@@ -1,7 +1,10 @@
+export type Role = "ADMIN" | "MEMBER";
+
 export interface User {
   id: string;
   name: string;
   email: string;
+  role: Role;
 }
 
 export type ProjectStatus =
@@ -47,6 +50,8 @@ export interface Project {
   startDate: string | null;
   targetCompletionDate: string | null;
   actualCompletionDate: string | null;
+  createdById: string | null;
+  createdBy: { id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
   tasks?: Task[];
@@ -54,7 +59,7 @@ export interface Project {
 
 export type ProjectInput = Omit<
   Project,
-  "id" | "createdAt" | "updatedAt" | "tasks"
+  "id" | "createdById" | "createdBy" | "createdAt" | "updatedAt" | "tasks"
 >;
 
 export interface ActivityLogEntry {

@@ -24,9 +24,14 @@ router.post("/login", async (req, res) => {
     return res.status(401).json({ error: "Invalid email or password" });
   }
 
-  const token = signToken({ sub: user.id, name: user.name, email: user.email });
+  const token = signToken({
+    sub: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  });
   res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
-  res.json({ id: user.id, name: user.name, email: user.email });
+  res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
 });
 
 router.post("/logout", (_req, res) => {
@@ -35,7 +40,12 @@ router.post("/logout", (_req, res) => {
 });
 
 router.get("/me", requireAuth, (req, res) => {
-  res.json({ id: req.user!.sub, name: req.user!.name, email: req.user!.email });
+  res.json({
+    id: req.user!.sub,
+    name: req.user!.name,
+    email: req.user!.email,
+    role: req.user!.role,
+  });
 });
 
 export default router;

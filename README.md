@@ -131,6 +131,26 @@ exposing the app beyond your own machine.
 `docker compose up` will refuse to start the backend without it. Generate one
 with `openssl rand -base64 32`.
 
+### Permissions
+
+Every user has a **role** — `MEMBER` (default) or `ADMIN` — and every project
+records who created it. All logged-in users can view every project and
+create new ones, but **editing or deleting a project is restricted to its
+creator or an admin**; this is enforced by the backend (a 403, not just a
+hidden button) as well as reflected in the UI, which hides the Edit/Delete
+buttons and shows who owns the project instead. Tasks and attachments stay
+open to any logged-in user, matching how a small team actually works day to
+day — only the project record itself needs an owner.
+
+A project with no recorded creator (there isn't one in the current seed
+data, but this covers a project whose creator's account was later removed)
+is editable by anyone, rather than being permanently locked out.
+
+The seed script creates one `admin@example.com` account (same demo
+password) alongside the three `MEMBER` accounts, and assigns each seeded
+project to the user matching its project manager, so the permission model
+has something real to demonstrate out of the box.
+
 ## Reports
 
 The "Reports" link on the dashboard opens a portfolio-level view with three
@@ -150,8 +170,7 @@ task-status colors.
 
 This is intentionally a starting point. Natural next steps to discuss:
 
-- Self-serve password reset / change-password flow, and an admin UI for managing users (today: seeded accounts + a shared demo password)
-- Per-user permissions (today: any logged-in user can edit/delete any project)
+- Self-serve password reset / change-password flow, and an admin UI for managing users and roles (today: seeded accounts + a shared demo password, roles set directly in the database)
 - Notifications for approaching deadlines
 - Integration with existing GVW systems (e.g. finance, GIS/asset data)
 

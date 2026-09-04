@@ -11,26 +11,33 @@ function daysFromNow(days: number): Date {
 
 const DEMO_PASSWORD = "ChangeMe123!";
 
-async function seedUsers() {
-  const userCount = await prisma.user.count();
-  if (userCount > 0) {
+async function seedUsers(): Promise<Record<string, string>> {
+  const existing = await prisma.user.findMany({ select: { id: true, name: true } });
+  if (existing.length > 0) {
     console.log("Users already exist, skipping user seed.");
-    return;
+    return Object.fromEntries(existing.map((u) => [u.name, u.id]));
   }
 
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
-  await prisma.user.createMany({
-    data: [
+  const users = await Promise.all(
+    [
       { name: "A. Nguyen", email: "a.nguyen@example.com", passwordHash },
       { name: "S. Patel", email: "s.patel@example.com", passwordHash },
       { name: "J. Wilson", email: "j.wilson@example.com", passwordHash },
-    ],
-  });
-  console.log(`Seeded 3 demo users (password: ${DEMO_PASSWORD}).`);
+      {
+        name: "Admin",
+        email: "admin@example.com",
+        passwordHash,
+        role: "ADMIN" as const,
+      },
+    ].map((data) => prisma.user.create({ data }))
+  );
+  console.log(`Seeded ${users.length} demo users (password: ${DEMO_PASSWORD}).`);
+  return Object.fromEntries(users.map((u) => [u.name, u.id]));
 }
 
 async function main() {
-  await seedUsers();
+  const userIdByName = await seedUsers();
 
   const count = await prisma.project.count();
   if (count > 0) {
@@ -45,6 +52,7 @@ async function main() {
       assetType: "Treatment Plant",
       status: "CONSTRUCTION",
       projectManager: "A. Nguyen",
+      createdById: userIdByName["A. Nguyen"],
       location: "Shepparton",
       contractor: "Fulton Hogan",
       budget: 8500000,
@@ -85,6 +93,7 @@ async function main() {
       assetType: "Pipeline",
       status: "TENDER",
       projectManager: "S. Patel",
+      createdById: userIdByName["S. Patel"],
       location: "Mooroopna",
       budget: 2100000,
       targetCompletionDate: daysFromNow(400),
@@ -117,6 +126,7 @@ async function main() {
       assetType: "Pump Station",
       status: "DESIGN",
       projectManager: "A. Nguyen",
+      createdById: userIdByName["A. Nguyen"],
       location: "Nathalia",
       budget: 950000,
       targetCompletionDate: daysFromNow(500),
@@ -143,6 +153,7 @@ async function main() {
       assetType: "Reservoir",
       status: "DEFECTS_LIABILITY",
       projectManager: "J. Wilson",
+      createdById: userIdByName["J. Wilson"],
       location: "Cobram",
       contractor: "BMD Constructions",
       budget: 1200000,
@@ -170,6 +181,7 @@ async function main() {
       assetType: "Building",
       status: "PLANNING",
       projectManager: "S. Patel",
+      createdById: userIdByName["S. Patel"],
       location: "Tatura",
       budget: 480000,
     },

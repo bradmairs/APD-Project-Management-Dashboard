@@ -1,3 +1,4 @@
+import { Role } from "@prisma/client";
 import jwt from "jsonwebtoken";
 
 if (!process.env.JWT_SECRET) {
@@ -11,6 +12,7 @@ export interface AuthTokenPayload {
   sub: string;
   name: string;
   email: string;
+  role: Role;
 }
 
 export function signToken(payload: AuthTokenPayload): string {
