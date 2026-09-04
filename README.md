@@ -68,9 +68,22 @@ expected by then.
 Each project also has a list of **Tasks** (visible on its detail page, opened
 by clicking a row): title, status (To Do / In Progress / Done), and an
 optional due date. Tasks with the nearest due dates across all projects show
-up in the "Upcoming Deadlines" panel on the main dashboard.
+up in the "Upcoming Deadlines" panel on the main dashboard, and in the
+notification bell described below.
 
 See `backend/prisma/schema.prisma` for the source of truth.
+
+## Deadline notifications
+
+A bell icon next to the account menu — present on every page, not just the
+dashboard — shows a badge with the count of tasks that are overdue or due
+within the next 7 days (across all projects, not just your own). The badge
+is red if anything is overdue, amber if only "due soon" items remain.
+Clicking it opens a list of those tasks, each linking to its project.
+
+There's no email/SMS delivery — this is in-app only, reusing the same
+`/api/tasks/upcoming` data as the dashboard's "Upcoming Deadlines" panel, so
+the two always agree. Nothing to configure (no SMTP credentials needed).
 
 ## Activity history
 
@@ -185,7 +198,7 @@ task-status colors.
 This is intentionally a starting point. Natural next steps to discuss:
 
 - Delete/deactivate a user account (today: an admin can create accounts and change roles, but not remove one)
-- Notifications for approaching deadlines
+- Email/SMS delivery for deadline notifications (today: in-app only, via the notification bell)
 - Integration with existing GVW systems (e.g. finance, GIS/asset data)
 
 ## Project structure
