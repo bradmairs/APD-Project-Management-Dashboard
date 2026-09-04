@@ -92,9 +92,9 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen">
       <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={gvwLogo} alt="Goulburn Valley Water" className="h-10 w-auto" />
+            <img src={gvwLogo} alt="Goulburn Valley Water" className="h-16 w-auto" />
             <div>
               <h1 className="text-xl font-semibold text-slate-900">
                 APD Project Dashboard
