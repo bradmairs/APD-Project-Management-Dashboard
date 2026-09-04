@@ -1,9 +1,9 @@
 # APD Project Management Dashboard
 
 A project management dashboard for Goulburn Valley Water's Asset & Project
-Delivery (APD) team. Version one gives Project Managers a single view of
-construction projects — status, budget, key dates, and who owns what — with
-the ability to add and update projects directly.
+Delivery (APD) team. It gives Project Managers a single view of construction
+projects — status, budget, key dates, and who owns what — plus a detail page
+per project for tracking tasks/milestones and their due dates.
 
 ## Stack
 
@@ -43,14 +43,13 @@ npm install
 npm run dev              # http://localhost:5173, proxies /api to backend via vite/nginx in prod
 ```
 
-Note: in local dev mode the frontend dev server does not proxy `/api` calls
-(that's handled by nginx in the Docker build). If you want to hit a local
-backend from `npm run dev`, add a Vite proxy rule for `/api` in
-`frontend/vite.config.ts` pointing at `http://localhost:4000`.
+The Vite dev server proxies `/api` to `http://localhost:4000` (see
+`frontend/vite.config.ts`), matching the nginx proxy used in the Docker build,
+so `npm run dev` talks to your local backend out of the box.
 
 ## Data model (v1)
 
-Each **Project** currently tracks:
+Each **Project** tracks:
 
 - Name, description, asset type (e.g. Pipeline, Pump Station, Treatment Plant)
 - Status: Planning → Design → Tender → Construction → Defects Liability → Complete
@@ -59,6 +58,16 @@ Each **Project** currently tracks:
 - Budget vs. contract value
 - Start date, target completion date, actual completion date
 
+A project marked "overdue" on the dashboard means its target completion date
+has passed while it's still actively in progress — Defects Liability,
+Complete, and Cancelled projects are excluded, since passing that date is
+expected by then.
+
+Each project also has a list of **Tasks** (visible on its detail page, opened
+by clicking a row): title, status (To Do / In Progress / Done), and an
+optional due date. Tasks with the nearest due dates across all projects show
+up in the "Upcoming Deadlines" panel on the main dashboard.
+
 See `backend/prisma/schema.prisma` for the source of truth.
 
 ## Roadmap ideas (not built yet)
@@ -66,7 +75,6 @@ See `backend/prisma/schema.prisma` for the source of truth.
 This is intentionally a starting point. Natural next steps to discuss:
 
 - User accounts / login (currently no auth — anyone with network access can edit)
-- Task or milestone tracking within a project
 - File/document attachments (drawings, contracts, correspondence)
 - Charts: projects by status, spend over time, upcoming deadlines
 - Audit history of changes to a project

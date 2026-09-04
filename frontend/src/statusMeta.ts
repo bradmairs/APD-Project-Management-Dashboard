@@ -1,4 +1,4 @@
-import { ProjectStatus } from "./types";
+import { Project, ProjectStatus } from "./types";
 
 export const STATUS_LABELS: Record<ProjectStatus, string> = {
   PLANNING: "Planning",
@@ -32,3 +32,18 @@ export const ALL_STATUSES: ProjectStatus[] = [
   "ON_HOLD",
   "CANCELLED",
 ];
+
+// A project is only "overdue" while it's still working toward its target
+// completion date. Once construction is done (Defects Liability, Complete)
+// or the project is Cancelled, passing that original date is expected, not late.
+const STATUSES_EXEMPT_FROM_OVERDUE: ProjectStatus[] = [
+  "DEFECTS_LIABILITY",
+  "COMPLETE",
+  "CANCELLED",
+];
+
+export function isProjectOverdue(project: Project): boolean {
+  if (!project.targetCompletionDate) return false;
+  if (STATUSES_EXEMPT_FROM_OVERDUE.includes(project.status)) return false;
+  return new Date(project.targetCompletionDate) < new Date();
+}

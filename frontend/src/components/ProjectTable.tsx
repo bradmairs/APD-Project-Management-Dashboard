@@ -1,5 +1,5 @@
 import { Project } from "../types";
-import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
+import { isProjectOverdue, STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 
 function formatDate(value: string | null): string {
   if (!value) return "—";
@@ -19,20 +19,25 @@ function formatCurrency(value: string | null): string {
   }).format(Number(value));
 }
 
-function isOverdue(project: Project): boolean {
-  if (!project.targetCompletionDate) return false;
-  if (project.status === "COMPLETE" || project.status === "CANCELLED")
-    return false;
-  return new Date(project.targetCompletionDate) < new Date();
+function taskProgress(project: Project): string | null {
+  if (!project.tasks || project.tasks.length === 0) return null;
+  const done = project.tasks.filter((t) => t.status === "DONE").length;
+  return `${done}/${project.tasks.length}`;
 }
 
 interface Props {
   projects: Project[];
+  onOpen: (project: Project) => void;
   onEdit: (project: Project) => void;
   onDelete: (project: Project) => void;
 }
 
-export default function ProjectTable({ projects, onEdit, onDelete }: Props) {
+export default function ProjectTable({
+  projects,
+  onOpen,
+  onEdit,
+  onDelete,
+}: Props) {
   if (projects.length === 0) {
     return (
       <div className="text-center text-slate-500 py-12 bg-white rounded-lg border border-slate-200">
@@ -64,6 +69,9 @@ export default function ProjectTable({ projects, onEdit, onDelete }: Props) {
             <th className="px-4 py-3 text-left font-medium text-slate-600">
               Target Completion
             </th>
+            <th className="px-4 py-3 text-left font-medium text-slate-600">
+              Tasks
+            </th>
             <th className="px-4 py-3 text-right font-medium text-slate-600">
               Actions
             </th>
@@ -71,7 +79,11 @@ export default function ProjectTable({ projects, onEdit, onDelete }: Props) {
         </thead>
         <tbody className="divide-y divide-slate-100">
           {projects.map((project) => (
-            <tr key={project.id} className="hover:bg-slate-50">
+            <tr
+              key={project.id}
+              onClick={() => onOpen(project)}
+              className="hover:bg-slate-50 cursor-pointer"
+            >
               <td className="px-4 py-3">
                 <div className="font-medium text-slate-900">
                   {project.name}
@@ -103,13 +115,19 @@ export default function ProjectTable({ projects, onEdit, onDelete }: Props) {
               <td className="px-4 py-3">
                 <span
                   className={
-                    isOverdue(project) ? "text-red-600 font-medium" : "text-slate-700"
+                    isProjectOverdue(project) ? "text-red-600 font-medium" : "text-slate-700"
                   }
                 >
                   {formatDate(project.targetCompletionDate)}
                 </span>
               </td>
-              <td className="px-4 py-3 text-right whitespace-nowrap">
+              <td className="px-4 py-3 text-slate-700">
+                {taskProgress(project) ?? "—"}
+              </td>
+              <td
+                className="px-4 py-3 text-right whitespace-nowrap"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <button
                   onClick={() => onEdit(project)}
                   className="text-blue-600 hover:underline mr-3"

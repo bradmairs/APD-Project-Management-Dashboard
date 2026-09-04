@@ -8,6 +8,25 @@ export type ProjectStatus =
   | "ON_HOLD"
   | "CANCELLED";
 
+export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE";
+
+export interface Task {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  dueDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type TaskInput = Omit<
+  Task,
+  "id" | "projectId" | "createdAt" | "updatedAt" | "project"
+>;
+
 export interface Project {
   id: string;
   name: string;
@@ -24,9 +43,10 @@ export interface Project {
   actualCompletionDate: string | null;
   createdAt: string;
   updatedAt: string;
+  tasks?: Task[];
 }
 
 export type ProjectInput = Omit<
   Project,
-  "id" | "createdAt" | "updatedAt"
+  "id" | "createdAt" | "updatedAt" | "tasks"
 >;

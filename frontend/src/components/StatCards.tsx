@@ -1,4 +1,5 @@
 import { Project } from "../types";
+import { isProjectOverdue } from "../statusMeta";
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-AU", {
@@ -14,12 +15,7 @@ export default function StatCards({ projects }: { projects: Project[] }) {
     (p) => p.status === "CONSTRUCTION"
   ).length;
 
-  const now = new Date();
-  const overdue = projects.filter((p) => {
-    if (!p.targetCompletionDate) return false;
-    if (p.status === "COMPLETE" || p.status === "CANCELLED") return false;
-    return new Date(p.targetCompletionDate) < now;
-  }).length;
+  const overdue = projects.filter(isProjectOverdue).length;
 
   const totalBudget = projects.reduce(
     (sum, p) => sum + (p.budget ? Number(p.budget) : 0),

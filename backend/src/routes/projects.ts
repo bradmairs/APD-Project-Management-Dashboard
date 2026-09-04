@@ -1,11 +1,15 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
+import projectTasksRouter from "./tasks";
 
 const router = Router();
+
+router.use("/:projectId/tasks", projectTasksRouter);
 
 router.get("/", async (_req, res) => {
   const projects = await prisma.project.findMany({
     orderBy: { updatedAt: "desc" },
+    include: { tasks: { select: { id: true, status: true } } },
   });
   res.json(projects);
 });
@@ -13,6 +17,7 @@ router.get("/", async (_req, res) => {
 router.get("/:id", async (req, res) => {
   const project = await prisma.project.findUnique({
     where: { id: req.params.id },
+    include: { tasks: { orderBy: [{ status: "asc" }, { dueDate: "asc" }] } },
   });
   if (!project) return res.status(404).json({ error: "Project not found" });
   res.json(project);
