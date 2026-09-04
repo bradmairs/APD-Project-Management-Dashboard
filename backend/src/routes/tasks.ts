@@ -1,5 +1,6 @@
 import { Request, Response, Router } from "express";
 import { prisma } from "../prisma";
+import { describeTaskUpdate, logActivity } from "../activityLog";
 
 const projectTasksRouter = Router({ mergeParams: true });
 
@@ -22,6 +23,14 @@ projectTasksRouter.post(
     try {
       const task = await prisma.task.create({
         data: { ...req.body, projectId: req.params.projectId },
+        include: { project: { select: { id: true, name: true } } },
+      });
+      await logActivity({
+        projectId: task.project.id,
+        projectName: task.project.name,
+        userId: req.user!.sub,
+        userName: req.user!.name,
+        action: `added task "${task.title}"`,
       });
       res.status(201).json(task);
     } catch (err) {
@@ -43,10 +52,23 @@ tasksRouter.get("/upcoming", async (_req, res) => {
 });
 
 tasksRouter.put("/:id", async (req, res) => {
+  const before = await prisma.task.findUnique({
+    where: { id: req.params.id },
+    include: { project: { select: { id: true, name: true } } },
+  });
+  if (!before) return res.status(404).json({ error: "Task not found" });
+
   try {
     const task = await prisma.task.update({
       where: { id: req.params.id },
       data: req.body,
+    });
+    await logActivity({
+      projectId: before.project.id,
+      projectName: before.project.name,
+      userId: req.user!.sub,
+      userName: req.user!.name,
+      action: describeTaskUpdate(before, req.body),
     });
     res.json(task);
   } catch (err) {
@@ -55,12 +77,21 @@ tasksRouter.put("/:id", async (req, res) => {
 });
 
 tasksRouter.delete("/:id", async (req, res) => {
-  try {
-    await prisma.task.delete({ where: { id: req.params.id } });
-    res.status(204).send();
-  } catch (err) {
-    res.status(404).json({ error: "Task not found" });
-  }
+  const task = await prisma.task.findUnique({
+    where: { id: req.params.id },
+    include: { project: { select: { id: true, name: true } } },
+  });
+  if (!task) return res.status(404).json({ error: "Task not found" });
+
+  await logActivity({
+    projectId: task.project.id,
+    projectName: task.project.name,
+    userId: req.user!.sub,
+    userName: req.user!.name,
+    action: `deleted task "${task.title}"`,
+  });
+  await prisma.task.delete({ where: { id: req.params.id } });
+  res.status(204).send();
 });
 
 export default projectTasksRouter;

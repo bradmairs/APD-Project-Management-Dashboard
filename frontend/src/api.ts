@@ -1,4 +1,11 @@
-import { Project, ProjectInput, Task, TaskInput, User } from "./types";
+import {
+  ActivityLogEntry,
+  Project,
+  ProjectInput,
+  Task,
+  TaskInput,
+  User,
+} from "./types";
 
 const API_BASE = "/api";
 
@@ -90,6 +97,16 @@ export function updateTask(
 
 export function deleteTask(id: string): Promise<void> {
   return fetch(`${API_BASE}/tasks/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getRecentActivity(): Promise<ActivityLogEntry[]> {
+  return fetch(`${API_BASE}/activity/recent`).then((res) => handle(res));
+}
+
+export function getProjectActivity(projectId: string): Promise<ActivityLogEntry[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/activity`).then((res) =>
     handle(res)
   );
 }

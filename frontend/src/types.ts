@@ -56,3 +56,13 @@ export type ProjectInput = Omit<
   Project,
   "id" | "createdAt" | "updatedAt" | "tasks"
 >;
+
+export interface ActivityLogEntry {
+  id: string;
+  projectId: string | null;
+  projectName: string;
+  userId: string | null;
+  userName: string;
+  action: string;
+  createdAt: string;
+}

@@ -25,12 +25,13 @@ enum TaskStatus {
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id           String        @id @default(cuid())
   name         String
-  email        String   @unique
+  email        String        @unique
   passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  activityLogs ActivityLog[]
 }
 
 model Project {
@@ -50,6 +51,7 @@ model Project {
   createdAt              DateTime      @default(now())
   updatedAt              DateTime      @updatedAt
   tasks                  Task[]
+  activityLogs           ActivityLog[]
 }
 
 model Task {
@@ -64,4 +66,23 @@ model Task {
   updatedAt   DateTime   @updatedAt
 
   @@index([projectId])
+}
+
+// Append-only audit trail. projectName/userName are snapshots taken at write
+// time so an entry stays meaningful even after its project or user is gone
+// (project relation is SET NULL on delete rather than cascaded, so a
+// project's "deleted" entry — and its history — outlives the project row).
+model ActivityLog {
+  id          String   @id @default(cuid())
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId   String?
+  projectName String
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId      String?
+  userName    String
+  action      String
+  createdAt   DateTime @default(now())
+
+  @@index([projectId])
+  @@index([createdAt])
 }

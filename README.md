@@ -72,6 +72,21 @@ up in the "Upcoming Deadlines" panel on the main dashboard.
 
 See `backend/prisma/schema.prisma` for the source of truth.
 
+## Activity history
+
+Every project and task change is written to an append-only `ActivityLog` —
+who did what, and when. It's attributed to the logged-in user (name captured
+at write time, so entries stay meaningful even if that user is later
+removed), and visible in two places:
+
+- Each project's detail page has an **Activity** panel scoped to that project
+- The dashboard's **Recent Activity** panel shows the latest changes across
+  every project, each linking back to its project
+
+A deleted project's activity entries aren't deleted with it — they survive
+(with a snapshot of the project's name) so there's a record that it existed
+and was removed, and by whom.
+
 ## Authentication
 
 The app requires login — every `/api/projects` and `/api/tasks` route needs a
@@ -119,7 +134,6 @@ This is intentionally a starting point. Natural next steps to discuss:
 - Self-serve password reset / change-password flow, and an admin UI for managing users (today: seeded accounts + a shared demo password)
 - Per-user permissions (today: any logged-in user can edit/delete any project)
 - File/document attachments (drawings, contracts, correspondence)
-- Audit history of changes to a project
 - Notifications for approaching deadlines
 - Integration with existing GVW systems (e.g. finance, GIS/asset data)
 

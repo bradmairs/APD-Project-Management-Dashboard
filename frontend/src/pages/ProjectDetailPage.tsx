@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Project, ProjectInput, Task, TaskStatus } from "../types";
+import { ActivityLogEntry, Project, ProjectInput, Task, TaskStatus } from "../types";
 import {
   createTask,
   deleteProject,
   deleteTask,
   getProject,
+  getProjectActivity,
   updateProject,
   updateTask,
 } from "../api";
 import ProjectFormModal from "../components/ProjectFormModal";
 import TaskList from "../components/TaskList";
+import ActivityFeed from "../components/ActivityFeed";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import UserMenu from "../components/UserMenu";
@@ -20,6 +22,7 @@ export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
+  const [activity, setActivity] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -29,8 +32,12 @@ export default function ProjectDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getProject(id);
+      const [data, activityData] = await Promise.all([
+        getProject(id),
+        getProjectActivity(id),
+      ]);
       setProject(data);
+      setActivity(activityData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -169,6 +176,11 @@ export default function ProjectDetailPage() {
           onUpdate={handleUpdateTask}
           onDelete={handleDeleteTask}
         />
+
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
+          <h2 className="text-sm font-semibold text-slate-900 mb-3">Activity</h2>
+          <ActivityFeed entries={activity} emptyMessage="No activity recorded yet." />
+        </div>
       </main>
 
       {showModal && (
