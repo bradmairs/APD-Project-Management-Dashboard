@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Task, TaskStatus } from "../types";
+import { isTaskOverdue } from "../taskMeta";
 
 const STATUS_ORDER: TaskStatus[] = ["TODO", "IN_PROGRESS", "DONE"];
 
@@ -12,11 +13,6 @@ const STATUS_LABELS: Record<TaskStatus, string> = {
 function formatDate(value: string | null): string {
   if (!value) return "";
   return value.substring(0, 10);
-}
-
-function isOverdue(task: Task): boolean {
-  if (!task.dueDate || task.status === "DONE") return false;
-  return new Date(task.dueDate) < new Date();
 }
 
 interface Props {
@@ -114,7 +110,7 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
                   })
                 }
                 className={`text-xs rounded border px-2 py-1 ${
-                  isOverdue(task)
+                  isTaskOverdue(task)
                     ? "border-red-300 text-red-600"
                     : "border-slate-300 text-slate-700"
                 }`}

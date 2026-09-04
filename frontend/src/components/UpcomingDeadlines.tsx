@@ -1,11 +1,7 @@
 import { Link } from "react-router-dom";
 import { Task } from "../types";
 import { formatDate } from "../format";
-
-function isOverdue(task: Task): boolean {
-  if (!task.dueDate) return false;
-  return new Date(task.dueDate) < new Date();
-}
+import { isTaskOverdue } from "../taskMeta";
 
 export default function UpcomingDeadlines({ tasks }: { tasks: Task[] }) {
   if (tasks.length === 0) return null;
@@ -34,7 +30,7 @@ export default function UpcomingDeadlines({ tasks }: { tasks: Task[] }) {
             </div>
             <span
               className={
-                isOverdue(task)
+                isTaskOverdue(task)
                   ? "text-red-600 font-medium"
                   : "text-slate-500"
               }
