@@ -1,10 +1,12 @@
-import express from "express";
+import express, { ErrorRequestHandler } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import multer from "multer";
 import authRouter from "./routes/auth";
 import projectsRouter from "./routes/projects";
 import { tasksRouter } from "./routes/tasks";
 import activityRouter from "./routes/activity";
+import attachmentsRouter from "./routes/attachments";
 import { requireAuth } from "./middleware/requireAuth";
 
 const app = express();
@@ -22,6 +24,22 @@ app.use("/api/auth", authRouter);
 app.use("/api/projects", requireAuth, projectsRouter);
 app.use("/api/tasks", requireAuth, tasksRouter);
 app.use("/api/activity", requireAuth, activityRouter);
+app.use("/api/attachments", requireAuth, attachmentsRouter);
+
+// Catches multer's file-size/file-type rejections (thrown before any route
+// handler runs) and reports them as clean JSON instead of Express's default
+// HTML error page.
+const handleUploadErrors: ErrorRequestHandler = (err, _req, res, next) => {
+  if (res.headersSent) return next(err);
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ error: err.message });
+  }
+  if (err instanceof Error) {
+    return res.status(400).json({ error: err.message });
+  }
+  next(err);
+};
+app.use(handleUploadErrors);
 
 app.listen(port, () => {
   console.log(`APD dashboard API listening on port ${port}`);
