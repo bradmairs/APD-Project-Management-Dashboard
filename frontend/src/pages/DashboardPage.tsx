@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Project, ProjectInput, ProjectStatus, Task } from "../types";
+import { ActivityLogEntry, Project, ProjectInput, ProjectStatus, Task } from "../types";
 import {
   createProject,
   deleteProject,
   getProjects,
+  getRecentActivity,
   getUpcomingTasks,
   updateProject,
 } from "../api";
@@ -12,6 +13,7 @@ import StatCards from "../components/StatCards";
 import ProjectTable from "../components/ProjectTable";
 import ProjectFormModal from "../components/ProjectFormModal";
 import UpcomingDeadlines from "../components/UpcomingDeadlines";
+import ActivityFeed from "../components/ActivityFeed";
 import { ALL_STATUSES, STATUS_LABELS } from "../statusMeta";
 import UserMenu from "../components/UserMenu";
 import gvwLogo from "../assets/gvw-logo.png";
@@ -20,6 +22,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
+  const [recentActivity, setRecentActivity] = useState<ActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -33,12 +36,14 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const [projectData, taskData] = await Promise.all([
+      const [projectData, taskData, activityData] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
+        getRecentActivity(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
+      setRecentActivity(activityData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -132,7 +137,17 @@ export default function DashboardPage() {
 
         <StatCards projects={projects} />
 
-        <UpcomingDeadlines tasks={upcomingTasks} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <UpcomingDeadlines tasks={upcomingTasks} />
+          {recentActivity.length > 0 && (
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
+              <h2 className="text-sm font-semibold text-slate-900 mb-3">
+                Recent Activity
+              </h2>
+              <ActivityFeed entries={recentActivity} showProjectLink />
+            </div>
+          )}
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
           <div className="flex gap-2 flex-wrap">

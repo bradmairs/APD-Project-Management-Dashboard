@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth";
 import projectsRouter from "./routes/projects";
 import { tasksRouter } from "./routes/tasks";
+import activityRouter from "./routes/activity";
 import { requireAuth } from "./middleware/requireAuth";
 
 const app = express();
@@ -20,6 +21,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/projects", requireAuth, projectsRouter);
 app.use("/api/tasks", requireAuth, tasksRouter);
+app.use("/api/activity", requireAuth, activityRouter);
 
 app.listen(port, () => {
   console.log(`APD dashboard API listening on port ${port}`);
