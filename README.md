@@ -70,13 +70,27 @@ up in the "Upcoming Deadlines" panel on the main dashboard.
 
 See `backend/prisma/schema.prisma` for the source of truth.
 
+## Reports
+
+The "Reports" link on the dashboard opens a portfolio-level view with three
+charts, built from the same project/task data (no separate reporting
+backend):
+
+- **Projects by Status** — count of projects at each pipeline stage
+- **Budget by Asset Type** — total budget grouped by asset type
+- **Task Progress by Project** — a To Do / In Progress / Done breakdown per
+  project, sorted so the least-progressed projects surface first
+
+Chart colors and layout follow a small internal palette in
+`frontend/src/charts/palette.ts`, chosen for colorblind-safe contrast between
+task-status colors.
+
 ## Roadmap ideas (not built yet)
 
 This is intentionally a starting point. Natural next steps to discuss:
 
 - User accounts / login (currently no auth — anyone with network access can edit)
 - File/document attachments (drawings, contracts, correspondence)
-- Charts: projects by status, spend over time, upcoming deadlines
 - Audit history of changes to a project
 - Notifications for approaching deadlines
 - Integration with existing GVW systems (e.g. finance, GIS/asset data)

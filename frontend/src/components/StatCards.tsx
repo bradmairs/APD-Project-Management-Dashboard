@@ -1,13 +1,6 @@
 import { Project } from "../types";
 import { isProjectOverdue } from "../statusMeta";
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: "AUD",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+import { formatCurrency } from "../format";
 
 export default function StatCards({ projects }: { projects: Project[] }) {
   const total = projects.length;

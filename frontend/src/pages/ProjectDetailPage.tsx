@@ -12,25 +12,8 @@ import {
 import ProjectFormModal from "../components/ProjectFormModal";
 import TaskList from "../components/TaskList";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
+import { formatCurrency, formatDate } from "../format";
 import gvwLogo from "../assets/gvw-logo.png";
-
-function formatDate(value: string | null): string {
-  if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-AU", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function formatCurrency(value: string | null): string {
-  if (!value) return "—";
-  return new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: "AUD",
-    maximumFractionDigits: 0,
-  }).format(Number(value));
-}
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();

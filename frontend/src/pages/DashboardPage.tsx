@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Project, ProjectInput, ProjectStatus, Task } from "../types";
 import {
   createProject,
@@ -104,12 +104,20 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          <button
-            onClick={openNewProject}
-            className="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-          >
-            + New Project
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/reports"
+              className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
+            >
+              Reports
+            </Link>
+            <button
+              onClick={openNewProject}
+              className="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+            >
+              + New Project
+            </button>
+          </div>
         </div>
       </header>
 

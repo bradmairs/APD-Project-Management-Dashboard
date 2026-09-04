@@ -1,23 +1,6 @@
 import { Project } from "../types";
 import { isProjectOverdue, STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
-
-function formatDate(value: string | null): string {
-  if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-AU", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function formatCurrency(value: string | null): string {
-  if (!value) return "—";
-  return new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: "AUD",
-    maximumFractionDigits: 0,
-  }).format(Number(value));
-}
+import { formatCurrency, formatDate } from "../format";
 
 function taskProgress(project: Project): string | null {
   if (!project.tasks || project.tasks.length === 0) return null;
