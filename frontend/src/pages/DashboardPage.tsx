@@ -13,6 +13,7 @@ import ProjectTable from "../components/ProjectTable";
 import ProjectFormModal from "../components/ProjectFormModal";
 import UpcomingDeadlines from "../components/UpcomingDeadlines";
 import { ALL_STATUSES, STATUS_LABELS } from "../statusMeta";
+import UserMenu from "../components/UserMenu";
 import gvwLogo from "../assets/gvw-logo.png";
 
 export default function DashboardPage() {
@@ -117,6 +118,7 @@ export default function DashboardPage() {
             >
               + New Project
             </button>
+            <UserMenu />
           </div>
         </div>
       </header>

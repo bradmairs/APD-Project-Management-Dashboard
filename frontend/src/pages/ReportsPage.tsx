@@ -7,6 +7,7 @@ import { formatCurrency } from "../format";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import StackedProgressChart, { ProgressDatum } from "../charts/StackedProgressChart";
 import { SEQUENTIAL_BLUE } from "../charts/palette";
+import UserMenu from "../components/UserMenu";
 import gvwLogo from "../assets/gvw-logo.png";
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -79,14 +80,17 @@ export default function ReportsPage() {
           <Link to="/" className="text-sm text-blue-600 hover:underline">
             ← Back to dashboard
           </Link>
-          <div className="flex items-center gap-4 mt-2">
-            <img src={gvwLogo} alt="Goulburn Valley Water" className="h-14 w-auto" />
-            <div>
-              <h1 className="text-xl font-semibold text-slate-900">Reports</h1>
-              <p className="text-sm text-slate-500">
-                Portfolio overview across all projects
-              </p>
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-4">
+              <img src={gvwLogo} alt="Goulburn Valley Water" className="h-14 w-auto" />
+              <div>
+                <h1 className="text-xl font-semibold text-slate-900">Reports</h1>
+                <p className="text-sm text-slate-500">
+                  Portfolio overview across all projects
+                </p>
+              </div>
             </div>
+            <UserMenu />
           </div>
         </div>
       </header>

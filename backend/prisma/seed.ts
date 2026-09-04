@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -8,7 +9,29 @@ function daysFromNow(days: number): Date {
   return date;
 }
 
+const DEMO_PASSWORD = "ChangeMe123!";
+
+async function seedUsers() {
+  const userCount = await prisma.user.count();
+  if (userCount > 0) {
+    console.log("Users already exist, skipping user seed.");
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
+  await prisma.user.createMany({
+    data: [
+      { name: "A. Nguyen", email: "a.nguyen@example.com", passwordHash },
+      { name: "S. Patel", email: "s.patel@example.com", passwordHash },
+      { name: "J. Wilson", email: "j.wilson@example.com", passwordHash },
+    ],
+  });
+  console.log(`Seeded 3 demo users (password: ${DEMO_PASSWORD}).`);
+}
+
 async function main() {
+  await seedUsers();
+
   const count = await prisma.project.count();
   if (count > 0) {
     console.log("Projects already exist, skipping seed.");

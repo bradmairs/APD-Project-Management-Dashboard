@@ -15,7 +15,8 @@ per project for tracking tasks/milestones and their due dates.
 ## Running it
 
 ```bash
-cp .env.example .env   # adjust DB credentials if you want
+cp .env.example .env
+# edit .env: set JWT_SECRET to a random value, e.g. `openssl rand -base64 32`
 docker compose up --build
 ```
 
@@ -23,7 +24,8 @@ docker compose up --build
 - API directly: http://localhost:4000/api/projects
 
 The backend runs Prisma migrations and seeds a handful of example projects
-automatically on first startup, so the dashboard isn't empty.
+(and demo user accounts — see **Authentication** below) automatically on
+first startup, so the dashboard isn't empty.
 
 ## Local development (without Docker)
 
@@ -32,7 +34,7 @@ Requires Node 20+ and a local Postgres instance.
 ```bash
 # Backend
 cd backend
-cp .env.example .env   # point DATABASE_URL at your local Postgres
+cp .env.example .env   # point DATABASE_URL at your local Postgres; set a real JWT_SECRET
 npm install
 npm run prisma:migrate:dev
 npm run dev             # http://localhost:4000
@@ -70,6 +72,31 @@ up in the "Upcoming Deadlines" panel on the main dashboard.
 
 See `backend/prisma/schema.prisma` for the source of truth.
 
+## Authentication
+
+The app requires login — every `/api/projects` and `/api/tasks` route needs a
+valid session, enforced by the backend (not just hidden in the UI). Sessions
+are a JWT in an httpOnly cookie, issued on `POST /api/auth/login` and checked
+by `requireAuth` middleware on every protected route.
+
+The seed script creates three demo accounts (matching the seeded projects'
+project managers), all sharing one password:
+
+| Email | Password |
+|---|---|
+| a.nguyen@example.com | `ChangeMe123!` |
+| s.patel@example.com | `ChangeMe123!` |
+| j.wilson@example.com | `ChangeMe123!` |
+
+These are demo credentials for a starter project — there's no self-serve
+signup or password-reset flow yet (see Roadmap). For real use, change these
+passwords directly in the database (or extend the seed script) before
+exposing the app beyond your own machine.
+
+`JWT_SECRET` **must** be set to a real random value outside of local dev —
+`docker compose up` will refuse to start the backend without it. Generate one
+with `openssl rand -base64 32`.
+
 ## Reports
 
 The "Reports" link on the dashboard opens a portfolio-level view with three
@@ -89,7 +116,8 @@ task-status colors.
 
 This is intentionally a starting point. Natural next steps to discuss:
 
-- User accounts / login (currently no auth — anyone with network access can edit)
+- Self-serve password reset / change-password flow, and an admin UI for managing users (today: seeded accounts + a shared demo password)
+- Per-user permissions (today: any logged-in user can edit/delete any project)
 - File/document attachments (drawings, contracts, correspondence)
 - Audit history of changes to a project
 - Notifications for approaching deadlines

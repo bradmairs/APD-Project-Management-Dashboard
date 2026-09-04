@@ -13,6 +13,7 @@ import ProjectFormModal from "../components/ProjectFormModal";
 import TaskList from "../components/TaskList";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
+import UserMenu from "../components/UserMenu";
 import gvwLogo from "../assets/gvw-logo.png";
 
 export default function ProjectDetailPage() {
@@ -130,6 +131,7 @@ export default function ProjectDetailPage() {
               >
                 Delete
               </button>
+              <UserMenu />
             </div>
           </div>
         </div>

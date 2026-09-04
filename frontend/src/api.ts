@@ -1,4 +1,4 @@
-import { Project, ProjectInput, Task, TaskInput } from "./types";
+import { Project, ProjectInput, Task, TaskInput, User } from "./types";
 
 const API_BASE = "/api";
 
@@ -9,6 +9,24 @@ async function handle<T>(res: Response): Promise<T> {
   }
   if (res.status === 204) return undefined as T;
   return res.json();
+}
+
+export function login(email: string, password: string): Promise<User> {
+  return fetch(`${API_BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  }).then((res) => handle(res));
+}
+
+export function logout(): Promise<void> {
+  return fetch(`${API_BASE}/auth/logout`, { method: "POST" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getMe(): Promise<User> {
+  return fetch(`${API_BASE}/auth/me`).then((res) => handle(res));
 }
 
 export function getProjects(): Promise<Project[]> {
