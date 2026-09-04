@@ -7,7 +7,9 @@ import projectsRouter from "./routes/projects";
 import { tasksRouter } from "./routes/tasks";
 import activityRouter from "./routes/activity";
 import attachmentsRouter from "./routes/attachments";
+import usersRouter from "./routes/users";
 import { requireAuth } from "./middleware/requireAuth";
+import { requireAdmin } from "./middleware/requireAdmin";
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
@@ -25,6 +27,7 @@ app.use("/api/projects", requireAuth, projectsRouter);
 app.use("/api/tasks", requireAuth, tasksRouter);
 app.use("/api/activity", requireAuth, activityRouter);
 app.use("/api/attachments", requireAuth, attachmentsRouter);
+app.use("/api/users", requireAuth, requireAdmin, usersRouter);
 
 // Catches multer's file-size/file-type rejections (thrown before any route
 // handler runs) and reports them as clean JSON instead of Express's default

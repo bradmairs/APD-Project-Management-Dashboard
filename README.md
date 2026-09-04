@@ -122,14 +122,28 @@ project managers), all sharing one password:
 | s.patel@example.com | `ChangeMe123!` |
 | j.wilson@example.com | `ChangeMe123!` |
 
-These are demo credentials for a starter project — there's no self-serve
-signup or password-reset flow yet (see Roadmap). For real use, change these
-passwords directly in the database (or extend the seed script) before
-exposing the app beyond your own machine.
+These are demo credentials for a starter project. Change them once you're
+using the app for real — every user can do this themselves from the account
+menu (top right → **Change Password**), no admin needed.
 
 `JWT_SECRET` **must** be set to a real random value outside of local dev —
 `docker compose up` will refuse to start the backend without it. Generate one
 with `openssl rand -base64 32`.
+
+### Managing users
+
+Admins get a **Manage Users** link in the account menu, opening a page to:
+
+- See every account, its role, and when it joined
+- Create a new account (name, email, a temporary password you share with
+  them directly — there's no email/invite flow yet) with either role
+- Promote or demote a user between `MEMBER` and `ADMIN`
+
+An admin can't demote themselves (the UI disables their own row, and the
+backend rejects it too) — a guard against a lone admin locking themselves
+out by mistake. There's no delete-user action yet; a departing team
+member's projects and history stay intact either way, since both use `SET
+NULL` on the user relation rather than cascading.
 
 ### Permissions
 
@@ -170,7 +184,7 @@ task-status colors.
 
 This is intentionally a starting point. Natural next steps to discuss:
 
-- Self-serve password reset / change-password flow, and an admin UI for managing users and roles (today: seeded accounts + a shared demo password, roles set directly in the database)
+- Delete/deactivate a user account (today: an admin can create accounts and change roles, but not remove one)
 - Notifications for approaching deadlines
 - Integration with existing GVW systems (e.g. finance, GIS/asset data)
 

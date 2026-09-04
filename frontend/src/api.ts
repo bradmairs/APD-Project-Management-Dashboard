@@ -3,6 +3,7 @@ import {
   Attachment,
   Project,
   ProjectInput,
+  Role,
   Task,
   TaskInput,
   User,
@@ -35,6 +36,17 @@ export function logout(): Promise<void> {
 
 export function getMe(): Promise<User> {
   return fetch(`${API_BASE}/auth/me`).then((res) => handle(res));
+}
+
+export function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  return fetch(`${API_BASE}/auth/change-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  }).then((res) => handle(res));
 }
 
 export function getProjects(): Promise<Project[]> {
@@ -138,4 +150,29 @@ export function deleteAttachment(id: string): Promise<void> {
 
 export function attachmentDownloadUrl(id: string): string {
   return `${API_BASE}/attachments/${id}/download`;
+}
+
+export function getUsers(): Promise<User[]> {
+  return fetch(`${API_BASE}/users`).then((res) => handle(res));
+}
+
+export function createUser(data: {
+  name: string;
+  email: string;
+  password: string;
+  role: Role;
+}): Promise<User> {
+  return fetch(`${API_BASE}/users`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateUserRole(id: string, role: Role): Promise<User> {
+  return fetch(`${API_BASE}/users/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ role }),
+  }).then((res) => handle(res));
 }

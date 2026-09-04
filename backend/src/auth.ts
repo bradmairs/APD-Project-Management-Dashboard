@@ -13,6 +13,7 @@ export interface AuthTokenPayload {
   name: string;
   email: string;
   role: Role;
+  createdAt: string;
 }
 
 export function signToken(payload: AuthTokenPayload): string {
