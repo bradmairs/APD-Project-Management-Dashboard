@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProjectStatus {
+  PLANNING
+  DESIGN
+  TENDER
+  CONSTRUCTION
+  DEFECTS_LIABILITY
+  COMPLETE
+  ON_HOLD
+  CANCELLED
+}
+
+model Project {
+  id                     String        @id @default(cuid())
+  name                   String
+  description            String?
+  assetType              String?
+  status                 ProjectStatus @default(PLANNING)
+  projectManager         String?
+  location               String?
+  contractor             String?
+  budget                 Decimal?      @db.Decimal(14, 2)
+  contractValue          Decimal?      @db.Decimal(14, 2)
+  startDate              DateTime?
+  targetCompletionDate   DateTime?
+  actualCompletionDate   DateTime?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+}
