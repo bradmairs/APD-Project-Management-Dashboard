@@ -66,3 +66,14 @@ export interface ActivityLogEntry {
   action: string;
   createdAt: string;
 }
+
+export interface Attachment {
+  id: string;
+  projectId: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  uploadedById: string | null;
+  uploadedByName: string;
+  createdAt: string;
+}

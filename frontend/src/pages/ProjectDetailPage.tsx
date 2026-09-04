@@ -1,18 +1,29 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ActivityLogEntry, Project, ProjectInput, Task, TaskStatus } from "../types";
+import {
+  ActivityLogEntry,
+  Attachment,
+  Project,
+  ProjectInput,
+  Task,
+  TaskStatus,
+} from "../types";
 import {
   createTask,
+  deleteAttachment,
   deleteProject,
   deleteTask,
+  getAttachments,
   getProject,
   getProjectActivity,
   updateProject,
   updateTask,
+  uploadAttachment,
 } from "../api";
 import ProjectFormModal from "../components/ProjectFormModal";
 import TaskList from "../components/TaskList";
 import ActivityFeed from "../components/ActivityFeed";
+import AttachmentsPanel from "../components/AttachmentsPanel";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import UserMenu from "../components/UserMenu";
@@ -23,6 +34,7 @@ export default function ProjectDetailPage() {
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [activity, setActivity] = useState<ActivityLogEntry[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -32,12 +44,14 @@ export default function ProjectDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const [data, activityData] = await Promise.all([
+      const [data, activityData, attachmentData] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
+        getAttachments(id),
       ]);
       setProject(data);
       setActivity(activityData);
+      setAttachments(attachmentData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -82,6 +96,18 @@ export default function ProjectDetailPage() {
 
   async function handleDeleteTask(task: Task) {
     await deleteTask(task.id);
+    await load();
+  }
+
+  async function handleUploadAttachment(file: File) {
+    if (!project) return;
+    await uploadAttachment(project.id, file);
+    await load();
+  }
+
+  async function handleDeleteAttachment(attachment: Attachment) {
+    if (!confirm(`Delete "${attachment.originalName}"? This cannot be undone.`)) return;
+    await deleteAttachment(attachment.id);
     await load();
   }
 
@@ -175,6 +201,12 @@ export default function ProjectDetailPage() {
           onAdd={handleAddTask}
           onUpdate={handleUpdateTask}
           onDelete={handleDeleteTask}
+        />
+
+        <AttachmentsPanel
+          attachments={attachments}
+          onUpload={handleUploadAttachment}
+          onDelete={handleDeleteAttachment}
         />
 
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">

@@ -1,5 +1,6 @@
 import {
   ActivityLogEntry,
+  Attachment,
   Project,
   ProjectInput,
   Task,
@@ -109,4 +110,32 @@ export function getProjectActivity(projectId: string): Promise<ActivityLogEntry[
   return fetch(`${API_BASE}/projects/${projectId}/activity`).then((res) =>
     handle(res)
   );
+}
+
+export function getAttachments(projectId: string): Promise<Attachment[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/attachments`).then((res) =>
+    handle(res)
+  );
+}
+
+export function uploadAttachment(
+  projectId: string,
+  file: File
+): Promise<Attachment> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return fetch(`${API_BASE}/projects/${projectId}/attachments`, {
+    method: "POST",
+    body: formData,
+  }).then((res) => handle(res));
+}
+
+export function deleteAttachment(id: string): Promise<void> {
+  return fetch(`${API_BASE}/attachments/${id}`, { method: "DELETE" }).then(
+    (res) => handle(res)
+  );
+}
+
+export function attachmentDownloadUrl(id: string): string {
+  return `${API_BASE}/attachments/${id}/download`;
 }

@@ -32,6 +32,7 @@ model User {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   activityLogs ActivityLog[]
+  attachments  Attachment[]
 }
 
 model Project {
@@ -52,6 +53,7 @@ model Project {
   updatedAt              DateTime      @updatedAt
   tasks                  Task[]
   activityLogs           ActivityLog[]
+  attachments            Attachment[]
 }
 
 model Task {
@@ -64,6 +66,26 @@ model Task {
   dueDate     DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+
+  @@index([projectId])
+}
+
+// Files (drawings, contracts, correspondence) attached to a project.
+// Deleted with its project (unlike ActivityLog) since the underlying file on
+// disk is deleted at the same time — there's nothing left for the row to
+// document once that happens.
+model Attachment {
+  id             String   @id @default(cuid())
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  storedFilename String
+  originalName   String
+  mimeType       String
+  size           Int
+  uploadedBy     User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedById   String?
+  uploadedByName String
+  createdAt      DateTime @default(now())
 
   @@index([projectId])
 }

@@ -87,6 +87,25 @@ A deleted project's activity entries aren't deleted with it — they survive
 (with a snapshot of the project's name) so there's a record that it existed
 and was removed, and by whom.
 
+## Attachments
+
+Each project has an **Attachments** panel for drawings, contracts, and
+correspondence. Files are stored on disk (not in Postgres), organized by
+project under `backend/uploads/<projectId>/` — the Docker Compose setup
+mounts that path to a named volume (`uploads_data`) so uploads survive
+container restarts and rebuilds.
+
+- Allowed types: PDF, Word, Excel, PowerPoint, images (PNG/JPG/GIF), CSV,
+  TXT, DWG, and ZIP — anything else is rejected with a clear error
+- Max file size: 20MB
+- On-disk filenames are always a fresh random ID, never the name the file was
+  uploaded with, so a crafted filename can't be used to overwrite another
+  file or escape the upload directory
+- Deleting a project deletes its attachments' files from disk too, not just
+  their database rows
+- Uploads and deletions are recorded in that project's Activity panel like
+  any other change
+
 ## Authentication
 
 The app requires login — every `/api/projects` and `/api/tasks` route needs a
@@ -133,7 +152,6 @@ This is intentionally a starting point. Natural next steps to discuss:
 
 - Self-serve password reset / change-password flow, and an admin UI for managing users (today: seeded accounts + a shared demo password)
 - Per-user permissions (today: any logged-in user can edit/delete any project)
-- File/document attachments (drawings, contracts, correspondence)
 - Notifications for approaching deadlines
 - Integration with existing GVW systems (e.g. finance, GIS/asset data)
 
