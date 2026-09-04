@@ -4,6 +4,7 @@ import { prisma } from "../prisma";
 import projectTasksRouter from "./tasks";
 import { describeProjectChanges, logActivity } from "../activityLog";
 import { projectUploadDir, upload } from "../upload";
+import { canModifyProject } from "../permissions";
 
 const router = Router();
 
@@ -12,7 +13,10 @@ router.use("/:projectId/tasks", projectTasksRouter);
 router.get("/", async (_req, res) => {
   const projects = await prisma.project.findMany({
     orderBy: { updatedAt: "desc" },
-    include: { tasks: { select: { id: true, status: true } } },
+    include: {
+      tasks: { select: { id: true, status: true } },
+      createdBy: { select: { id: true, name: true } },
+    },
   });
   res.json(projects);
 });
@@ -20,7 +24,10 @@ router.get("/", async (_req, res) => {
 router.get("/:id", async (req, res) => {
   const project = await prisma.project.findUnique({
     where: { id: req.params.id },
-    include: { tasks: { orderBy: [{ status: "asc" }, { dueDate: "asc" }] } },
+    include: {
+      tasks: { orderBy: [{ status: "asc" }, { dueDate: "asc" }] },
+      createdBy: { select: { id: true, name: true } },
+    },
   });
   if (!project) return res.status(404).json({ error: "Project not found" });
   res.json(project);
@@ -83,7 +90,12 @@ router.post(
 
 router.post("/", async (req, res) => {
   try {
-    const project = await prisma.project.create({ data: req.body });
+    // createdById is server-assigned, never taken from the request body —
+    // otherwise a client could claim a project was created by someone else.
+    const { createdById, ...data } = req.body;
+    const project = await prisma.project.create({
+      data: { ...data, createdById: req.user!.sub },
+    });
     await logActivity({
       projectId: project.id,
       projectName: project.name,
@@ -100,18 +112,25 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   const before = await prisma.project.findUnique({ where: { id: req.params.id } });
   if (!before) return res.status(404).json({ error: "Project not found" });
+  if (!canModifyProject(before, req.user!)) {
+    return res
+      .status(403)
+      .json({ error: "Only the project's creator or an admin can edit it" });
+  }
 
   try {
+    // createdById can't be reassigned through an edit.
+    const { createdById, ...data } = req.body;
     const project = await prisma.project.update({
       where: { id: req.params.id },
-      data: req.body,
+      data,
     });
     await logActivity({
       projectId: project.id,
       projectName: project.name,
       userId: req.user!.sub,
       userName: req.user!.name,
-      action: describeProjectChanges(before, req.body),
+      action: describeProjectChanges(before, data),
     });
     res.json(project);
   } catch (err) {
@@ -122,6 +141,11 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const project = await prisma.project.findUnique({ where: { id: req.params.id } });
   if (!project) return res.status(404).json({ error: "Project not found" });
+  if (!canModifyProject(project, req.user!)) {
+    return res
+      .status(403)
+      .json({ error: "Only the project's creator or an admin can delete it" });
+  }
 
   await logActivity({
     projectId: project.id,

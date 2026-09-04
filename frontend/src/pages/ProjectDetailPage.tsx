@@ -26,12 +26,15 @@ import ActivityFeed from "../components/ActivityFeed";
 import AttachmentsPanel from "../components/AttachmentsPanel";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
+import { canModifyProject } from "../permissions";
 import UserMenu from "../components/UserMenu";
+import { useAuth } from "../auth/AuthContext";
 import gvwLogo from "../assets/gvw-logo.png";
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [activity, setActivity] = useState<ActivityLogEntry[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -151,19 +154,29 @@ export default function ProjectDetailPage() {
                 </span>
               </div>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowModal(true)}
-                className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
-              >
-                Edit
-              </button>
-              <button
-                onClick={handleDeleteProject}
-                className="px-4 py-2 text-sm rounded border border-red-300 text-red-600 hover:bg-red-50"
-              >
-                Delete
-              </button>
+            <div className="flex items-center gap-3">
+              {canModifyProject(project, user) ? (
+                <>
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={handleDeleteProject}
+                    className="px-4 py-2 text-sm rounded border border-red-300 text-red-600 hover:bg-red-50"
+                  >
+                    Delete
+                  </button>
+                </>
+              ) : (
+                project.createdBy && (
+                  <span className="text-sm text-slate-500">
+                    Only {project.createdBy.name} or an admin can edit this project
+                  </span>
+                )
+              )}
               <UserMenu />
             </div>
           </div>
@@ -194,6 +207,7 @@ export default function ProjectDetailPage() {
             label="Actual Completion"
             value={formatDate(project.actualCompletionDate)}
           />
+          <Field label="Created By" value={project.createdBy?.name || "—"} />
         </div>
 
         <TaskList

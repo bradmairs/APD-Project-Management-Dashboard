@@ -16,10 +16,12 @@ import UpcomingDeadlines from "../components/UpcomingDeadlines";
 import ActivityFeed from "../components/ActivityFeed";
 import { ALL_STATUSES, STATUS_LABELS } from "../statusMeta";
 import UserMenu from "../components/UserMenu";
+import { useAuth } from "../auth/AuthContext";
 import gvwLogo from "../assets/gvw-logo.png";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityLogEntry[]>([]);
@@ -188,6 +190,7 @@ export default function DashboardPage() {
         ) : (
           <ProjectTable
             projects={filteredProjects}
+            currentUser={user}
             onOpen={(project) => navigate(`/projects/${project.id}`)}
             onEdit={openEditProject}
             onDelete={handleDelete}

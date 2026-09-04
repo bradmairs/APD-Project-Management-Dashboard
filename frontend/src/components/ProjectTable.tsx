@@ -1,6 +1,7 @@
-import { Project } from "../types";
+import { Project, User } from "../types";
 import { isProjectOverdue, STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
+import { canModifyProject } from "../permissions";
 
 function taskProgress(project: Project): string | null {
   if (!project.tasks || project.tasks.length === 0) return null;
@@ -10,6 +11,7 @@ function taskProgress(project: Project): string | null {
 
 interface Props {
   projects: Project[];
+  currentUser: User | null;
   onOpen: (project: Project) => void;
   onEdit: (project: Project) => void;
   onDelete: (project: Project) => void;
@@ -17,6 +19,7 @@ interface Props {
 
 export default function ProjectTable({
   projects,
+  currentUser,
   onOpen,
   onEdit,
   onDelete,
@@ -111,18 +114,26 @@ export default function ProjectTable({
                 className="px-4 py-3 text-right whitespace-nowrap"
                 onClick={(e) => e.stopPropagation()}
               >
-                <button
-                  onClick={() => onEdit(project)}
-                  className="text-blue-600 hover:underline mr-3"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => onDelete(project)}
-                  className="text-red-600 hover:underline"
-                >
-                  Delete
-                </button>
+                {canModifyProject(project, currentUser) ? (
+                  <>
+                    <button
+                      onClick={() => onEdit(project)}
+                      className="text-blue-600 hover:underline mr-3"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => onDelete(project)}
+                      className="text-red-600 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-slate-400 text-xs">
+                    {project.createdBy ? `${project.createdBy.name} only` : ""}
+                  </span>
+                )}
               </td>
             </tr>
           ))}

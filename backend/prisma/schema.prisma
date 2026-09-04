@@ -24,15 +24,22 @@ enum TaskStatus {
   DONE
 }
 
+enum Role {
+  ADMIN
+  MEMBER
+}
+
 model User {
-  id           String        @id @default(cuid())
-  name         String
-  email        String        @unique
-  passwordHash String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  activityLogs ActivityLog[]
-  attachments  Attachment[]
+  id             String        @id @default(cuid())
+  name           String
+  email          String        @unique
+  passwordHash   String
+  role           Role          @default(MEMBER)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  activityLogs   ActivityLog[]
+  attachments    Attachment[]
+  createdProjects Project[]
 }
 
 model Project {
@@ -49,6 +56,8 @@ model Project {
   startDate              DateTime?
   targetCompletionDate   DateTime?
   actualCompletionDate   DateTime?
+  createdById            String?
+  createdBy              User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdAt              DateTime      @default(now())
   updatedAt              DateTime      @updatedAt
   tasks                  Task[]
