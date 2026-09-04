@@ -2,6 +2,7 @@ import fs from "fs";
 import { Router } from "express";
 import { prisma } from "../prisma";
 import projectTasksRouter from "./tasks";
+import projectReportsRouter from "./monthlyReports";
 import { describeProjectChanges, logActivity } from "../activityLog";
 import { projectUploadDir, upload } from "../upload";
 import { canModifyProject } from "../permissions";
@@ -9,6 +10,7 @@ import { canModifyProject } from "../permissions";
 const router = Router();
 
 router.use("/:projectId/tasks", projectTasksRouter);
+router.use("/:id/reports", projectReportsRouter);
 
 router.get("/", async (_req, res) => {
   const projects = await prisma.project.findMany({

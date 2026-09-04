@@ -5,6 +5,7 @@ import multer from "multer";
 import authRouter from "./routes/auth";
 import projectsRouter from "./routes/projects";
 import { tasksRouter } from "./routes/tasks";
+import { reportsRouter } from "./routes/monthlyReports";
 import activityRouter from "./routes/activity";
 import attachmentsRouter from "./routes/attachments";
 import usersRouter from "./routes/users";
@@ -25,6 +26,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/projects", requireAuth, projectsRouter);
 app.use("/api/tasks", requireAuth, tasksRouter);
+app.use("/api/reports", requireAuth, reportsRouter);
 app.use("/api/activity", requireAuth, activityRouter);
 app.use("/api/attachments", requireAuth, attachmentsRouter);
 app.use("/api/users", requireAuth, requireAdmin, usersRouter);

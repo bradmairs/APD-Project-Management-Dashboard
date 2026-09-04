@@ -1,6 +1,8 @@
 import {
   ActivityLogEntry,
   Attachment,
+  MonthlyReport,
+  MonthlyReportInput,
   Project,
   ProjectInput,
   Role,
@@ -183,4 +185,38 @@ export function setUserActive(id: string, active: boolean): Promise<User> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ active }),
   }).then((res) => handle(res));
+}
+
+export function getMonthlyReports(projectId: string): Promise<MonthlyReport[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/reports`).then((res) =>
+    handle(res)
+  );
+}
+
+export function createMonthlyReport(
+  projectId: string,
+  data: Partial<MonthlyReportInput>
+): Promise<MonthlyReport> {
+  return fetch(`${API_BASE}/projects/${projectId}/reports`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateMonthlyReport(
+  id: string,
+  data: Partial<MonthlyReportInput>
+): Promise<MonthlyReport> {
+  return fetch(`${API_BASE}/reports/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteMonthlyReport(id: string): Promise<void> {
+  return fetch(`${API_BASE}/reports/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
 }

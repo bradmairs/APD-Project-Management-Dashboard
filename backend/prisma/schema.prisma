@@ -29,6 +29,12 @@ enum Role {
   MEMBER
 }
 
+enum RagStatus {
+  GREEN
+  AMBER
+  RED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -41,6 +47,7 @@ model User {
   activityLogs   ActivityLog[]
   attachments    Attachment[]
   createdProjects Project[]
+  monthlyReports MonthlyReport[]
 }
 
 model Project {
@@ -49,7 +56,10 @@ model Project {
   description            String?
   assetType              String?
   status                 ProjectStatus @default(PLANNING)
+  bpRefNo                String?
   projectManager         String?
+  projectDirector        String?
+  projectSponsor         String?
   location               String?
   contractor             String?
   budget                 Decimal?      @db.Decimal(14, 2)
@@ -64,6 +74,7 @@ model Project {
   tasks                  Task[]
   activityLogs           ActivityLog[]
   attachments            Attachment[]
+  monthlyReports         MonthlyReport[]
 }
 
 model Task {
@@ -97,6 +108,37 @@ model Attachment {
   uploadedByName String
   createdAt      DateTime @default(now())
 
+  @@index([projectId])
+}
+
+// A monthly project report snapshot, matching the board-reporting template
+// PMs already fill in manually. Each (project, reportingMonth) pair is its
+// own row rather than a set of live fields — a past month's report is a
+// historical record and shouldn't change as the project moves on, the same
+// way the source document is a point-in-time report, not a live view.
+// Cascades with its project (unlike ActivityLog) since a report only makes
+// sense in that project's context — there's no standalone value in a report
+// row once the project itself is gone.
+model MonthlyReport {
+  id                String    @id @default(cuid())
+  project           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId         String
+  reportingMonth    DateTime
+  projectPhase      String
+  currentStatus     String
+  recentlyCompleted String?
+  monthlyLookahead  String?
+  budgetHealth      RagStatus @default(GREEN)
+  budgetComments    String?
+  scheduleHealth    RagStatus @default(GREEN)
+  scheduleComments  String?
+  createdBy         User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById       String?
+  authorName        String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([projectId, reportingMonth])
   @@index([projectId])
 }
 

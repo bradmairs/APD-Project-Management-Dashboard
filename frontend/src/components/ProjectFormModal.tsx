@@ -20,8 +20,15 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
   const [status, setStatus] = useState<ProjectStatus>(
     project?.status ?? "PLANNING"
   );
+  const [bpRefNo, setBpRefNo] = useState(project?.bpRefNo ?? "");
   const [projectManager, setProjectManager] = useState(
     project?.projectManager ?? ""
+  );
+  const [projectDirector, setProjectDirector] = useState(
+    project?.projectDirector ?? ""
+  );
+  const [projectSponsor, setProjectSponsor] = useState(
+    project?.projectSponsor ?? ""
   );
   const [location, setLocation] = useState(project?.location ?? "");
   const [contractor, setContractor] = useState(project?.contractor ?? "");
@@ -48,7 +55,10 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
         description: description || null,
         assetType: assetType || null,
         status,
+        bpRefNo: bpRefNo || null,
         projectManager: projectManager || null,
+        projectDirector: projectDirector || null,
+        projectSponsor: projectSponsor || null,
         location: location || null,
         contractor: contractor || null,
         budget: budget ? String(budget) : null,
@@ -136,11 +146,12 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
-                Project Manager
+                BP Ref. No.
               </label>
               <input
-                value={projectManager}
-                onChange={(e) => setProjectManager(e.target.value)}
+                value={bpRefNo}
+                onChange={(e) => setBpRefNo(e.target.value)}
+                placeholder="e.g. 3323"
                 className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
               />
             </div>
@@ -151,6 +162,39 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
               <input
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
+                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Project Manager
+              </label>
+              <input
+                value={projectManager}
+                onChange={(e) => setProjectManager(e.target.value)}
+                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Project Director
+              </label>
+              <input
+                value={projectDirector}
+                onChange={(e) => setProjectDirector(e.target.value)}
+                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Project Sponsor
+              </label>
+              <input
+                value={projectSponsor}
+                onChange={(e) => setProjectSponsor(e.target.value)}
                 className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
               />
             </div>
