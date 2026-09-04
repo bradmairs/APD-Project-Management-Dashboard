@@ -154,9 +154,20 @@ Admins get a **Manage Users** link in the account menu, opening a page to:
 
 An admin can't demote themselves (the UI disables their own row, and the
 backend rejects it too) — a guard against a lone admin locking themselves
-out by mistake. There's no delete-user action yet; a departing team
-member's projects and history stay intact either way, since both use `SET
-NULL` on the user relation rather than cascading.
+out by mistake.
+
+Admins can also **deactivate** an account instead of deleting it — the
+"Deactivate" link on each row. A deactivated user can't log in (their
+existing session is cut off immediately too, not just future logins — every
+request re-checks the flag rather than trusting the session cookie), but
+nothing about them is deleted: their projects, tasks, activity history, and
+attachments stay exactly as they were, still attributed to them by name.
+"Reactivate" restores login access with no other side effects. The same
+self-lockout guard applies here — an admin can't deactivate their own
+account. There's still no way to permanently delete a user outright, which
+is deliberate: deactivating covers the real use case (someone leaves the
+team) without the SET NULL cleanup and lost-history trade-offs a hard
+delete would need.
 
 ### Permissions
 
@@ -197,7 +208,6 @@ task-status colors.
 
 This is intentionally a starting point. Natural next steps to discuss:
 
-- Delete/deactivate a user account (today: an admin can create accounts and change roles, but not remove one)
 - Email/SMS delivery for deadline notifications (today: in-app only, via the notification bell)
 - Integration with existing GVW systems (e.g. finance, GIS/asset data)
 
