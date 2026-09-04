@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { createUser, getUsers, updateUserRole } from "../api";
+import { createUser, getUsers, setUserActive, updateUserRole } from "../api";
 import { Role, User } from "../types";
 import { formatDate } from "../format";
 import { useAuth } from "../auth/AuthContext";
@@ -37,6 +37,17 @@ export default function AdminUsersPage() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update role");
+    }
+  }
+
+  async function handleActiveToggle(user: User) {
+    try {
+      await setUserActive(user.id, !user.active);
+      await load();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to update account status"
+      );
     }
   }
 
@@ -90,24 +101,38 @@ export default function AdminUsersPage() {
                     Role
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600">
                     Joined
                   </th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="px-4 py-3 font-medium text-slate-900">
+                  <tr key={user.id} className={user.active ? "" : "bg-slate-50"}>
+                    <td
+                      className={`px-4 py-3 font-medium ${
+                        user.active ? "text-slate-900" : "text-slate-400"
+                      }`}
+                    >
                       {user.name}
                       {user.id === currentUser?.id && (
                         <span className="ml-2 text-xs text-slate-400">(you)</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-700">{user.email}</td>
+                    <td
+                      className={`px-4 py-3 ${
+                        user.active ? "text-slate-700" : "text-slate-400"
+                      }`}
+                    >
+                      {user.email}
+                    </td>
                     <td className="px-4 py-3">
                       <select
                         value={user.role}
-                        disabled={user.id === currentUser?.id}
+                        disabled={user.id === currentUser?.id || !user.active}
                         onChange={(e) =>
                           handleRoleChange(user, e.target.value as Role)
                         }
@@ -117,8 +142,39 @@ export default function AdminUsersPage() {
                         <option value="ADMIN">Admin</option>
                       </select>
                     </td>
-                    <td className="px-4 py-3 text-slate-700">
+                    <td className="px-4 py-3">
+                      {user.active ? (
+                        <span className="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                          Deactivated
+                        </span>
+                      )}
+                    </td>
+                    <td
+                      className={`px-4 py-3 ${
+                        user.active ? "text-slate-700" : "text-slate-400"
+                      }`}
+                    >
                       {formatDate(user.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => handleActiveToggle(user)}
+                        disabled={user.id === currentUser?.id}
+                        title={
+                          user.id === currentUser?.id
+                            ? "You can't deactivate your own account"
+                            : undefined
+                        }
+                        className={`text-xs hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed ${
+                          user.active ? "text-red-600" : "text-blue-600"
+                        }`}
+                      >
+                        {user.active ? "Deactivate" : "Reactivate"}
+                      </button>
                     </td>
                   </tr>
                 ))}

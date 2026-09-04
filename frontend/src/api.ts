@@ -176,3 +176,11 @@ export function updateUserRole(id: string, role: Role): Promise<User> {
     body: JSON.stringify({ role }),
   }).then((res) => handle(res));
 }
+
+export function setUserActive(id: string, active: boolean): Promise<User> {
+  return fetch(`${API_BASE}/users/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ active }),
+  }).then((res) => handle(res));
+}
