@@ -13,6 +13,7 @@ import ProjectTable from "../components/ProjectTable";
 import ProjectFormModal from "../components/ProjectFormModal";
 import UpcomingDeadlines from "../components/UpcomingDeadlines";
 import { ALL_STATUSES, STATUS_LABELS } from "../statusMeta";
+import gvwLogo from "../assets/gvw-logo.png";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -92,13 +93,16 @@ export default function DashboardPage() {
     <div className="min-h-screen">
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-slate-900">
-              APD Project Dashboard
-            </h1>
-            <p className="text-sm text-slate-500">
-              Goulburn Valley Water — Asset &amp; Project Delivery
-            </p>
+          <div className="flex items-center gap-4">
+            <img src={gvwLogo} alt="Goulburn Valley Water" className="h-10 w-auto" />
+            <div>
+              <h1 className="text-xl font-semibold text-slate-900">
+                APD Project Dashboard
+              </h1>
+              <p className="text-sm text-slate-500">
+                Asset &amp; Project Delivery
+              </p>
+            </div>
           </div>
           <button
             onClick={openNewProject}

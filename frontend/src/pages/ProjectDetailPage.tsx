@@ -12,6 +12,7 @@ import {
 import ProjectFormModal from "../components/ProjectFormModal";
 import TaskList from "../components/TaskList";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
+import gvwLogo from "../assets/gvw-logo.png";
 
 function formatDate(value: string | null): string {
   if (!value) return "—";
@@ -118,17 +119,20 @@ export default function ProjectDetailPage() {
             ← Back to dashboard
           </Link>
           <div className="flex items-center justify-between mt-2">
-            <div>
-              <h1 className="text-xl font-semibold text-slate-900">
-                {project.name}
-              </h1>
-              <span
-                className={`inline-block mt-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                  STATUS_COLORS[project.status]
-                }`}
-              >
-                {STATUS_LABELS[project.status]}
-              </span>
+            <div className="flex items-center gap-4">
+              <img src={gvwLogo} alt="Goulburn Valley Water" className="h-8 w-auto" />
+              <div>
+                <h1 className="text-xl font-semibold text-slate-900">
+                  {project.name}
+                </h1>
+                <span
+                  className={`inline-block mt-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                    STATUS_COLORS[project.status]
+                  }`}
+                >
+                  {STATUS_LABELS[project.status]}
+                </span>
+              </div>
             </div>
             <div className="flex gap-3">
               <button
