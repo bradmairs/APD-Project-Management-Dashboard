@@ -1,5 +1,6 @@
 import { CashFlowEntry, Project } from "../types";
 import { formatCurrency } from "../format";
+import { useTheme } from "../theme/ThemeContext";
 import {
   CASH_FLOW_ACTUAL,
   CASH_FLOW_FORECAST,
@@ -7,6 +8,7 @@ import {
   CHART_GRIDLINE,
   CHART_TEXT_MUTED,
   CHART_TEXT_SECONDARY,
+  chartColor,
 } from "./palette";
 
 const WIDTH = 800;
@@ -17,7 +19,6 @@ const PAD_TOP = 16;
 const PAD_BOTTOM = 30;
 const PLOT_WIDTH = WIDTH - PAD_LEFT - PAD_RIGHT;
 const PLOT_HEIGHT = HEIGHT - PAD_TOP - PAD_BOTTOM;
-const BUDGET_COLOR = CHART_TEXT_MUTED;
 
 function toMonthKey(value: string | Date): string {
   const d = typeof value === "string" ? new Date(value) : value;
@@ -58,6 +59,8 @@ interface Props {
 // than a categorical hue — it would otherwise compete with Actual/Forecast
 // for attention it isn't supposed to have.
 export default function CumulativeSpendChart({ project, entries }: Props) {
+  const { theme } = useTheme();
+  const BUDGET_COLOR = chartColor(CHART_TEXT_MUTED, theme);
   const entryMonths = entries.map((e) => e.month).sort();
   const starts = [project.startDate, entryMonths[0]]
     .filter((v): v is string => !!v)
@@ -70,7 +73,7 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
 
   if (starts.length === 0 || ends.length === 0) {
     return (
-      <p className="text-sm text-slate-500 py-6 text-center">
+      <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">
         Add a start/target completion date or a cash flow entry to see spend
         over time.
       </p>
@@ -134,19 +137,19 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
     <div>
       <div
         className="flex items-center gap-4 mb-3 text-xs flex-wrap"
-        style={{ color: CHART_TEXT_SECONDARY }}
+        style={{ color: chartColor(CHART_TEXT_SECONDARY, theme) }}
       >
         <span className="flex items-center gap-1.5">
           <span
             className="inline-block w-3 h-0.5"
-            style={{ backgroundColor: CASH_FLOW_ACTUAL }}
+            style={{ backgroundColor: chartColor(CASH_FLOW_ACTUAL, theme) }}
           />
           Actual (cumulative)
         </span>
         <span className="flex items-center gap-1.5">
           <span
             className="inline-block w-3 h-0.5 border-t-2 border-dashed"
-            style={{ borderColor: CASH_FLOW_FORECAST }}
+            style={{ borderColor: chartColor(CASH_FLOW_FORECAST, theme) }}
           />
           Forecast (cumulative)
         </span>
@@ -169,7 +172,7 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
               x2={WIDTH - PAD_RIGHT}
               y1={y(tick)}
               y2={y(tick)}
-              stroke={CHART_GRIDLINE}
+              stroke={chartColor(CHART_GRIDLINE, theme)}
               strokeWidth={1}
             />
             <text
@@ -178,7 +181,7 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
               textAnchor="end"
               dominantBaseline="middle"
               fontSize={10}
-              fill={CHART_TEXT_MUTED}
+              fill={chartColor(CHART_TEXT_MUTED, theme)}
             >
               {formatCompact(tick)}
             </text>
@@ -190,7 +193,7 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
           x2={WIDTH - PAD_RIGHT}
           y1={PAD_TOP + PLOT_HEIGHT}
           y2={PAD_TOP + PLOT_HEIGHT}
-          stroke={CHART_BASELINE}
+          stroke={chartColor(CHART_BASELINE, theme)}
           strokeWidth={1}
         />
 
@@ -202,7 +205,7 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
               y={HEIGHT - 8}
               textAnchor="middle"
               fontSize={10}
-              fill={CHART_TEXT_MUTED}
+              fill={chartColor(CHART_TEXT_MUTED, theme)}
             >
               {monthLabel(month)}
             </text>
@@ -228,7 +231,7 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
               x2={x(todayIndex)}
               y1={PAD_TOP}
               y2={PAD_TOP + PLOT_HEIGHT}
-              stroke={CHART_TEXT_SECONDARY}
+              stroke={chartColor(CHART_TEXT_SECONDARY, theme)}
               strokeWidth={1}
               strokeDasharray="3 3"
             />
@@ -237,7 +240,7 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
               y={PAD_TOP - 4}
               textAnchor="middle"
               fontSize={10}
-              fill={CHART_TEXT_SECONDARY}
+              fill={chartColor(CHART_TEXT_SECONDARY, theme)}
             >
               Today
             </text>
@@ -248,13 +251,18 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
           <path
             d={forecastPath}
             fill="none"
-            stroke={CASH_FLOW_FORECAST}
+            stroke={chartColor(CASH_FLOW_FORECAST, theme)}
             strokeWidth={2}
             strokeDasharray="6 4"
           />
         )}
         {actualPath && (
-          <path d={actualPath} fill="none" stroke={CASH_FLOW_ACTUAL} strokeWidth={2} />
+          <path
+            d={actualPath}
+            fill="none"
+            stroke={chartColor(CASH_FLOW_ACTUAL, theme)}
+            strokeWidth={2}
+          />
         )}
 
         {cumulative.map((v, i) => (
@@ -263,7 +271,10 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
             cx={x(i)}
             cy={y(v)}
             r={2.5}
-            fill={i <= lastActualIndex ? CASH_FLOW_ACTUAL : CASH_FLOW_FORECAST}
+            fill={chartColor(
+              i <= lastActualIndex ? CASH_FLOW_ACTUAL : CASH_FLOW_FORECAST,
+              theme
+            )}
           >
             <title>
               {monthLabel(months[i])}: {formatCurrency(v)} cumulative
@@ -273,7 +284,7 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
         ))}
       </svg>
 
-      <p className="text-xs pt-1" style={{ color: CHART_TEXT_MUTED }}>
+      <p className="text-xs pt-1" style={{ color: chartColor(CHART_TEXT_MUTED, theme) }}>
         Cumulative spend from {monthLabel(rangeStart)} to {monthLabel(rangeEnd)}
         {budget !== null && `, against an approved budget of ${formatCurrency(budget)}`}.
       </p>

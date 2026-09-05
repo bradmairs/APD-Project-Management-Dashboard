@@ -14,15 +14,21 @@ export default function ActivityFeed({
   emptyMessage = "No activity yet.",
 }: Props) {
   if (entries.length === 0) {
-    return <p className="text-sm text-slate-500 py-2">{emptyMessage}</p>;
+    return (
+      <p className="text-sm text-slate-500 dark:text-slate-400 py-2">
+        {emptyMessage}
+      </p>
+    );
   }
 
   return (
-    <ul className="divide-y divide-slate-100">
+    <ul className="divide-y divide-slate-100 dark:divide-slate-700">
       {entries.map((entry) => (
         <li key={entry.id} className="py-2 text-sm">
-          <div className="text-slate-700">
-            <span className="font-medium text-slate-900">{entry.userName}</span>{" "}
+          <div className="text-slate-700 dark:text-slate-300">
+            <span className="font-medium text-slate-900 dark:text-slate-100">
+              {entry.userName}
+            </span>{" "}
             {entry.action}
             {showProjectLink &&
               (entry.projectId ? (
@@ -31,16 +37,19 @@ export default function ActivityFeed({
                   on{" "}
                   <Link
                     to={`/projects/${entry.projectId}`}
-                    className="text-blue-600 hover:underline"
+                    className="text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     {entry.projectName}
                   </Link>
                 </>
               ) : (
-                <span className="text-slate-500"> on {entry.projectName}</span>
+                <span className="text-slate-500 dark:text-slate-400">
+                  {" "}
+                  on {entry.projectName}
+                </span>
               ))}
           </div>
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-slate-400 dark:text-slate-500">
             {formatRelativeTime(entry.createdAt)}
           </div>
         </li>

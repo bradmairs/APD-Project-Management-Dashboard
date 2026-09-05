@@ -6,7 +6,11 @@ export default function AdminRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="text-center text-slate-500 py-12">Loading…</div>;
+    return (
+      <div className="text-center text-slate-500 dark:text-slate-400 py-12">
+        Loading…
+      </div>
+    );
   }
 
   if (!user) {

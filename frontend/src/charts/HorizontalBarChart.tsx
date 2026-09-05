@@ -1,4 +1,5 @@
-import { CHART_BASELINE, CHART_TEXT_MUTED, CHART_TEXT_SECONDARY } from "./palette";
+import { useTheme } from "../theme/ThemeContext";
+import { CHART_BASELINE, CHART_TEXT_MUTED, CHART_TEXT_SECONDARY, chartColor } from "./palette";
 
 export interface BarDatum {
   label: string;
@@ -20,8 +21,14 @@ export default function HorizontalBarChart({
   formatValue,
   emptyMessage = "No data yet.",
 }: Props) {
+  const { theme } = useTheme();
+
   if (data.length === 0) {
-    return <p className="text-sm text-slate-500 py-6 text-center">{emptyMessage}</p>;
+    return (
+      <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">
+        {emptyMessage}
+      </p>
+    );
   }
 
   const maxValue = Math.max(...data.map((d) => d.value), 1);
@@ -33,17 +40,17 @@ export default function HorizontalBarChart({
         return (
           <div key={d.label} className="group" tabIndex={0}>
             <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-slate-700">{d.label}</span>
+              <span className="text-slate-700 dark:text-slate-300">{d.label}</span>
               <span
                 className="font-medium tabular-nums"
-                style={{ color: CHART_TEXT_SECONDARY }}
+                style={{ color: chartColor(CHART_TEXT_SECONDARY, theme) }}
               >
                 {formatValue(d.value)}
               </span>
             </div>
             <div
               className="h-4"
-              style={{ borderBottom: `1px solid ${CHART_BASELINE}` }}
+              style={{ borderBottom: `1px solid ${chartColor(CHART_BASELINE, theme)}` }}
             >
               <div
                 className="h-4 transition-opacity group-hover:opacity-80 group-focus:opacity-80"
@@ -58,7 +65,7 @@ export default function HorizontalBarChart({
           </div>
         );
       })}
-      <p className="text-xs pt-1" style={{ color: CHART_TEXT_MUTED }}>
+      <p className="text-xs pt-1" style={{ color: chartColor(CHART_TEXT_MUTED, theme) }}>
         Bar length is relative to the largest value shown ({formatValue(maxValue)}).
       </p>
     </div>

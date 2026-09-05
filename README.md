@@ -317,6 +317,82 @@ generally used for (the current state of schedule and spend), and it's
 the only way this view can exist without also snapshotting those tables
 monthly, which no one asked for.
 
+## Dark Mode
+
+A sun/moon toggle — in the header next to the notification bell on every
+app page, and top-right on the login page — switches the whole app between
+light and dark. It's built on Tailwind's class-based dark mode
+(`darkMode: "class"`): a `ThemeContext` toggles a `dark` class on `<html>`
+and persists the choice to `localStorage`, defaulting to the OS's
+`prefers-color-scheme` on first visit. Every page, panel, table, and modal
+carries `dark:` variants, and the hand-rolled charts read their colors from
+theme-aware tokens in `frontend/src/charts/palette.ts` (light/dark pairs
+for grid lines, axis text, and the Actual/Forecast categorical pair —
+re-validated for the dark chart surface with the same `dataviz` palette
+checker used for light mode).
+
+The **Formatted Report View** (`/projects/:id/reports/:reportId`) is the
+one page that deliberately ignores the toggle and always renders light —
+it's a print/document view meant to look the same on paper regardless of
+which theme you're browsing in, so it carries no `dark:` classes at all.
+
+## Site Visits
+
+Each project has a **Site Visits** panel — a mobile-friendly field log for
+the visits a project manager makes to site, since that's typically entered
+from a phone standing in the field rather than at a desk. A visit records
+Date, Time, Location (free text, with a **📍 Use current** button that
+fills it from the browser's Geolocation API as `lat, lng`), Notes (what was
+observed), and Discussion Notes (points raised or agreed with the
+contractor/site team). Entries render as a stack of full-width cards rather
+than the app's usual table layout — tables don't fit a narrow screen, and a
+project typically has far fewer site visits than tasks or activity-log
+entries, so a card per visit costs little vertical space. Each card expands
+in place to show its Notes/Discussion Notes, matching the Monthly Reports
+panel's expand-on-tap pattern. Like Milestones and Cash Flow entries, a
+site visit is live, editable data with no month-based snapshotting — each
+visit is already its own point-in-time record by nature.
+
+Building this surfaced a pre-existing mobile layout bug: the page header's
+Edit/Delete/theme-toggle/notification-bell/account-menu button row, and the
+Tasks panel's "Add a task" row, didn't wrap on a narrow screen — native
+`<input type="date">`/`<input type="time">` controls have a minimum
+intrinsic width that doesn't shrink, so at phone width the row overflowed
+sideways and forced the entire page's layout viewport wider than the
+device, breaking pinch-zoom-to-fit for the whole page (not just those
+rows). Fixed by allowing those rows to wrap (`flex-wrap`) across the
+Dashboard, Project Detail, Reports, and Admin Users headers, and giving the
+Site Visit form's own Date/Time fields a single column on narrow screens
+(`grid-cols-1 sm:grid-cols-2`) rather than forcing them side by side.
+
+### Site Photos
+
+Each site visit card has a **Photos** section with two upload paths: **📷
+Take Photo** (`<input type="file" accept="image/*" capture="environment">`,
+which opens the device's camera directly on a phone) and **🖼 Add from
+Gallery** (a plain multi-select file picker). Uploaded photos appear as a
+thumbnail grid, click-through to the full image.
+
+GPS coordinates and the capture time are read server-side from each
+photo's own EXIF tags at upload time (`backend/src/exif.ts`, via the
+`exifr` package) — never trusted from the client, the same way file type
+is validated server-side for every other upload in this app. A photo
+without a GPS tag (location services were off, or it came from a gallery
+rather than the camera) still uploads and shows in the thumbnail grid,
+just tagged "no GPS" and left off the map.
+
+Above the site visit list, a **Site Photos** map plots every geotagged
+photo across the project's site visits, with a pin per photo — clicking
+one opens a popup with that photo's thumbnail, the visit's location, and
+its date. This is the one component in the app that reaches for a mapping
+library: unlike the hand-rolled SVG/HTML charts everywhere else, real map
+tiles can't be drawn by hand, so it uses **Leaflet** with **OpenStreetMap**
+tiles (no API key required). The marker is a small inline-SVG pin via a
+Leaflet `divIcon` rather than Leaflet's bundled marker images, which
+sidesteps a well-known bundler issue where `Icon.Default`'s image paths
+resolve relative to the `leaflet` package rather than the built app and
+404 in production.
+
 ## Roadmap ideas (not built yet)
 
 This is intentionally a starting point. Natural next steps to discuss:

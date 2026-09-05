@@ -53,6 +53,8 @@ model User {
   attachments    Attachment[]
   createdProjects Project[]
   monthlyReports MonthlyReport[]
+  siteVisits     SiteVisit[]
+  siteVisitPhotos SiteVisitPhoto[]
 }
 
 model Project {
@@ -83,6 +85,7 @@ model Project {
   monthlyReports         MonthlyReport[]
   milestones             Milestone[]
   cashFlowEntries        CashFlowEntry[]
+  siteVisits             SiteVisit[]
 }
 
 model Task {
@@ -198,6 +201,57 @@ model MonthlyReport {
 
   @@unique([projectId, reportingMonth])
   @@index([projectId])
+}
+
+// A field record of a site visit — mobile-friendly since it's typically
+// logged from a phone on site. Like Milestone/CashFlowEntry (and unlike
+// MonthlyReport) this isn't a monthly snapshot; each visit is its own
+// point-in-time record, dated by when it happened rather than a reporting
+// month, so there's naturally many per month rather than one. Cascades with
+// its project since a visit log only makes sense in that project's context.
+model SiteVisit {
+  id              String    @id @default(cuid())
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  visitDate       DateTime
+  location        String
+  notes           String?
+  discussionNotes String?
+  visitedBy       User?     @relation(fields: [visitedById], references: [id], onDelete: SetNull)
+  visitedById     String?
+  visitedByName   String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  photos          SiteVisitPhoto[]
+
+  @@index([projectId])
+}
+
+// A photo attached to a site visit. latitude/longitude/takenAt are read
+// server-side from the file's own EXIF GPS/DateTimeOriginal tags at upload
+// time (never trusted from the client) — a photo with no GPS tag (location
+// services were off, or it came from a gallery rather than the camera)
+// simply has null coordinates and is shown in the thumbnail grid but never
+// plotted on the map. Cascades with its site visit for the same reason
+// Attachment cascades with its project: the file on disk goes with it, so
+// there's nothing left for the row to document once that happens.
+model SiteVisitPhoto {
+  id             String    @id @default(cuid())
+  siteVisit      SiteVisit @relation(fields: [siteVisitId], references: [id], onDelete: Cascade)
+  siteVisitId    String
+  storedFilename String
+  originalName   String
+  mimeType       String
+  size           Int
+  latitude       Float?
+  longitude      Float?
+  takenAt        DateTime?
+  uploadedBy     User?     @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedById   String?
+  uploadedByName String
+  createdAt      DateTime  @default(now())
+
+  @@index([siteVisitId])
 }
 
 // Append-only audit trail. projectName/userName are snapshots taken at write

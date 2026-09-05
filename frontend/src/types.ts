@@ -150,3 +150,36 @@ export type CashFlowEntryInput = Omit<
   CashFlowEntry,
   "id" | "projectId" | "createdAt" | "updatedAt"
 >;
+
+export interface SiteVisit {
+  id: string;
+  projectId: string;
+  visitDate: string;
+  location: string;
+  notes: string | null;
+  discussionNotes: string | null;
+  visitedById: string | null;
+  visitedByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SiteVisitInput = Omit<
+  SiteVisit,
+  "id" | "projectId" | "visitedById" | "visitedByName" | "createdAt" | "updatedAt"
+>;
+
+export interface SiteVisitPhoto {
+  id: string;
+  siteVisitId: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  latitude: number | null;
+  longitude: number | null;
+  takenAt: string | null;
+  uploadedById: string | null;
+  uploadedByName: string;
+  createdAt: string;
+  siteVisit?: { id: string; location: string; visitDate: string };
+}
