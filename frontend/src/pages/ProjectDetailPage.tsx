@@ -16,12 +16,15 @@ import {
   SiteVisitPhoto,
   Task,
   TaskStatus,
+  Variation,
+  VariationInput,
 } from "../types";
 import {
   createMilestone,
   createMonthlyReport,
   createSiteVisit,
   createTask,
+  createVariation,
   deleteAttachment,
   deleteCashFlowEntry,
   deleteMilestone,
@@ -30,6 +33,7 @@ import {
   deleteSiteVisit,
   deleteSiteVisitPhoto,
   deleteTask,
+  deleteVariation,
   getAttachments,
   getCashFlowEntries,
   getMilestones,
@@ -38,12 +42,14 @@ import {
   getProjectActivity,
   getProjectSitePhotos,
   getSiteVisits,
+  getVariations,
   reorderMilestone,
   updateMilestone,
   updateMonthlyReport,
   updateProject,
   updateSiteVisit,
   updateTask,
+  updateVariation,
   uploadAttachment,
   uploadSiteVisitPhotos,
   upsertCashFlowEntry,
@@ -56,6 +62,7 @@ import MonthlyReportsPanel from "../components/MonthlyReportsPanel";
 import MilestonesPanel from "../components/MilestonesPanel";
 import CashFlowPanel from "../components/CashFlowPanel";
 import SiteVisitsPanel from "../components/SiteVisitsPanel";
+import VariationsPanel from "../components/VariationsPanel";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import { canModifyProject } from "../permissions";
@@ -75,6 +82,7 @@ export default function ProjectDetailPage() {
   const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
   const [siteVisits, setSiteVisits] = useState<SiteVisit[]>([]);
   const [sitePhotos, setSitePhotos] = useState<SiteVisitPhoto[]>([]);
+  const [variations, setVariations] = useState<Variation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -93,6 +101,7 @@ export default function ProjectDetailPage() {
         cashFlowData,
         siteVisitData,
         sitePhotoData,
+        variationData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -102,6 +111,7 @@ export default function ProjectDetailPage() {
         getCashFlowEntries(id),
         getSiteVisits(id),
         getProjectSitePhotos(id),
+        getVariations(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -111,6 +121,7 @@ export default function ProjectDetailPage() {
       setCashFlowEntries(cashFlowData);
       setSiteVisits(siteVisitData);
       setSitePhotos(sitePhotoData);
+      setVariations(variationData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -256,6 +267,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateVariation(data: Partial<VariationInput>) {
+    if (!project) return;
+    await createVariation(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateVariation(
+    variation: Variation,
+    data: Partial<VariationInput>
+  ) {
+    await updateVariation(variation.id, data);
+    await load();
+  }
+
+  async function handleDeleteVariation(variation: Variation) {
+    await deleteVariation(variation.id);
+    await load();
+  }
+
   if (loading) {
     return (
       <div className="text-center text-slate-500 dark:text-slate-400 py-12">
@@ -367,9 +397,17 @@ export default function ProjectDetailPage() {
           <Field label="Created By" value={project.createdBy?.name || "—"} />
         </div>
 
+        <VariationsPanel
+          variations={variations}
+          onCreate={handleCreateVariation}
+          onUpdate={handleUpdateVariation}
+          onDelete={handleDeleteVariation}
+        />
+
         <CashFlowPanel
           project={project}
           entries={cashFlowEntries}
+          variations={variations}
           onUpsert={handleUpsertCashFlowEntry}
           onDelete={handleDeleteCashFlowEntry}
         />

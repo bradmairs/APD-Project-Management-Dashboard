@@ -213,8 +213,11 @@ flow entries into one bucket — that distinction matters because a project
 still on Forecast for a given month must keep contributing its forecast
 figure to the total even in a month where some *other* project has
 already booked an Actual, which a naive combined-entries approach would
-silently drop. The reference line sums every project's Approved Budget.
-Both this and the per-project chart share their SVG rendering
+silently drop. The reference line sums every project's *revised* budget
+(Approved Budget plus its own approved variations — see Variations
+below), relabeling itself "Total Revised Budget" once any project in the
+portfolio has one, the same way the per-project chart's own reference
+line does. Both this and the per-project chart share their SVG rendering
 (`frontend/src/charts/CumulativeSpendChartView.tsx`) and cumulative-series
 math (`frontend/src/charts/cumulativeSpend.ts`).
 
@@ -222,8 +225,10 @@ Each project's Cash Flow panel has two charts:
 
 - **Spend vs Budget Over Time** — a cumulative line: Actual spend (solid
   blue) running into Forecast spend (dashed orange) as the project's
-  Actual entries run out, plotted against a flat Approved Budget reference
-  line (dashed gray) and a "Today" marker. The x-axis spans the project's
+  Actual entries run out, plotted against a flat budget reference line
+  (dashed gray, labelled "Revised Budget" once the project has an
+  approved variation, "Approved Budget" otherwise) and a "Today" marker.
+  The x-axis spans the project's
   own Start Date to Target Completion (extended to cover any entry outside
   that range), so the chart doubles as a where-are-we-in-the-schedule view,
   not just a spend total. This is the one chart in the app drawn as an SVG
@@ -285,6 +290,38 @@ sequence is meaningful on its own and isn't derivable from the other
 fields. Open to any logged-in user to edit, like Tasks and Attachments —
 only the project record itself needs an owner.
 
+## Variations
+
+Each project has a **Variations** panel for tracking contract variations
+(scope, cost, and time changes) as they move through their own lifecycle:
+Proposed → Approved or Rejected, changeable inline from the panel itself
+(a status `<select>` per row) or from the full edit form. A variation
+records a Reference (e.g. "VAR-01"), Title, Category (free text, with
+suggestions like "Latent Conditions" or "Scope Change"), Description, a
+Cost Impact (can be negative, for a credit/deduction), an optional Time
+Impact in days, the date it was raised, and free-text notes. `dateDecided`
+is stamped automatically the moment a variation leaves Proposed, rather
+than needing to be entered by hand. The panel header totals the value of
+every currently Approved variation and flags how many are still awaiting
+a decision.
+
+Only an **Approved** variation counts toward a project's budget — a
+Proposed one hasn't been agreed to yet, and a Rejected one never
+happened. `frontend/src/variations.ts` computes each project's *revised
+budget* (its Approved Budget plus the sum of its approved variations'
+cost impact) once, and every other budget-aware figure in the app —
+the Cash Flow panel's Variance calculation, both cumulative-spend charts'
+budget reference line — reads from that revised figure rather than the
+raw project budget. When a project has no approved variations the revised
+budget is identical to the Approved Budget, so nothing downstream changes
+its wording or behavior until a variation is actually approved.
+
+Like Milestones and Cash Flow entries, a variation is live data with no
+per-month snapshot — its current state (and history of status changes,
+via the Activity panel) is what matters, not what it looked like on some
+past reporting date. Open to any logged-in user to edit, matching Tasks,
+Attachments, and Milestones.
+
 ## Cash Flow
 
 Each project has a **Cash Flow** panel — the source report's monthly
@@ -301,8 +338,14 @@ source report:
 - **Expenditure to Date** — the sum of all Actual entries
 - **Forecast Total** — Expenditure to Date plus the sum of all Forecast
   entries
-- **Variance** — Approved Budget minus Forecast Total (shown in red if
-  the project is forecast to run over)
+- **Variance** — the project's current budget (Approved Budget, revised
+  by any Approved variations — see Variations above) minus Forecast
+  Total, shown in red if the project is forecast to run over
+
+When at least one variation has been approved, two extra stats appear —
+**Approved Variations** (their total cost impact) and **Revised Budget**
+— so the original figure and its revision are both visible side by side
+rather than the original quietly being replaced.
 
 Like Milestones, this is live data rather than a per-month snapshot — an
 Actual figure doesn't need re-editing once entered, and a Forecast is

@@ -1,5 +1,6 @@
-import { CashFlowEntry, Project } from "../types";
+import { CashFlowEntry, Project, Variation } from "../types";
 import { formatCurrency } from "../format";
+import { approvedVariationsTotal, revisedBudget } from "../variations";
 import CumulativeSpendChartView from "./CumulativeSpendChartView";
 import {
   buildCumulativeSeries,
@@ -13,6 +14,7 @@ import {
 interface Props {
   projects: Project[];
   entries: CashFlowEntry[];
+  variations?: Variation[];
 }
 
 // The portfolio-wide version of each project's own Spend vs Budget Over Time
@@ -22,12 +24,23 @@ interface Props {
 // summed, rather than pooling every project's raw entries into one bucket
 // (which would let one project's actual silently swallow another's still-
 // forecast month).
-export default function PortfolioCumulativeSpendChart({ projects, entries }: Props) {
+export default function PortfolioCumulativeSpendChart({
+  projects,
+  entries,
+  variations = [],
+}: Props) {
   const entriesByProject = new Map<string, CashFlowEntry[]>();
   for (const entry of entries) {
     const list = entriesByProject.get(entry.projectId) ?? [];
     list.push(entry);
     entriesByProject.set(entry.projectId, list);
+  }
+
+  const variationsByProject = new Map<string, Variation[]>();
+  for (const variation of variations) {
+    const list = variationsByProject.get(variation.projectId) ?? [];
+    list.push(variation);
+    variationsByProject.set(variation.projectId, list);
   }
 
   const allMonths = entries.map((e) => e.month);
@@ -73,11 +86,13 @@ export default function PortfolioCumulativeSpendChart({ projects, entries }: Pro
     lastActual ?? null
   );
 
-  const budgets = projects
-    .map((p) => p.budget)
-    .filter((b): b is string => b !== null)
-    .map(Number);
-  const totalBudget = budgets.length === 0 ? null : budgets.reduce((sum, b) => sum + b, 0);
+  const revisedBudgets = projects
+    .map((p) => revisedBudget(p, variationsByProject.get(p.id) ?? []))
+    .filter((b): b is number => b !== null);
+  const totalBudget =
+    revisedBudgets.length === 0 ? null : revisedBudgets.reduce((sum, b) => sum + b, 0);
+  const isRevised = approvedVariationsTotal(variations) !== 0;
+  const budgetLabel = isRevised ? "Total Revised Budget" : "Total Approved Budget";
 
   return (
     <CumulativeSpendChartView
@@ -85,12 +100,12 @@ export default function PortfolioCumulativeSpendChart({ projects, entries }: Pro
       cumulative={cumulative}
       lastActualIndex={lastActualIndex}
       budget={totalBudget}
-      budgetLabel="Total Approved Budget"
+      budgetLabel={budgetLabel}
       footerNote={`Cumulative spend across ${projects.length} project${
         projects.length === 1 ? "" : "s"
       } from ${monthLabel(rangeStart)} to ${monthLabel(rangeEnd)}${
         totalBudget !== null
-          ? `, against a total approved budget of ${formatCurrency(totalBudget)}`
+          ? `, against a total ${isRevised ? "revised" : "approved"} budget of ${formatCurrency(totalBudget)}`
           : ""
       }.`}
     />

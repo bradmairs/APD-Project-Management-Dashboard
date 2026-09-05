@@ -40,6 +40,12 @@ enum CashFlowType {
   FORECAST
 }
 
+enum VariationStatus {
+  PROPOSED
+  APPROVED
+  REJECTED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -55,6 +61,7 @@ model User {
   monthlyReports MonthlyReport[]
   siteVisits     SiteVisit[]
   siteVisitPhotos SiteVisitPhoto[]
+  variations     Variation[]
 }
 
 model Project {
@@ -86,6 +93,7 @@ model Project {
   milestones             Milestone[]
   cashFlowEntries        CashFlowEntry[]
   siteVisits             SiteVisit[]
+  variations             Variation[]
 }
 
 model Task {
@@ -252,6 +260,39 @@ model SiteVisitPhoto {
   createdAt      DateTime  @default(now())
 
   @@index([siteVisitId])
+}
+
+// A contract variation (scope/cost/time change) raised against a project.
+// Like Milestone/CashFlowEntry (and unlike MonthlyReport) this is live data,
+// not a monthly snapshot — a variation moves through Proposed -> Approved/
+// Rejected over its own lifetime, and that current state is what matters,
+// not what it looked like at some past reporting date. costImpact can be
+// negative (a deduction/credit); an APPROVED variation's costImpact is what
+// revises a project's budget for variance calculations elsewhere in the
+// app — see frontend/src/variations.ts — a Proposed or Rejected one doesn't
+// count yet (or ever). Cascades with its project for the same reason
+// Milestone does: a variation only makes sense in that project's context.
+model Variation {
+  id             String          @id @default(cuid())
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  reference      String?
+  title          String
+  description    String?
+  category       String?
+  costImpact     Decimal         @db.Decimal(14, 2)
+  timeImpactDays Int?
+  status         VariationStatus @default(PROPOSED)
+  dateRaised     DateTime
+  dateDecided    DateTime?
+  raisedBy       User?           @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById     String?
+  raisedByName   String
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([projectId])
 }
 
 // Append-only audit trail. projectName/userName are snapshots taken at write

@@ -183,3 +183,35 @@ export interface SiteVisitPhoto {
   createdAt: string;
   siteVisit?: { id: string; location: string; visitDate: string };
 }
+
+export type VariationStatus = "PROPOSED" | "APPROVED" | "REJECTED";
+
+export interface Variation {
+  id: string;
+  projectId: string;
+  reference: string | null;
+  title: string;
+  description: string | null;
+  category: string | null;
+  costImpact: string;
+  timeImpactDays: number | null;
+  status: VariationStatus;
+  dateRaised: string;
+  dateDecided: string | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type VariationInput = Omit<
+  Variation,
+  | "id"
+  | "projectId"
+  | "dateDecided"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+>;

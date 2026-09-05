@@ -16,6 +16,8 @@ import {
   Task,
   TaskInput,
   User,
+  Variation,
+  VariationInput,
 } from "./types";
 
 const API_BASE = "/api";
@@ -370,4 +372,42 @@ export function deleteSiteVisitPhoto(id: string): Promise<void> {
 
 export function siteVisitPhotoFileUrl(id: string): string {
   return `${API_BASE}/site-visit-photos/${id}/file`;
+}
+
+export function getVariations(projectId: string): Promise<Variation[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/variations`).then((res) =>
+    handle(res)
+  );
+}
+
+export function getAllVariations(): Promise<Variation[]> {
+  return fetch(`${API_BASE}/variations`).then((res) => handle(res));
+}
+
+export function createVariation(
+  projectId: string,
+  data: Partial<VariationInput>
+): Promise<Variation> {
+  return fetch(`${API_BASE}/projects/${projectId}/variations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateVariation(
+  id: string,
+  data: Partial<VariationInput>
+): Promise<Variation> {
+  return fetch(`${API_BASE}/variations/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteVariation(id: string): Promise<void> {
+  return fetch(`${API_BASE}/variations/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
 }

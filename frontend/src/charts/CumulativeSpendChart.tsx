@@ -1,5 +1,6 @@
-import { CashFlowEntry, Project } from "../types";
+import { CashFlowEntry, Project, Variation } from "../types";
 import { formatCurrency } from "../format";
+import { approvedVariationsTotal, revisedBudget } from "../variations";
 import CumulativeSpendChartView from "./CumulativeSpendChartView";
 import {
   buildCumulativeSeries,
@@ -13,12 +14,21 @@ import {
 interface Props {
   project: Project;
   entries: CashFlowEntry[];
+  variations?: Variation[];
 }
 
 // A budget "S-curve": cumulative spend (Actual, then continuing as
 // Forecast) plotted against the Approved Budget as a flat reference line,
-// over the project's own start-to-target-completion timeframe.
-export default function CumulativeSpendChart({ project, entries }: Props) {
+// over the project's own start-to-target-completion timeframe. The
+// reference line uses the project's budget as revised by any approved
+// variations, so an approved scope change is reflected in the same line
+// the Cash Flow panel's own Variance figure is measured against — falls
+// back to the raw Approved Budget when there are no approved variations.
+export default function CumulativeSpendChart({
+  project,
+  entries,
+  variations = [],
+}: Props) {
   const entryMonths = entries.map((e) => e.month).sort();
   const starts = [project.startDate, entryMonths[0]]
     .filter((v): v is string => !!v)
@@ -47,7 +57,9 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
     lastActualMonth(entries)
   );
 
-  const budget = project.budget === null ? null : Number(project.budget);
+  const budget = revisedBudget(project, variations);
+  const isRevised = approvedVariationsTotal(variations) !== 0;
+  const budgetLabel = isRevised ? "Revised Budget" : "Approved Budget";
 
   return (
     <CumulativeSpendChartView
@@ -55,9 +67,14 @@ export default function CumulativeSpendChart({ project, entries }: Props) {
       cumulative={cumulative}
       lastActualIndex={lastActualIndex}
       budget={budget}
+      budgetLabel={budgetLabel}
       footerNote={`Cumulative spend from ${monthLabel(rangeStart)} to ${monthLabel(
         rangeEnd
-      )}${budget !== null ? `, against an approved budget of ${formatCurrency(budget)}` : ""}.`}
+      )}${
+        budget !== null
+          ? `, against ${isRevised ? "a revised" : "an approved"} budget of ${formatCurrency(budget)}`
+          : ""
+      }.`}
     />
   );
 }

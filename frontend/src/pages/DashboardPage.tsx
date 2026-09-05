@@ -7,11 +7,13 @@ import {
   ProjectInput,
   ProjectStatus,
   Task,
+  Variation,
 } from "../types";
 import {
   createProject,
   deleteProject,
   getAllCashFlowEntries,
+  getAllVariations,
   getProjects,
   getRecentActivity,
   getUpcomingTasks,
@@ -40,6 +42,7 @@ export default function DashboardPage() {
   const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityLogEntry[]>([]);
   const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
+  const [variations, setVariations] = useState<Variation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -53,16 +56,19 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const [projectData, taskData, activityData, cashFlowData] = await Promise.all([
-        getProjects(),
-        getUpcomingTasks(),
-        getRecentActivity(),
-        getAllCashFlowEntries(),
-      ]);
+      const [projectData, taskData, activityData, cashFlowData, variationData] =
+        await Promise.all([
+          getProjects(),
+          getUpcomingTasks(),
+          getRecentActivity(),
+          getAllCashFlowEntries(),
+          getAllVariations(),
+        ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
       setRecentActivity(activityData);
       setCashFlowEntries(cashFlowData);
+      setVariations(variationData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -168,7 +174,11 @@ export default function DashboardPage() {
         {!loading && projects.length > 0 && (
           <>
             <ChartCard title="Spend vs Budget Over Time — All Projects">
-              <PortfolioCumulativeSpendChart projects={projects} entries={cashFlowEntries} />
+              <PortfolioCumulativeSpendChart
+                projects={projects}
+                entries={cashFlowEntries}
+                variations={variations}
+              />
             </ChartCard>
 
             <ChartCard title="Projects by Status">
