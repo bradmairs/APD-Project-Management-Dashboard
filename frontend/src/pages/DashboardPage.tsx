@@ -33,6 +33,8 @@ import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendCha
 import { SEQUENTIAL_BLUE, chartColor } from "../charts/palette";
 import { useTheme } from "../theme/ThemeContext";
 import { ALL_STATUSES, STATUS_LABELS } from "../statusMeta";
+import { computeProjectHealth, ProjectHealth } from "../health";
+import NeedsAttentionPanel from "../components/NeedsAttentionPanel";
 import UserMenu from "../components/UserMenu";
 import { useAuth } from "../auth/AuthContext";
 import gvwLogo from "../assets/gvw-logo.png";
@@ -94,6 +96,22 @@ export default function DashboardPage() {
       })),
     [projects]
   );
+
+  const healthByProjectId: Record<string, ProjectHealth> = useMemo(() => {
+    const result: Record<string, ProjectHealth> = {};
+    for (const project of projects) {
+      const projectEntries = cashFlowEntries.filter((e) => e.projectId === project.id);
+      const projectVariations = variations.filter((v) => v.projectId === project.id);
+      const projectRisks = risks.filter((r) => r.projectId === project.id);
+      result[project.id] = computeProjectHealth(
+        project,
+        projectEntries,
+        projectVariations,
+        projectRisks
+      );
+    }
+    return result;
+  }, [projects, cashFlowEntries, variations, risks]);
 
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
@@ -178,6 +196,10 @@ export default function DashboardPage() {
         <StatCards projects={projects} />
 
         {!loading && projects.length > 0 && (
+          <NeedsAttentionPanel projects={projects} healthByProjectId={healthByProjectId} />
+        )}
+
+        {!loading && projects.length > 0 && (
           <>
             <ChartCard title="Spend vs Budget Over Time — All Projects">
               <PortfolioCumulativeSpendChart
@@ -252,6 +274,7 @@ export default function DashboardPage() {
           <ProjectTable
             projects={filteredProjects}
             currentUser={user}
+            healthByProjectId={healthByProjectId}
             onOpen={(project) => navigate(`/projects/${project.id}`)}
             onEdit={openEditProject}
             onDelete={handleDelete}

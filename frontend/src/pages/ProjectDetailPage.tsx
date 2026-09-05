@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ActivityLogEntry,
@@ -70,6 +70,8 @@ import CashFlowPanel from "../components/CashFlowPanel";
 import SiteVisitsPanel from "../components/SiteVisitsPanel";
 import VariationsPanel from "../components/VariationsPanel";
 import RisksPanel from "../components/RisksPanel";
+import HealthBadge from "../components/HealthBadge";
+import { computeProjectHealth } from "../health";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import { canModifyProject } from "../permissions";
@@ -313,6 +315,12 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  const health = useMemo(
+    () =>
+      project ? computeProjectHealth(project, cashFlowEntries, variations, risks) : null,
+    [project, cashFlowEntries, variations, risks]
+  );
+
   if (loading) {
     return (
       <div className="text-center text-slate-500 dark:text-slate-400 py-12">
@@ -354,13 +362,16 @@ export default function ProjectDetailPage() {
                 <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                   {project.name}
                 </h1>
-                <span
-                  className={`inline-block mt-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                    STATUS_COLORS[project.status]
-                  }`}
-                >
-                  {STATUS_LABELS[project.status]}
-                </span>
+                <div className="flex items-center gap-2 flex-wrap mt-1">
+                  <span
+                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                      STATUS_COLORS[project.status]
+                    }`}
+                  >
+                    {STATUS_LABELS[project.status]}
+                  </span>
+                  {health && <HealthBadge health={health} detailed />}
+                </div>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">

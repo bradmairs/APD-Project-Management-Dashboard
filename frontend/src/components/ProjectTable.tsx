@@ -2,6 +2,8 @@ import { Project, User } from "../types";
 import { isProjectOverdue, STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import { canModifyProject } from "../permissions";
+import { ProjectHealth } from "../health";
+import HealthBadge from "./HealthBadge";
 
 function taskProgress(project: Project): string | null {
   if (!project.tasks || project.tasks.length === 0) return null;
@@ -12,6 +14,7 @@ function taskProgress(project: Project): string | null {
 interface Props {
   projects: Project[];
   currentUser: User | null;
+  healthByProjectId: Record<string, ProjectHealth>;
   onOpen: (project: Project) => void;
   onEdit: (project: Project) => void;
   onDelete: (project: Project) => void;
@@ -20,6 +23,7 @@ interface Props {
 export default function ProjectTable({
   projects,
   currentUser,
+  healthByProjectId,
   onOpen,
   onEdit,
   onDelete,
@@ -42,6 +46,9 @@ export default function ProjectTable({
             </th>
             <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
               Status
+            </th>
+            <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
+              Health
             </th>
             <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
               Manager
@@ -88,6 +95,11 @@ export default function ProjectTable({
                 >
                   {STATUS_LABELS[project.status]}
                 </span>
+              </td>
+              <td className="px-4 py-3">
+                {healthByProjectId[project.id] && (
+                  <HealthBadge health={healthByProjectId[project.id]} />
+                )}
               </td>
               <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                 {project.projectManager || "—"}

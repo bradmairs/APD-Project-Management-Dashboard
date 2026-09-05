@@ -355,6 +355,38 @@ current state and status history (via the Activity panel) are what
 matter. Open to any logged-in user to edit, matching Tasks, Attachments,
 Milestones, and Variations.
 
+## Project Health
+
+Every project gets a live **Health** rating — Green/Amber/Red — computed
+from data that's already there, rather than typed in by hand. This is
+distinct from a Monthly Report's `budgetHealth`/`scheduleHealth`, which
+are a PM's own judgement call as of that report's month: Project Health
+recalculates on every page load from whatever the project's schedule,
+cash flow, and risk register currently say, so a project that's drifted
+off track shows up immediately rather than waiting for the next report.
+
+`frontend/src/health.ts` rates three dimensions independently, then takes
+the worst of the three as the overall rating:
+
+- **Schedule** — Red if the project is overdue (its target completion
+  date has passed and it isn't Defects Liability/Complete/Cancelled, the
+  same rule the dashboard's Overdue stat uses); Amber if that date is
+  within the next 30 days; Green otherwise
+- **Budget** — Red if the Forecast Total (from Cash Flow) exceeds the
+  project's current budget (revised by any approved Variations); Amber
+  once it passes 90% of that budget; Green otherwise, and Green when
+  there's no cash flow data yet rather than guessing
+- **Risk** — Red if any open Risk (not an Opportunity, not Closed) has a
+  Critical inherent score; Amber for High; Green otherwise
+
+The dashboard's **Needs Attention** panel lists every project rated
+Amber or Red portfolio-wide, naming which dimension(s) triggered it and
+linking straight to the project — the exception-surfacing view of what a
+PM should look at today, rather than a database they have to go dig
+through. The same rating shows as a compact badge in the dashboard's
+project table (hover for the per-dimension breakdown) and as the full
+Schedule/Budget/Risk breakdown in each project's own header.
+
 ## Cash Flow
 
 Each project has a **Cash Flow** panel — the source report's monthly
