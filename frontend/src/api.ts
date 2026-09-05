@@ -283,6 +283,10 @@ export function getCashFlowEntries(projectId: string): Promise<CashFlowEntry[]> 
   );
 }
 
+export function getAllCashFlowEntries(): Promise<CashFlowEntry[]> {
+  return fetch(`${API_BASE}/cashflow`).then((res) => handle(res));
+}
+
 export function upsertCashFlowEntry(
   projectId: string,
   data: Partial<CashFlowEntryInput>

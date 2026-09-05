@@ -192,16 +192,31 @@ has something real to demonstrate out of the box.
 
 ## Charts
 
-The dashboard shows a **Projects by Status** chart right below the stat
-cards — a bar per pipeline stage, so the portfolio's shape is visible
-without a click. The "Reports" link opens a dedicated page with that same
-chart plus two more, all built from the same project/task data (no
-separate reporting backend):
+The dashboard shows a **Spend vs Budget Over Time — All Projects** chart
+right below the stat cards, then a **Projects by Status** chart below
+that — so both the portfolio's financial trajectory and its pipeline
+shape are visible without a click. The "Reports" link opens a dedicated
+page with the status chart plus two more, all built from the same
+project/task data (no separate reporting backend):
 
 - **Projects by Status** — count of projects at each pipeline stage
 - **Budget by Asset Type** — total budget grouped by asset type
 - **Task Progress by Project** — a To Do / In Progress / Done breakdown per
   project, sorted so the least-progressed projects surface first
+
+The dashboard's **Spend vs Budget Over Time — All Projects** chart is the
+portfolio-wide sibling of each project's own chart described below: every
+project's own cumulative Actual-then-Forecast series (see the per-project
+description for how that series is built) is computed independently and
+only then summed by month, rather than pooling every project's raw cash
+flow entries into one bucket — that distinction matters because a project
+still on Forecast for a given month must keep contributing its forecast
+figure to the total even in a month where some *other* project has
+already booked an Actual, which a naive combined-entries approach would
+silently drop. The reference line sums every project's Approved Budget.
+Both this and the per-project chart share their SVG rendering
+(`frontend/src/charts/CumulativeSpendChartView.tsx`) and cumulative-series
+math (`frontend/src/charts/cumulativeSpend.ts`).
 
 Each project's Cash Flow panel has two charts:
 

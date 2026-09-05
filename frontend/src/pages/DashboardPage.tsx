@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ActivityLogEntry, Project, ProjectInput, ProjectStatus, Task } from "../types";
+import {
+  ActivityLogEntry,
+  CashFlowEntry,
+  Project,
+  ProjectInput,
+  ProjectStatus,
+  Task,
+} from "../types";
 import {
   createProject,
   deleteProject,
+  getAllCashFlowEntries,
   getProjects,
   getRecentActivity,
   getUpcomingTasks,
@@ -16,6 +24,7 @@ import UpcomingDeadlines from "../components/UpcomingDeadlines";
 import ActivityFeed from "../components/ActivityFeed";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
+import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
 import { SEQUENTIAL_BLUE, chartColor } from "../charts/palette";
 import { useTheme } from "../theme/ThemeContext";
 import { ALL_STATUSES, STATUS_LABELS } from "../statusMeta";
@@ -30,6 +39,7 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityLogEntry[]>([]);
+  const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -43,14 +53,16 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const [projectData, taskData, activityData] = await Promise.all([
+      const [projectData, taskData, activityData, cashFlowData] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
         getRecentActivity(),
+        getAllCashFlowEntries(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
       setRecentActivity(activityData);
+      setCashFlowEntries(cashFlowData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -154,13 +166,19 @@ export default function DashboardPage() {
         <StatCards projects={projects} />
 
         {!loading && projects.length > 0 && (
-          <ChartCard title="Projects by Status">
-            <HorizontalBarChart
-              data={statusData}
-              color={chartColor(SEQUENTIAL_BLUE, theme)}
-              formatValue={(v) => String(v)}
-            />
-          </ChartCard>
+          <>
+            <ChartCard title="Spend vs Budget Over Time — All Projects">
+              <PortfolioCumulativeSpendChart projects={projects} entries={cashFlowEntries} />
+            </ChartCard>
+
+            <ChartCard title="Projects by Status">
+              <HorizontalBarChart
+                data={statusData}
+                color={chartColor(SEQUENTIAL_BLUE, theme)}
+                formatValue={(v) => String(v)}
+              />
+            </ChartCard>
+          </>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

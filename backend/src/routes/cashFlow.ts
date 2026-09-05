@@ -93,6 +93,15 @@ projectCashFlowRouter.post(
 
 export const cashFlowRouter = Router();
 
+// Every cash flow entry across every project, for the portfolio-wide
+// dashboard chart — avoids the frontend fanning out one request per project.
+cashFlowRouter.get("/", async (_req, res) => {
+  const entries = await prisma.cashFlowEntry.findMany({
+    orderBy: { month: "asc" },
+  });
+  res.json(entries);
+});
+
 cashFlowRouter.delete("/:id", async (req, res) => {
   const entry = await prisma.cashFlowEntry.findUnique({
     where: { id: req.params.id },
