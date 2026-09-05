@@ -16,6 +16,7 @@ import projectLessonsLearnedRouter from "./lessonsLearned";
 import projectSqeRouter from "./sqe";
 import projectEotClaimsRouter from "./eotClaims";
 import projectChecklistItemsRouter from "./checklistItems";
+import projectDefectsRouter from "./defects";
 import { describeProjectChanges, logActivity } from "../activityLog";
 import { projectUploadDir, upload } from "../upload";
 import { canModifyProject } from "../permissions";
@@ -37,6 +38,7 @@ router.use("/:id/lessons-learned", projectLessonsLearnedRouter);
 router.use("/:id/sqe", projectSqeRouter);
 router.use("/:id/eot-claims", projectEotClaimsRouter);
 router.use("/:id/checklist-items", projectChecklistItemsRouter);
+router.use("/:id/defects", projectDefectsRouter);
 
 router.get("/", async (_req, res) => {
   const projects = await prisma.project.findMany({

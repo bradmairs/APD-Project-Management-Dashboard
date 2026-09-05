@@ -1,6 +1,7 @@
 import {
   ActionItem,
   ChecklistItem,
+  DefectItem,
   EotClaim,
   LessonLearned,
   Milestone,
@@ -290,4 +291,22 @@ export function describeChecklistItemUpdate(
     return `marked ${noun} "${before.title}" as ${label}`;
   }
   return `updated ${noun} "${before.title}"`;
+}
+
+const DEFECT_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  RECTIFIED: "Rectified",
+  VERIFIED: "Verified",
+  DISPUTED: "Disputed",
+};
+
+export function describeDefectUpdate(
+  before: DefectItem,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = DEFECT_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked defect "${before.title}" as ${label}`;
+  }
+  return `updated defect "${before.title}"`;
 }

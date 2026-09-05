@@ -466,3 +466,38 @@ export type ChecklistItemInput = Omit<
   | "createdAt"
   | "updatedAt"
 >;
+
+export type DefectStatus = "OPEN" | "RECTIFIED" | "VERIFIED" | "DISPUTED";
+
+export interface DefectItem {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  category: string | null;
+  assignedTo: string | null;
+  dueDate: string | null;
+  status: DefectStatus;
+  dateRaised: string;
+  dateClosed: string | null;
+  retentionHeld: number | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type DefectItemInput = Omit<
+  DefectItem,
+  | "id"
+  | "projectId"
+  | "dateClosed"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

@@ -4,6 +4,7 @@ import {
   ActionItem,
   ActivityLogEntry,
   CashFlowEntry,
+  DefectItem,
   EotClaim,
   Permit,
   Project,
@@ -19,6 +20,7 @@ import {
   deleteProject,
   getAllActionItems,
   getAllCashFlowEntries,
+  getAllDefects,
   getAllEotClaims,
   getAllPermits,
   getAllRisks,
@@ -38,6 +40,7 @@ import TopRisksPanel from "../components/TopRisksPanel";
 import OpenActionsPanel from "../components/OpenActionsPanel";
 import ExpiringPermitsPanel from "../components/ExpiringPermitsPanel";
 import OpenSqePanel from "../components/OpenSqePanel";
+import OpenDefectsPanel from "../components/OpenDefectsPanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -64,6 +67,7 @@ export default function DashboardPage() {
   const [permits, setPermits] = useState<Permit[]>([]);
   const [sqeRecords, setSqeRecords] = useState<SqeRecord[]>([]);
   const [eotClaims, setEotClaims] = useState<EotClaim[]>([]);
+  const [defects, setDefects] = useState<DefectItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -88,6 +92,7 @@ export default function DashboardPage() {
         permitData,
         sqeData,
         eotData,
+        defectData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -99,6 +104,7 @@ export default function DashboardPage() {
         getAllPermits(),
         getAllSqeRecords(),
         getAllEotClaims(),
+        getAllDefects(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -109,6 +115,7 @@ export default function DashboardPage() {
       setActionItems(actionItemData);
       setPermits(permitData);
       setSqeRecords(sqeData);
+      setDefects(defectData);
       setEotClaims(eotData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
@@ -237,11 +244,12 @@ export default function DashboardPage() {
         <StatCards projects={projects} />
 
         {!loading && projects.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             <NeedsAttentionPanel projects={projects} healthByProjectId={healthByProjectId} />
             <OpenActionsPanel actionItems={actionItems} />
             <ExpiringPermitsPanel permits={permits} />
             <OpenSqePanel records={sqeRecords} />
+            <OpenDefectsPanel defects={defects} />
           </div>
         )}
 

@@ -135,6 +135,13 @@ enum ChecklistItemStatus {
   NOT_APPLICABLE
 }
 
+enum DefectStatus {
+  OPEN
+  RECTIFIED
+  VERIFIED
+  DISPUTED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -158,6 +165,7 @@ model User {
   sqeRecords     SqeRecord[]
   eotClaims      EotClaim[]
   checklistItems ChecklistItem[]
+  defectItems    DefectItem[]
 }
 
 model Project {
@@ -198,6 +206,7 @@ model Project {
   sqeRecords             SqeRecord[]
   eotClaims              EotClaim[]
   checklistItems         ChecklistItem[]
+  defectItems            DefectItem[]
 }
 
 model Task {
@@ -638,6 +647,44 @@ model ChecklistItem {
   createdByName String
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
+
+  @@index([projectId])
+}
+
+// A defect or punch-list item raised during commissioning or the
+// Defects Liability Period — physically distinct from an SQE record
+// (which documents a safety/quality/environment event) and from an
+// ActionItem (a general open item or decision): a defect names a
+// specific piece of work that needs rectifying, tracks who it's
+// assigned to for fixing, and optionally how much retention money is
+// held against it until it's verified fixed. status runs OPEN ->
+// RECTIFIED (the contractor says it's done) -> VERIFIED (the PM has
+// confirmed it) as the normal path, with DISPUTED for a defect whose
+// existence or cause is contested — common during a DLP. dateClosed
+// stamps automatically the moment status becomes VERIFIED, the same
+// auto-stamp pattern used by SqeRecord.dateClosed and
+// ChecklistItem.completedDate. Cascades with its project like the
+// other registers.
+model DefectItem {
+  id            String       @id @default(cuid())
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  title         String
+  description   String?
+  location      String?
+  category      String?
+  assignedTo    String?
+  dueDate       DateTime?
+  status        DefectStatus @default(OPEN)
+  dateRaised    DateTime
+  dateClosed    DateTime?
+  retentionHeld Decimal?     @db.Decimal(14, 2)
+  raisedBy      User?        @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById    String?
+  raisedByName  String
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   @@index([projectId])
 }

@@ -7,6 +7,8 @@ import {
   CashFlowEntryInput,
   ChecklistItem,
   ChecklistItemInput,
+  DefectItem,
+  DefectItemInput,
   EotClaim,
   EotClaimInput,
   LessonLearned,
@@ -706,4 +708,38 @@ export function deleteChecklistItem(id: string): Promise<void> {
   return fetch(`${API_BASE}/checklist-items/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
+}
+
+export function getDefects(projectId: string): Promise<DefectItem[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/defects`).then((res) => handle(res));
+}
+
+export function getAllDefects(): Promise<DefectItem[]> {
+  return fetch(`${API_BASE}/defects`).then((res) => handle(res));
+}
+
+export function createDefect(
+  projectId: string,
+  data: Partial<DefectItemInput>
+): Promise<DefectItem> {
+  return fetch(`${API_BASE}/projects/${projectId}/defects`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateDefect(
+  id: string,
+  data: Partial<DefectItemInput>
+): Promise<DefectItem> {
+  return fetch(`${API_BASE}/defects/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteDefect(id: string): Promise<void> {
+  return fetch(`${API_BASE}/defects/${id}`, { method: "DELETE" }).then((res) => handle(res));
 }

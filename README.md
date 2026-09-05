@@ -380,6 +380,32 @@ project's commissioning checklist doesn't aggregate meaningfully across
 the portfolio the way an open risk or an expiring permit does. Open to
 any logged-in user to edit.
 
+## Defects & Punch List
+
+Each project has a **Defects & Punch List** register for physical work
+that needs rectifying — distinct from an SQE record (which documents a
+safety/quality/environment event) and from an Actions & Decisions entry
+(a general open item): a defect names a specific piece of work, tracks
+who it's assigned to for fixing (a contractor or subcontractor), and
+optionally how much retention money is held against it until it's
+verified fixed. Fields are Title, Location, Category (free text, with
+suggestions like "Civil" or "Electrical"), Description, Assigned To,
+Due Date, Status, Retention Held ($), and Notes.
+
+Status runs the normal path OPEN → RECTIFIED (the contractor says it's
+done) → VERIFIED (the PM has confirmed it), with a DISPUTED status for a
+defect whose existence or cause is contested — common during a Defects
+Liability Period. `dateClosed` stamps automatically the moment status
+becomes VERIFIED, the same auto-stamp pattern used elsewhere in the app.
+The panel sorts the most outstanding defects first (open and disputed
+ahead of rectified-but-unverified, verified ones last) and its header
+shows a running "N outstanding of total" count.
+
+The Dashboard has a portfolio-wide **Open Defects** panel alongside
+Needs Attention, Open Actions, Expiring Permits, and Open SQE Issues,
+listing every non-verified defect across the portfolio with a link back
+to its project. Open to any logged-in user to edit.
+
 ## Risks & Opportunities
 
 Each project has a **Risks & Opportunities** register — one shared `Risk`
