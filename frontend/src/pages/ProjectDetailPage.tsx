@@ -11,6 +11,8 @@ import {
   MonthlyReportInput,
   Project,
   ProjectInput,
+  Risk,
+  RiskInput,
   SiteVisit,
   SiteVisitInput,
   SiteVisitPhoto,
@@ -22,6 +24,7 @@ import {
 import {
   createMilestone,
   createMonthlyReport,
+  createRisk,
   createSiteVisit,
   createTask,
   createVariation,
@@ -30,6 +33,7 @@ import {
   deleteMilestone,
   deleteMonthlyReport,
   deleteProject,
+  deleteRisk,
   deleteSiteVisit,
   deleteSiteVisitPhoto,
   deleteTask,
@@ -41,12 +45,14 @@ import {
   getProject,
   getProjectActivity,
   getProjectSitePhotos,
+  getRisks,
   getSiteVisits,
   getVariations,
   reorderMilestone,
   updateMilestone,
   updateMonthlyReport,
   updateProject,
+  updateRisk,
   updateSiteVisit,
   updateTask,
   updateVariation,
@@ -63,6 +69,7 @@ import MilestonesPanel from "../components/MilestonesPanel";
 import CashFlowPanel from "../components/CashFlowPanel";
 import SiteVisitsPanel from "../components/SiteVisitsPanel";
 import VariationsPanel from "../components/VariationsPanel";
+import RisksPanel from "../components/RisksPanel";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import { canModifyProject } from "../permissions";
@@ -83,6 +90,7 @@ export default function ProjectDetailPage() {
   const [siteVisits, setSiteVisits] = useState<SiteVisit[]>([]);
   const [sitePhotos, setSitePhotos] = useState<SiteVisitPhoto[]>([]);
   const [variations, setVariations] = useState<Variation[]>([]);
+  const [risks, setRisks] = useState<Risk[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -102,6 +110,7 @@ export default function ProjectDetailPage() {
         siteVisitData,
         sitePhotoData,
         variationData,
+        riskData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -112,6 +121,7 @@ export default function ProjectDetailPage() {
         getSiteVisits(id),
         getProjectSitePhotos(id),
         getVariations(id),
+        getRisks(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -122,6 +132,7 @@ export default function ProjectDetailPage() {
       setSiteVisits(siteVisitData);
       setSitePhotos(sitePhotoData);
       setVariations(variationData);
+      setRisks(riskData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -286,6 +297,22 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateRisk(data: Partial<RiskInput>) {
+    if (!project) return;
+    await createRisk(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateRisk(risk: Risk, data: Partial<RiskInput>) {
+    await updateRisk(risk.id, data);
+    await load();
+  }
+
+  async function handleDeleteRisk(risk: Risk) {
+    await deleteRisk(risk.id);
+    await load();
+  }
+
   if (loading) {
     return (
       <div className="text-center text-slate-500 dark:text-slate-400 py-12">
@@ -410,6 +437,13 @@ export default function ProjectDetailPage() {
           variations={variations}
           onUpsert={handleUpsertCashFlowEntry}
           onDelete={handleDeleteCashFlowEntry}
+        />
+
+        <RisksPanel
+          risks={risks}
+          onCreate={handleCreateRisk}
+          onUpdate={handleUpdateRisk}
+          onDelete={handleDeleteRisk}
         />
 
         <TaskList

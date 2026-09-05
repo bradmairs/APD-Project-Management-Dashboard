@@ -215,3 +215,48 @@ export type VariationInput = Omit<
   | "createdAt"
   | "updatedAt"
 >;
+
+export type RiskType = "RISK" | "OPPORTUNITY";
+
+export type RiskLikelihood =
+  | "RARE"
+  | "UNLIKELY"
+  | "POSSIBLE"
+  | "LIKELY"
+  | "ALMOST_CERTAIN";
+
+export type RiskConsequence =
+  | "INSIGNIFICANT"
+  | "MINOR"
+  | "MODERATE"
+  | "MAJOR"
+  | "SEVERE";
+
+export type RiskStatus = "OPEN" | "MITIGATING" | "CLOSED";
+
+export interface Risk {
+  id: string;
+  projectId: string;
+  type: RiskType;
+  title: string;
+  description: string | null;
+  category: string | null;
+  inherentLikelihood: RiskLikelihood;
+  inherentConsequence: RiskConsequence;
+  residualLikelihood: RiskLikelihood | null;
+  residualConsequence: RiskConsequence | null;
+  mitigation: string | null;
+  ownerName: string | null;
+  dueDate: string | null;
+  status: RiskStatus;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type RiskInput = Omit<
+  Risk,
+  "id" | "projectId" | "createdById" | "createdByName" | "createdAt" | "updatedAt" | "project"
+>;

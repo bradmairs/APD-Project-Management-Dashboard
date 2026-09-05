@@ -46,6 +46,36 @@ enum VariationStatus {
   REJECTED
 }
 
+enum RiskType {
+  RISK
+  OPPORTUNITY
+}
+
+// A standard 5-point risk-matrix scale, used for both likelihood and
+// consequence — see frontend/src/riskScoring.ts for how the two combine
+// into a numeric score and a Low/Medium/High/Critical band.
+enum RiskLikelihood {
+  RARE
+  UNLIKELY
+  POSSIBLE
+  LIKELY
+  ALMOST_CERTAIN
+}
+
+enum RiskConsequence {
+  INSIGNIFICANT
+  MINOR
+  MODERATE
+  MAJOR
+  SEVERE
+}
+
+enum RiskStatus {
+  OPEN
+  MITIGATING
+  CLOSED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -62,6 +92,7 @@ model User {
   siteVisits     SiteVisit[]
   siteVisitPhotos SiteVisitPhoto[]
   variations     Variation[]
+  risks          Risk[]
 }
 
 model Project {
@@ -94,6 +125,7 @@ model Project {
   cashFlowEntries        CashFlowEntry[]
   siteVisits             SiteVisit[]
   variations             Variation[]
+  risks                  Risk[]
 }
 
 model Task {
@@ -291,6 +323,43 @@ model Variation {
   notes          String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
+  @@index([projectId])
+}
+
+// A project risk register entry — or, when type is OPPORTUNITY, its mirror
+// image (an upside worth chasing rather than a downside to mitigate), kept
+// in the same table since the two share every field. inherentLikelihood/
+// inherentConsequence score the risk with no controls in place; the
+// residual pair (both optional) score it after mitigation is applied — a
+// risk with no residual score yet simply hasn't been assessed post-
+// mitigation. Scoring math (the 1-5 scale behind each enum value, and the
+// Low/Medium/High/Critical band a score falls into) lives in
+// frontend/src/riskScoring.ts rather than being stored, the same way a
+// Milestone's overall percent is computed rather than persisted. Cascades
+// with its project like Milestone/Variation — a risk only makes sense in
+// that project's context.
+model Risk {
+  id                   String           @id @default(cuid())
+  project              Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId            String
+  type                 RiskType         @default(RISK)
+  title                String
+  description          String?
+  category             String?
+  inherentLikelihood   RiskLikelihood
+  inherentConsequence  RiskConsequence
+  residualLikelihood   RiskLikelihood?
+  residualConsequence  RiskConsequence?
+  mitigation           String?
+  ownerName            String?
+  dueDate              DateTime?
+  status               RiskStatus       @default(OPEN)
+  createdBy            User?            @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById          String?
+  createdByName        String
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
 
   @@index([projectId])
 }

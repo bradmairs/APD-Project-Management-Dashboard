@@ -1,4 +1,4 @@
-import { Milestone, Project, SiteVisit, Task, Variation } from "@prisma/client";
+import { Milestone, Project, Risk, SiteVisit, Task, Variation } from "@prisma/client";
 import { prisma } from "./prisma";
 
 interface LogParams {
@@ -147,4 +147,26 @@ export function describeVariationUpdate(
     return `marked variation "${before.title}" as ${label}`;
   }
   return `updated variation "${before.title}"`;
+}
+
+const RISK_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  MITIGATING: "Mitigating",
+  CLOSED: "Closed",
+};
+
+export function describeRiskUpdate(before: Risk, body: Record<string, unknown>): string {
+  const noun = before.type === "OPPORTUNITY" ? "opportunity" : "risk";
+  if ("status" in body && body.status !== before.status) {
+    const label = RISK_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked ${noun} "${before.title}" as ${label}`;
+  }
+  if (
+    ("residualLikelihood" in body || "residualConsequence" in body) &&
+    (body.residualLikelihood !== before.residualLikelihood ||
+      body.residualConsequence !== before.residualConsequence)
+  ) {
+    return `updated the residual rating for ${noun} "${before.title}"`;
+  }
+  return `updated ${noun} "${before.title}"`;
 }

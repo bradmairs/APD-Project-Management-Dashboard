@@ -6,6 +6,7 @@ import {
   Project,
   ProjectInput,
   ProjectStatus,
+  Risk,
   Task,
   Variation,
 } from "../types";
@@ -13,6 +14,7 @@ import {
   createProject,
   deleteProject,
   getAllCashFlowEntries,
+  getAllRisks,
   getAllVariations,
   getProjects,
   getRecentActivity,
@@ -24,6 +26,7 @@ import ProjectTable from "../components/ProjectTable";
 import ProjectFormModal from "../components/ProjectFormModal";
 import UpcomingDeadlines from "../components/UpcomingDeadlines";
 import ActivityFeed from "../components/ActivityFeed";
+import TopRisksPanel from "../components/TopRisksPanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -43,6 +46,7 @@ export default function DashboardPage() {
   const [recentActivity, setRecentActivity] = useState<ActivityLogEntry[]>([]);
   const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
   const [variations, setVariations] = useState<Variation[]>([]);
+  const [risks, setRisks] = useState<Risk[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -56,19 +60,21 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const [projectData, taskData, activityData, cashFlowData, variationData] =
+      const [projectData, taskData, activityData, cashFlowData, variationData, riskData] =
         await Promise.all([
           getProjects(),
           getUpcomingTasks(),
           getRecentActivity(),
           getAllCashFlowEntries(),
           getAllVariations(),
+          getAllRisks(),
         ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
       setRecentActivity(activityData);
       setCashFlowEntries(cashFlowData);
       setVariations(variationData);
+      setRisks(riskData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -191,8 +197,9 @@ export default function DashboardPage() {
           </>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <UpcomingDeadlines tasks={upcomingTasks} />
+          <TopRisksPanel risks={risks} />
           {recentActivity.length > 0 && (
             <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">

@@ -9,6 +9,8 @@ import {
   MonthlyReportInput,
   Project,
   ProjectInput,
+  Risk,
+  RiskInput,
   Role,
   SiteVisit,
   SiteVisitInput,
@@ -408,6 +410,39 @@ export function updateVariation(
 
 export function deleteVariation(id: string): Promise<void> {
   return fetch(`${API_BASE}/variations/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getRisks(projectId: string): Promise<Risk[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/risks`).then((res) => handle(res));
+}
+
+export function getAllRisks(): Promise<Risk[]> {
+  return fetch(`${API_BASE}/risks`).then((res) => handle(res));
+}
+
+export function createRisk(
+  projectId: string,
+  data: Partial<RiskInput>
+): Promise<Risk> {
+  return fetch(`${API_BASE}/projects/${projectId}/risks`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateRisk(id: string, data: Partial<RiskInput>): Promise<Risk> {
+  return fetch(`${API_BASE}/risks/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteRisk(id: string): Promise<void> {
+  return fetch(`${API_BASE}/risks/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }

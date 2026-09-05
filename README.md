@@ -322,6 +322,39 @@ via the Activity panel) is what matters, not what it looked like on some
 past reporting date. Open to any logged-in user to edit, matching Tasks,
 Attachments, and Milestones.
 
+## Risks & Opportunities
+
+Each project has a **Risks & Opportunities** register — one shared `Risk`
+model with a `type` discriminator, since both track the same structure
+(only the polarity of the underlying uncertainty differs). Each entry has
+a Title, Type (Risk or Opportunity), Category (free text), Description,
+an owner, an optional due date, and a status of Open, Mitigating, or
+Closed, changeable inline from the panel (a status `<select>` per row) or
+from the full edit form.
+
+Likelihood and consequence are rated on a standard 5×5 matrix — Rare
+through Almost Certain, Insignificant through Severe — captured twice:
+an **Inherent** rating (before any mitigation) is required on every
+entry, and an optional **Residual** rating (after mitigation) can be
+added once a response is in place. `frontend/src/riskScoring.ts` maps
+each rating to a 1-5 value, multiplies likelihood × consequence for a
+score from 1 to 25, and bands it Low/Medium/High/Critical — this scoring
+is computed client-side rather than persisted, so changing the band
+thresholds doesn't require a migration. The panel sorts by inherent
+score (highest first) and shows both score badges side by side when a
+residual rating exists, so the effect of mitigation is visible at a
+glance.
+
+The Dashboard has its own portfolio-wide **Top Risks & Opportunities**
+panel, listing the highest-scored open items across every project with a
+link back to each one — matching the Risks panel's per-project register
+without needing to open every project to see what needs attention.
+
+Like Variations, a risk is live data with no per-month snapshot — its
+current state and status history (via the Activity panel) are what
+matter. Open to any logged-in user to edit, matching Tasks, Attachments,
+Milestones, and Variations.
+
 ## Cash Flow
 
 Each project has a **Cash Flow** panel — the source report's monthly
