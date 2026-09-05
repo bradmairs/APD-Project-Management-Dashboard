@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CashFlowEntry, CashFlowEntryInput, Project } from "../types";
 import { formatCurrency, formatReportMonth } from "../format";
 import CashFlowChart from "../charts/CashFlowChart";
+import CumulativeSpendChart from "../charts/CumulativeSpendChart";
 import CashFlowEntryFormModal from "./CashFlowEntryFormModal";
 
 interface Props {
@@ -74,11 +75,21 @@ export default function CashFlowPanel({ project, entries, onUpsert, onDelete }: 
         />
       </div>
 
+      <div className="mb-4">
+        <h3 className="text-xs font-medium text-slate-500 mb-2">
+          Spend vs Budget Over Time
+        </h3>
+        <CumulativeSpendChart project={project} entries={entries} />
+      </div>
+
       {entries.length === 0 ? (
         <p className="text-sm text-slate-500">No cash flow entries yet.</p>
       ) : (
         <>
           <div className="mb-4">
+            <h3 className="text-xs font-medium text-slate-500 mb-2">
+              Monthly Spend
+            </h3>
             <CashFlowChart entries={entries} />
           </div>
           <ul className="divide-y divide-slate-100">

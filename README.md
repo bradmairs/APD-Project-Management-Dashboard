@@ -203,12 +203,24 @@ separate reporting backend):
 - **Task Progress by Project** — a To Do / In Progress / Done breakdown per
   project, sorted so the least-progressed projects surface first
 
-Each project's Cash Flow panel has its own chart: a bar per month, Actual
-spend in blue and Forecast in orange, so a project's spend trajectory reads
-at a glance instead of only as the row-by-row entry list below it.
+Each project's Cash Flow panel has two charts:
 
-Every chart is hand-rolled with plain HTML/CSS (no charting library) and
-draws its colors from a small validated palette in
+- **Spend vs Budget Over Time** — a cumulative line: Actual spend (solid
+  blue) running into Forecast spend (dashed orange) as the project's
+  Actual entries run out, plotted against a flat Approved Budget reference
+  line (dashed gray) and a "Today" marker. The x-axis spans the project's
+  own Start Date to Target Completion (extended to cover any entry outside
+  that range), so the chart doubles as a where-are-we-in-the-schedule view,
+  not just a spend total. This is the one chart in the app drawn as an SVG
+  line rather than HTML/CSS bars — a diagonal line isn't something bars can
+  do, and a threshold like the budget line gets a neutral gray rather than
+  a categorical hue since it isn't a data series.
+- **Monthly Spend** — the existing bar-per-month Actual (blue) vs Forecast
+  (orange) view, for comparing individual months rather than the running
+  total.
+
+Every chart is hand-rolled with plain HTML/CSS or SVG (no charting library)
+and draws its colors from a small validated palette in
 `frontend/src/charts/palette.ts` — chosen and checked for colorblind-safe
 contrast (see the `dataviz` skill this project follows: categorical hues
 assigned in a fixed order, never cycled, and validated with its palette
