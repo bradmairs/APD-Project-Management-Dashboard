@@ -5,6 +5,8 @@ import {
   Attachment,
   CashFlowEntry,
   CashFlowEntryInput,
+  EotClaim,
+  EotClaimInput,
   LessonLearned,
   LessonLearnedInput,
   Milestone,
@@ -632,4 +634,40 @@ export function updateSqeRecord(
 
 export function deleteSqeRecord(id: string): Promise<void> {
   return fetch(`${API_BASE}/sqe/${id}`, { method: "DELETE" }).then((res) => handle(res));
+}
+
+export function getEotClaims(projectId: string): Promise<EotClaim[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/eot-claims`).then((res) => handle(res));
+}
+
+export function getAllEotClaims(): Promise<EotClaim[]> {
+  return fetch(`${API_BASE}/eot-claims`).then((res) => handle(res));
+}
+
+export function createEotClaim(
+  projectId: string,
+  data: Partial<EotClaimInput>
+): Promise<EotClaim> {
+  return fetch(`${API_BASE}/projects/${projectId}/eot-claims`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateEotClaim(
+  id: string,
+  data: Partial<EotClaimInput>
+): Promise<EotClaim> {
+  return fetch(`${API_BASE}/eot-claims/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteEotClaim(id: string): Promise<void> {
+  return fetch(`${API_BASE}/eot-claims/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
 }

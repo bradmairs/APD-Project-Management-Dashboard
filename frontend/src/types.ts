@@ -398,3 +398,35 @@ export type SqeRecordInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export type EotStatus = "SUBMITTED" | "APPROVED" | "REJECTED";
+
+export interface EotClaim {
+  id: string;
+  projectId: string;
+  reference: string | null;
+  title: string;
+  cause: string | null;
+  description: string | null;
+  daysClaimed: number;
+  daysGranted: number | null;
+  status: EotStatus;
+  dateSubmitted: string;
+  dateDecided: string | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type EotClaimInput = Omit<
+  EotClaim,
+  | "id"
+  | "projectId"
+  | "dateDecided"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+>;

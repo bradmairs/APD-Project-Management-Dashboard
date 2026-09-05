@@ -1,5 +1,6 @@
 import {
   ActionItem,
+  EotClaim,
   LessonLearned,
   Milestone,
   Permit,
@@ -248,4 +249,25 @@ export function describeSqeUpdate(
     return `marked ${noun} "${before.title}" as ${label}`;
   }
   return `updated ${noun} "${before.title}"`;
+}
+
+const EOT_STATUS_LABELS: Record<string, string> = {
+  SUBMITTED: "Submitted",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
+export function describeEotClaimUpdate(
+  before: EotClaim,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = EOT_STATUS_LABELS[body.status as string] ?? String(body.status);
+    const grantedNote =
+      body.status === "APPROVED" && body.daysGranted !== undefined
+        ? ` (${body.daysGranted} days granted)`
+        : "";
+    return `marked EOT claim "${before.title}" as ${label}${grantedNote}`;
+  }
+  return `updated EOT claim "${before.title}"`;
 }

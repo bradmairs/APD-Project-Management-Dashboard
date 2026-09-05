@@ -1,6 +1,7 @@
-import { CashFlowEntry, Project, RagStatus, Risk, Variation } from "./types";
-import { isProjectOverdue } from "./statusMeta";
+import { CashFlowEntry, EotClaim, Project, RagStatus, Risk, Variation } from "./types";
+import { STATUSES_EXEMPT_FROM_OVERDUE } from "./statusMeta";
 import { revisedBudget } from "./variations";
+import { revisedCompletionDate } from "./eot";
 import { riskBand, riskScore } from "./riskScoring";
 
 // A computed, always-up-to-date view of a project's health — distinct from
@@ -25,14 +26,23 @@ function worstOf(statuses: RagStatus[]): RagStatus {
 
 const DUE_SOON_DAYS = 30;
 
-function scheduleHealth(project: Project): RagStatus {
-  if (isProjectOverdue(project)) return "RED";
-  if (project.targetCompletionDate) {
-    const daysUntilTarget =
-      (new Date(project.targetCompletionDate).getTime() - Date.now()) /
-      (1000 * 60 * 60 * 24);
-    if (daysUntilTarget >= 0 && daysUntilTarget <= DUE_SOON_DAYS) return "AMBER";
-  }
+// Uses the project's completion date as revised by any approved EOT
+// claims, not the raw contractual date — the same reasoning budgetHealth
+// uses revisedBudget instead of the raw budget. This is deliberately
+// different from statusMeta's isProjectOverdue (used by the dashboard's
+// "Overdue" stat and the project table), which always reflects the
+// original contractual date; Health is the exception-surfacing signal
+// that should account for a schedule already agreed to be revised, while
+// "Overdue" stays a literal reading of the contract.
+function scheduleHealth(project: Project, eotClaims: EotClaim[]): RagStatus {
+  const effectiveTarget = revisedCompletionDate(project, eotClaims);
+  if (!effectiveTarget) return "GREEN";
+  if (STATUSES_EXEMPT_FROM_OVERDUE.includes(project.status)) return "GREEN";
+
+  const daysUntilTarget =
+    (new Date(effectiveTarget).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+  if (daysUntilTarget < 0) return "RED";
+  if (daysUntilTarget <= DUE_SOON_DAYS) return "AMBER";
   return "GREEN";
 }
 
@@ -72,9 +82,10 @@ export function computeProjectHealth(
   project: Project,
   entries: CashFlowEntry[],
   variations: Variation[],
-  risks: Risk[]
+  risks: Risk[],
+  eotClaims: EotClaim[] = []
 ): ProjectHealth {
-  const schedule = scheduleHealth(project);
+  const schedule = scheduleHealth(project, eotClaims);
   const budget = budgetHealth(project, entries, variations);
   const risk = riskHealth(risks);
   return { schedule, budget, risk, overall: worstOf([schedule, budget, risk]) };

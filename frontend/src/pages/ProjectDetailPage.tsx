@@ -7,6 +7,8 @@ import {
   Attachment,
   CashFlowEntry,
   CashFlowEntryInput,
+  EotClaim,
+  EotClaimInput,
   LessonLearned,
   LessonLearnedInput,
   Permit,
@@ -33,6 +35,7 @@ import {
 } from "../types";
 import {
   createActionItem,
+  createEotClaim,
   createLessonLearned,
   createMilestone,
   createMonthlyReport,
@@ -46,6 +49,7 @@ import {
   deleteActionItem,
   deleteAttachment,
   deleteCashFlowEntry,
+  deleteEotClaim,
   deleteLessonLearned,
   deleteMilestone,
   deleteMonthlyReport,
@@ -61,6 +65,7 @@ import {
   getActionItems,
   getAttachments,
   getCashFlowEntries,
+  getEotClaims,
   getLessonsLearned,
   getMilestones,
   getMonthlyReports,
@@ -75,6 +80,7 @@ import {
   getVariations,
   reorderMilestone,
   updateActionItem,
+  updateEotClaim,
   updateLessonLearned,
   updateMilestone,
   updateMonthlyReport,
@@ -105,8 +111,10 @@ import StakeholdersPanel from "../components/StakeholdersPanel";
 import PermitsPanel from "../components/PermitsPanel";
 import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
 import SqePanel from "../components/SqePanel";
+import EotPanel from "../components/EotPanel";
 import HealthBadge from "../components/HealthBadge";
 import { computeProjectHealth } from "../health";
+import { revisedCompletionDate } from "../eot";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import { canModifyProject } from "../permissions";
@@ -133,6 +141,7 @@ export default function ProjectDetailPage() {
   const [permits, setPermits] = useState<Permit[]>([]);
   const [lessons, setLessons] = useState<LessonLearned[]>([]);
   const [sqeRecords, setSqeRecords] = useState<SqeRecord[]>([]);
+  const [eotClaims, setEotClaims] = useState<EotClaim[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -158,6 +167,7 @@ export default function ProjectDetailPage() {
         permitData,
         lessonData,
         sqeData,
+        eotData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -174,6 +184,7 @@ export default function ProjectDetailPage() {
         getPermits(id),
         getLessonsLearned(id),
         getSqeRecords(id),
+        getEotClaims(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -190,6 +201,7 @@ export default function ProjectDetailPage() {
       setPermits(permitData);
       setLessons(lessonData);
       setSqeRecords(sqeData);
+      setEotClaims(eotData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -462,10 +474,33 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateEotClaim(data: Partial<EotClaimInput>) {
+    if (!project) return;
+    await createEotClaim(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateEotClaim(claim: EotClaim, data: Partial<EotClaimInput>) {
+    await updateEotClaim(claim.id, data);
+    await load();
+  }
+
+  async function handleDeleteEotClaim(claim: EotClaim) {
+    await deleteEotClaim(claim.id);
+    await load();
+  }
+
+  const revisedTargetCompletion = useMemo(
+    () => (project ? revisedCompletionDate(project, eotClaims) : null),
+    [project, eotClaims]
+  );
+
   const health = useMemo(
     () =>
-      project ? computeProjectHealth(project, cashFlowEntries, variations, risks) : null,
-    [project, cashFlowEntries, variations, risks]
+      project
+        ? computeProjectHealth(project, cashFlowEntries, variations, risks, eotClaims)
+        : null,
+    [project, cashFlowEntries, variations, risks, eotClaims]
   );
 
   if (loading) {
@@ -575,6 +610,13 @@ export default function ProjectDetailPage() {
             label="Target Completion"
             value={formatDate(project.targetCompletionDate)}
           />
+          {revisedTargetCompletion &&
+            revisedTargetCompletion !== project.targetCompletionDate && (
+              <Field
+                label="Revised Completion"
+                value={formatDate(revisedTargetCompletion)}
+              />
+            )}
           <Field
             label="Actual Completion"
             value={formatDate(project.actualCompletionDate)}
@@ -645,6 +687,13 @@ export default function ProjectDetailPage() {
           onUpdate={handleUpdateMilestone}
           onDelete={handleDeleteMilestone}
           onReorder={handleReorderMilestone}
+        />
+
+        <EotPanel
+          claims={eotClaims}
+          onCreate={handleCreateEotClaim}
+          onUpdate={handleUpdateEotClaim}
+          onDelete={handleDeleteEotClaim}
         />
 
         <SiteVisitsPanel

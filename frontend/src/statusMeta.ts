@@ -37,7 +37,7 @@ export const ALL_STATUSES: ProjectStatus[] = [
 // A project is only "overdue" while it's still working toward its target
 // completion date. Once construction is done (Defects Liability, Complete)
 // or the project is Cancelled, passing that original date is expected, not late.
-const STATUSES_EXEMPT_FROM_OVERDUE: ProjectStatus[] = [
+export const STATUSES_EXEMPT_FROM_OVERDUE: ProjectStatus[] = [
   "DEFECTS_LIABILITY",
   "COMPLETE",
   "CANCELLED",

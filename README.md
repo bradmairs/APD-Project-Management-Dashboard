@@ -322,6 +322,36 @@ via the Activity panel) is what matters, not what it looked like on some
 past reporting date. Open to any logged-in user to edit, matching Tasks,
 Attachments, and Milestones.
 
+## Extension of Time (EOT) Claims
+
+Each project has an **Extension of Time Claims** panel — distinct from
+Variations even though both are raised against a contract. A Variation
+is a scope/cost/time change the parties agree to; an EOT claim argues
+the existing schedule itself was disrupted (weather, latent conditions,
+a client-caused delay) and should be pushed out, independent of any
+scope change. A claim records a Reference, Title, Cause (free text, with
+suggestions like "Weather" or "Latent Conditions"), Description, Days
+Claimed, Days Granted (once decided — can be less than Days Claimed for
+a partial grant, which is why it's a separate field rather than a fourth
+status), a Status of Submitted/Approved/Rejected, the date submitted,
+and notes. `dateDecided` stamps automatically on leaving Submitted, the
+same pattern Variations use.
+
+Only an **Approved** claim's granted days extend a project's expected
+completion date. `frontend/src/eot.ts` computes each project's *revised
+completion date* (its Target Completion plus the sum of its approved
+claims' granted days) — the schedule equivalent of Variations' revised
+budget — and the project overview shows it alongside Target Completion
+once it differs. Project Health's Schedule dimension (below) uses this
+revised date too, so an approved EOT claim pushes back the
+overdue/approaching-due threshold the same way an approved Variation
+revises the budget threshold — deliberately different from the
+dashboard's "Overdue" stat and project table, which always reflect the
+literal contractual date.
+
+Like Variations, an EOT claim is live data with no per-month snapshot.
+Open to any logged-in user to edit.
+
 ## Risks & Opportunities
 
 Each project has a **Risks & Opportunities** register — one shared `Risk`
@@ -476,10 +506,13 @@ off track shows up immediately rather than waiting for the next report.
 `frontend/src/health.ts` rates three dimensions independently, then takes
 the worst of the three as the overall rating:
 
-- **Schedule** — Red if the project is overdue (its target completion
-  date has passed and it isn't Defects Liability/Complete/Cancelled, the
-  same rule the dashboard's Overdue stat uses); Amber if that date is
-  within the next 30 days; Green otherwise
+- **Schedule** — Red if the project is past its *revised* completion
+  date (Target Completion plus any approved EOT claims' granted days —
+  see Extension of Time Claims above) and it isn't Defects
+  Liability/Complete/Cancelled; Amber if that revised date is within the
+  next 30 days; Green otherwise. This is deliberately different from the
+  dashboard's "Overdue" stat and the project table, which always reflect
+  the literal contractual date rather than the revised one
 - **Budget** — Red if the Forecast Total (from Cash Flow) exceeds the
   project's current budget (revised by any approved Variations); Amber
   once it passes 90% of that budget; Green otherwise, and Green when

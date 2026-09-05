@@ -14,6 +14,7 @@ import projectStakeholdersRouter from "./stakeholders";
 import projectPermitsRouter from "./permits";
 import projectLessonsLearnedRouter from "./lessonsLearned";
 import projectSqeRouter from "./sqe";
+import projectEotClaimsRouter from "./eotClaims";
 import { describeProjectChanges, logActivity } from "../activityLog";
 import { projectUploadDir, upload } from "../upload";
 import { canModifyProject } from "../permissions";
@@ -33,6 +34,7 @@ router.use("/:id/stakeholders", projectStakeholdersRouter);
 router.use("/:id/permits", projectPermitsRouter);
 router.use("/:id/lessons-learned", projectLessonsLearnedRouter);
 router.use("/:id/sqe", projectSqeRouter);
+router.use("/:id/eot-claims", projectEotClaimsRouter);
 
 router.get("/", async (_req, res) => {
   const projects = await prisma.project.findMany({

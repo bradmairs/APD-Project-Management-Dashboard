@@ -4,6 +4,7 @@ import {
   ActionItem,
   ActivityLogEntry,
   CashFlowEntry,
+  EotClaim,
   Permit,
   Project,
   ProjectInput,
@@ -18,6 +19,7 @@ import {
   deleteProject,
   getAllActionItems,
   getAllCashFlowEntries,
+  getAllEotClaims,
   getAllPermits,
   getAllRisks,
   getAllSqeRecords,
@@ -61,6 +63,7 @@ export default function DashboardPage() {
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [permits, setPermits] = useState<Permit[]>([]);
   const [sqeRecords, setSqeRecords] = useState<SqeRecord[]>([]);
+  const [eotClaims, setEotClaims] = useState<EotClaim[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -84,6 +87,7 @@ export default function DashboardPage() {
         actionItemData,
         permitData,
         sqeData,
+        eotData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -94,6 +98,7 @@ export default function DashboardPage() {
         getAllActionItems(),
         getAllPermits(),
         getAllSqeRecords(),
+        getAllEotClaims(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -104,6 +109,7 @@ export default function DashboardPage() {
       setActionItems(actionItemData);
       setPermits(permitData);
       setSqeRecords(sqeData);
+      setEotClaims(eotData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -130,15 +136,17 @@ export default function DashboardPage() {
       const projectEntries = cashFlowEntries.filter((e) => e.projectId === project.id);
       const projectVariations = variations.filter((v) => v.projectId === project.id);
       const projectRisks = risks.filter((r) => r.projectId === project.id);
+      const projectEotClaims = eotClaims.filter((c) => c.projectId === project.id);
       result[project.id] = computeProjectHealth(
         project,
         projectEntries,
         projectVariations,
-        projectRisks
+        projectRisks,
+        projectEotClaims
       );
     }
     return result;
-  }, [projects, cashFlowEntries, variations, risks]);
+  }, [projects, cashFlowEntries, variations, risks, eotClaims]);
 
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {

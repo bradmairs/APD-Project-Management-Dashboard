@@ -117,6 +117,12 @@ enum SqeStatus {
   CLOSED
 }
 
+enum EotStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -138,6 +144,7 @@ model User {
   permits        Permit[]
   lessonsLearned LessonLearned[]
   sqeRecords     SqeRecord[]
+  eotClaims      EotClaim[]
 }
 
 model Project {
@@ -176,6 +183,7 @@ model Project {
   permits                Permit[]
   lessonsLearned         LessonLearned[]
   sqeRecords             SqeRecord[]
+  eotClaims              EotClaim[]
 }
 
 model Task {
@@ -550,6 +558,42 @@ model SqeRecord {
   reportedByName   String
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
+
+  @@index([projectId])
+}
+
+// An Extension of Time claim — distinct from Variation even though both
+// are raised against a contract: a Variation is a scope/cost/time change
+// the parties agree to, while an EOT claim argues the existing schedule
+// itself was disrupted (weather, latent conditions, a client-caused
+// delay) and should be pushed out, independent of any scope change.
+// daysGranted is set once a decision is made and can be less than
+// daysClaimed (a partial grant), so it's a separate field rather than a
+// third status. dateDecided stamps automatically on leaving SUBMITTED,
+// the same pattern Variation.dateDecided uses. Only an APPROVED claim's
+// daysGranted extends a project's expected completion date — see
+// frontend/src/eot.ts's revisedCompletionDate, which plays the same role
+// for schedule that frontend/src/variations.ts's revisedBudget plays for
+// cost. Cascades with its project like the other registers.
+model EotClaim {
+  id           String    @id @default(cuid())
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+  reference    String?
+  title        String
+  cause        String?
+  description  String?
+  daysClaimed  Int
+  daysGranted  Int?
+  status       EotStatus @default(SUBMITTED)
+  dateSubmitted DateTime
+  dateDecided  DateTime?
+  raisedBy     User?     @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById   String?
+  raisedByName String
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([projectId])
 }
