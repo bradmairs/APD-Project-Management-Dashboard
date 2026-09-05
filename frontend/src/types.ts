@@ -112,3 +112,23 @@ export type MonthlyReportInput = Omit<
   MonthlyReport,
   "id" | "projectId" | "createdById" | "authorName" | "createdAt" | "updatedAt"
 >;
+
+export interface Milestone {
+  id: string;
+  projectId: string;
+  wbsItem: string | null;
+  taskActivity: string;
+  percentComplete: number;
+  originalCompletion: string | null;
+  forecastedCompletion: string | null;
+  actualCompletion: string | null;
+  notes: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type MilestoneInput = Omit<
+  Milestone,
+  "id" | "projectId" | "sortOrder" | "createdAt" | "updatedAt"
+>;
