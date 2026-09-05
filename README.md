@@ -355,6 +355,37 @@ current state and status history (via the Activity panel) are what
 matter. Open to any logged-in user to edit, matching Tasks, Attachments,
 Milestones, and Variations.
 
+## Actions & Decisions
+
+Each project has an **Actions & Decisions** register — one shared
+`ActionItem` model with a `type` discriminator, the same pattern as
+Risk/Opportunity. It's deliberately separate from Tasks: a Task is a
+general to-do, while an Action or Decision is raised in a specific
+context (a design review, a site meeting) and tracked back to that
+origin. Both share a Title, Category (free text), Description, an
+owner, an optional due date, and a status of Open, In Progress, or Done,
+changeable inline from the panel or the full edit form.
+
+A **Decision** is, by nature, usually already resolved the moment it's
+recorded — there's no work left to do, just a record of what was agreed
+— so creating one defaults its status straight to Done rather than Open
+the way a new Action does; both remain fully editable afterwards (a
+decision can be revisited and reopened) since the type only changes the
+starting point, not what's allowed. `dateClosed` stamps automatically
+the moment status becomes Done, and clears if it moves off Done again —
+the same pattern `dateDecided` uses on a Variation.
+
+The Dashboard has its own portfolio-wide **Open Actions** panel, listing
+every open Action/Decision across every project — the ones with a due
+date first, soonest (or most overdue) at the top — each linking back to
+its project. It sits beside the Needs Attention panel since both answer
+the same question: what does a PM need to look at today, across the
+whole portfolio, without opening every project one by one.
+
+Like Risks and Variations, an action item is live data with no per-month
+snapshot. Open to any logged-in user to edit, matching Tasks,
+Attachments, Milestones, Variations, and Risks.
+
 ## Project Health
 
 Every project gets a live **Health** rating — Green/Amber/Red — computed

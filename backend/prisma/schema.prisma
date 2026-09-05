@@ -76,6 +76,17 @@ enum RiskStatus {
   CLOSED
 }
 
+enum ActionType {
+  ACTION
+  DECISION
+}
+
+enum ActionItemStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -93,6 +104,7 @@ model User {
   siteVisitPhotos SiteVisitPhoto[]
   variations     Variation[]
   risks          Risk[]
+  actionItems    ActionItem[]
 }
 
 model Project {
@@ -126,6 +138,7 @@ model Project {
   siteVisits             SiteVisit[]
   variations             Variation[]
   risks                  Risk[]
+  actionItems            ActionItem[]
 }
 
 model Task {
@@ -360,6 +373,38 @@ model Risk {
   createdByName        String
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
+
+  @@index([projectId])
+}
+
+// A meeting action or decision logged against a project — distinct from
+// Task (a general to-do) in that it's raised in a specific context (a
+// meeting, a review) and, for a DECISION, is typically already resolved
+// the moment it's recorded rather than something to work through. Both
+// share the same shape, the same way Risk/Opportunity do, since a
+// decision is really just an action whose lifecycle is already complete.
+// dateClosed stamps automatically the moment status becomes DONE, the
+// same way Variation.dateDecided stamps on leaving PROPOSED. Cascades
+// with its project like Variation/Risk.
+model ActionItem {
+  id           String           @id @default(cuid())
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+  type         ActionType       @default(ACTION)
+  title        String
+  description  String?
+  category     String?
+  ownerName    String?
+  dueDate      DateTime?
+  status       ActionItemStatus @default(OPEN)
+  dateRaised   DateTime
+  dateClosed   DateTime?
+  raisedBy     User?            @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById   String?
+  raisedByName String
+  notes        String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([projectId])
 }

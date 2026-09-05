@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  ActionItem,
+  ActionItemInput,
   ActivityLogEntry,
   Attachment,
   CashFlowEntry,
@@ -22,12 +24,14 @@ import {
   VariationInput,
 } from "../types";
 import {
+  createActionItem,
   createMilestone,
   createMonthlyReport,
   createRisk,
   createSiteVisit,
   createTask,
   createVariation,
+  deleteActionItem,
   deleteAttachment,
   deleteCashFlowEntry,
   deleteMilestone,
@@ -38,6 +42,7 @@ import {
   deleteSiteVisitPhoto,
   deleteTask,
   deleteVariation,
+  getActionItems,
   getAttachments,
   getCashFlowEntries,
   getMilestones,
@@ -49,6 +54,7 @@ import {
   getSiteVisits,
   getVariations,
   reorderMilestone,
+  updateActionItem,
   updateMilestone,
   updateMonthlyReport,
   updateProject,
@@ -70,6 +76,7 @@ import CashFlowPanel from "../components/CashFlowPanel";
 import SiteVisitsPanel from "../components/SiteVisitsPanel";
 import VariationsPanel from "../components/VariationsPanel";
 import RisksPanel from "../components/RisksPanel";
+import ActionsPanel from "../components/ActionsPanel";
 import HealthBadge from "../components/HealthBadge";
 import { computeProjectHealth } from "../health";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
@@ -93,6 +100,7 @@ export default function ProjectDetailPage() {
   const [sitePhotos, setSitePhotos] = useState<SiteVisitPhoto[]>([]);
   const [variations, setVariations] = useState<Variation[]>([]);
   const [risks, setRisks] = useState<Risk[]>([]);
+  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -113,6 +121,7 @@ export default function ProjectDetailPage() {
         sitePhotoData,
         variationData,
         riskData,
+        actionItemData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -124,6 +133,7 @@ export default function ProjectDetailPage() {
         getProjectSitePhotos(id),
         getVariations(id),
         getRisks(id),
+        getActionItems(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -135,6 +145,7 @@ export default function ProjectDetailPage() {
       setSitePhotos(sitePhotoData);
       setVariations(variationData);
       setRisks(riskData);
+      setActionItems(actionItemData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -315,6 +326,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateActionItem(data: Partial<ActionItemInput>) {
+    if (!project) return;
+    await createActionItem(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateActionItem(
+    actionItem: ActionItem,
+    data: Partial<ActionItemInput>
+  ) {
+    await updateActionItem(actionItem.id, data);
+    await load();
+  }
+
+  async function handleDeleteActionItem(actionItem: ActionItem) {
+    await deleteActionItem(actionItem.id);
+    await load();
+  }
+
   const health = useMemo(
     () =>
       project ? computeProjectHealth(project, cashFlowEntries, variations, risks) : null,
@@ -455,6 +485,13 @@ export default function ProjectDetailPage() {
           onCreate={handleCreateRisk}
           onUpdate={handleUpdateRisk}
           onDelete={handleDeleteRisk}
+        />
+
+        <ActionsPanel
+          actionItems={actionItems}
+          onCreate={handleCreateActionItem}
+          onUpdate={handleUpdateActionItem}
+          onDelete={handleDeleteActionItem}
         />
 
         <TaskList

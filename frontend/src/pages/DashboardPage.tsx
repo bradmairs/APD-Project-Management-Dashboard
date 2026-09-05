@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
+  ActionItem,
   ActivityLogEntry,
   CashFlowEntry,
   Project,
@@ -13,6 +14,7 @@ import {
 import {
   createProject,
   deleteProject,
+  getAllActionItems,
   getAllCashFlowEntries,
   getAllRisks,
   getAllVariations,
@@ -27,6 +29,7 @@ import ProjectFormModal from "../components/ProjectFormModal";
 import UpcomingDeadlines from "../components/UpcomingDeadlines";
 import ActivityFeed from "../components/ActivityFeed";
 import TopRisksPanel from "../components/TopRisksPanel";
+import OpenActionsPanel from "../components/OpenActionsPanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -49,6 +52,7 @@ export default function DashboardPage() {
   const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
   const [variations, setVariations] = useState<Variation[]>([]);
   const [risks, setRisks] = useState<Risk[]>([]);
+  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -62,21 +66,30 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const [projectData, taskData, activityData, cashFlowData, variationData, riskData] =
-        await Promise.all([
-          getProjects(),
-          getUpcomingTasks(),
-          getRecentActivity(),
-          getAllCashFlowEntries(),
-          getAllVariations(),
-          getAllRisks(),
-        ]);
+      const [
+        projectData,
+        taskData,
+        activityData,
+        cashFlowData,
+        variationData,
+        riskData,
+        actionItemData,
+      ] = await Promise.all([
+        getProjects(),
+        getUpcomingTasks(),
+        getRecentActivity(),
+        getAllCashFlowEntries(),
+        getAllVariations(),
+        getAllRisks(),
+        getAllActionItems(),
+      ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
       setRecentActivity(activityData);
       setCashFlowEntries(cashFlowData);
       setVariations(variationData);
       setRisks(riskData);
+      setActionItems(actionItemData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -196,7 +209,10 @@ export default function DashboardPage() {
         <StatCards projects={projects} />
 
         {!loading && projects.length > 0 && (
-          <NeedsAttentionPanel projects={projects} healthByProjectId={healthByProjectId} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <NeedsAttentionPanel projects={projects} healthByProjectId={healthByProjectId} />
+            <OpenActionsPanel actionItems={actionItems} />
+          </div>
         )}
 
         {!loading && projects.length > 0 && (

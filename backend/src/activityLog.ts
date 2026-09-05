@@ -1,4 +1,4 @@
-import { Milestone, Project, Risk, SiteVisit, Task, Variation } from "@prisma/client";
+import { ActionItem, Milestone, Project, Risk, SiteVisit, Task, Variation } from "@prisma/client";
 import { prisma } from "./prisma";
 
 interface LogParams {
@@ -167,6 +167,24 @@ export function describeRiskUpdate(before: Risk, body: Record<string, unknown>):
       body.residualConsequence !== before.residualConsequence)
   ) {
     return `updated the residual rating for ${noun} "${before.title}"`;
+  }
+  return `updated ${noun} "${before.title}"`;
+}
+
+const ACTION_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  IN_PROGRESS: "In Progress",
+  DONE: "Done",
+};
+
+export function describeActionItemUpdate(
+  before: ActionItem,
+  body: Record<string, unknown>
+): string {
+  const noun = before.type === "DECISION" ? "decision" : "action";
+  if ("status" in body && body.status !== before.status) {
+    const label = ACTION_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked ${noun} "${before.title}" as ${label}`;
   }
   return `updated ${noun} "${before.title}"`;
 }

@@ -260,3 +260,39 @@ export type RiskInput = Omit<
   Risk,
   "id" | "projectId" | "createdById" | "createdByName" | "createdAt" | "updatedAt" | "project"
 >;
+
+export type ActionType = "ACTION" | "DECISION";
+
+export type ActionItemStatus = "OPEN" | "IN_PROGRESS" | "DONE";
+
+export interface ActionItem {
+  id: string;
+  projectId: string;
+  type: ActionType;
+  title: string;
+  description: string | null;
+  category: string | null;
+  ownerName: string | null;
+  dueDate: string | null;
+  status: ActionItemStatus;
+  dateRaised: string;
+  dateClosed: string | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type ActionItemInput = Omit<
+  ActionItem,
+  | "id"
+  | "projectId"
+  | "dateClosed"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

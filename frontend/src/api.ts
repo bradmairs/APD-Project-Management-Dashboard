@@ -1,4 +1,6 @@
 import {
+  ActionItem,
+  ActionItemInput,
   ActivityLogEntry,
   Attachment,
   CashFlowEntry,
@@ -443,6 +445,44 @@ export function updateRisk(id: string, data: Partial<RiskInput>): Promise<Risk> 
 
 export function deleteRisk(id: string): Promise<void> {
   return fetch(`${API_BASE}/risks/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getActionItems(projectId: string): Promise<ActionItem[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/action-items`).then((res) =>
+    handle(res)
+  );
+}
+
+export function getAllActionItems(): Promise<ActionItem[]> {
+  return fetch(`${API_BASE}/action-items`).then((res) => handle(res));
+}
+
+export function createActionItem(
+  projectId: string,
+  data: Partial<ActionItemInput>
+): Promise<ActionItem> {
+  return fetch(`${API_BASE}/projects/${projectId}/action-items`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateActionItem(
+  id: string,
+  data: Partial<ActionItemInput>
+): Promise<ActionItem> {
+  return fetch(`${API_BASE}/action-items/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteActionItem(id: string): Promise<void> {
+  return fetch(`${API_BASE}/action-items/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }
