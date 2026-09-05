@@ -190,20 +190,29 @@ password) alongside the three `MEMBER` accounts, and assigns each seeded
 project to the user matching its project manager, so the permission model
 has something real to demonstrate out of the box.
 
-## Reports
+## Charts
 
-The "Reports" link on the dashboard opens a portfolio-level view with three
-charts, built from the same project/task data (no separate reporting
-backend):
+The dashboard shows a **Projects by Status** chart right below the stat
+cards — a bar per pipeline stage, so the portfolio's shape is visible
+without a click. The "Reports" link opens a dedicated page with that same
+chart plus two more, all built from the same project/task data (no
+separate reporting backend):
 
 - **Projects by Status** — count of projects at each pipeline stage
 - **Budget by Asset Type** — total budget grouped by asset type
 - **Task Progress by Project** — a To Do / In Progress / Done breakdown per
   project, sorted so the least-progressed projects surface first
 
-Chart colors and layout follow a small internal palette in
-`frontend/src/charts/palette.ts`, chosen for colorblind-safe contrast between
-task-status colors.
+Each project's Cash Flow panel has its own chart: a bar per month, Actual
+spend in blue and Forecast in orange, so a project's spend trajectory reads
+at a glance instead of only as the row-by-row entry list below it.
+
+Every chart is hand-rolled with plain HTML/CSS (no charting library) and
+draws its colors from a small validated palette in
+`frontend/src/charts/palette.ts` — chosen and checked for colorblind-safe
+contrast (see the `dataviz` skill this project follows: categorical hues
+assigned in a fixed order, never cycled, and validated with its palette
+checker before use).
 
 ## Monthly Reports
 
