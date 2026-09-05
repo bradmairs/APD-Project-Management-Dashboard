@@ -53,6 +53,7 @@ model User {
   attachments    Attachment[]
   createdProjects Project[]
   monthlyReports MonthlyReport[]
+  siteVisits     SiteVisit[]
 }
 
 model Project {
@@ -83,6 +84,7 @@ model Project {
   monthlyReports         MonthlyReport[]
   milestones             Milestone[]
   cashFlowEntries        CashFlowEntry[]
+  siteVisits             SiteVisit[]
 }
 
 model Task {
@@ -197,6 +199,30 @@ model MonthlyReport {
   updatedAt         DateTime  @updatedAt
 
   @@unique([projectId, reportingMonth])
+  @@index([projectId])
+}
+
+// A field record of a site visit — mobile-friendly since it's typically
+// logged from a phone on site. Like Milestone/CashFlowEntry (and unlike
+// MonthlyReport) this isn't a monthly snapshot; each visit is its own
+// point-in-time record, dated by when it happened rather than a reporting
+// month, so there's naturally many per month rather than one. Cascades with
+// its project since a visit log only makes sense in that project's context.
+// Phase 2 adds geotagged photos (SiteVisitPhoto) — not part of this model yet.
+model SiteVisit {
+  id              String    @id @default(cuid())
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  visitDate       DateTime
+  location        String
+  notes           String?
+  discussionNotes String?
+  visitedBy       User?     @relation(fields: [visitedById], references: [id], onDelete: SetNull)
+  visitedById     String?
+  visitedByName   String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
   @@index([projectId])
 }
 

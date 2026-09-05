@@ -10,6 +10,8 @@ import {
   Project,
   ProjectInput,
   Role,
+  SiteVisit,
+  SiteVisitInput,
   Task,
   TaskInput,
   User,
@@ -293,6 +295,40 @@ export function upsertCashFlowEntry(
 
 export function deleteCashFlowEntry(id: string): Promise<void> {
   return fetch(`${API_BASE}/cashflow/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getSiteVisits(projectId: string): Promise<SiteVisit[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/site-visits`).then((res) =>
+    handle(res)
+  );
+}
+
+export function createSiteVisit(
+  projectId: string,
+  data: Partial<SiteVisitInput>
+): Promise<SiteVisit> {
+  return fetch(`${API_BASE}/projects/${projectId}/site-visits`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateSiteVisit(
+  id: string,
+  data: Partial<SiteVisitInput>
+): Promise<SiteVisit> {
+  return fetch(`${API_BASE}/site-visits/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteSiteVisit(id: string): Promise<void> {
+  return fetch(`${API_BASE}/site-visits/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }

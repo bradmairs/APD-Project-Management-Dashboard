@@ -5,6 +5,7 @@ import projectTasksRouter from "./tasks";
 import projectReportsRouter from "./monthlyReports";
 import projectMilestonesRouter from "./milestones";
 import projectCashFlowRouter from "./cashFlow";
+import projectSiteVisitsRouter from "./siteVisits";
 import { describeProjectChanges, logActivity } from "../activityLog";
 import { projectUploadDir, upload } from "../upload";
 import { canModifyProject } from "../permissions";
@@ -15,6 +16,7 @@ router.use("/:projectId/tasks", projectTasksRouter);
 router.use("/:id/reports", projectReportsRouter);
 router.use("/:id/milestones", projectMilestonesRouter);
 router.use("/:id/cashflow", projectCashFlowRouter);
+router.use("/:id/site-visits", projectSiteVisitsRouter);
 
 router.get("/", async (_req, res) => {
   const projects = await prisma.project.findMany({

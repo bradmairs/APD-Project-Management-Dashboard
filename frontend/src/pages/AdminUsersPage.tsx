@@ -61,7 +61,7 @@ export default function AdminUsersPage() {
           >
             ← Back to dashboard
           </Link>
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex flex-wrap items-center justify-between gap-y-3 mt-2">
             <div className="flex items-center gap-4">
               <img src={gvwLogo} alt="Goulburn Valley Water" className="h-14 w-auto" />
               <div>
@@ -73,7 +73,7 @@ export default function AdminUsersPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"

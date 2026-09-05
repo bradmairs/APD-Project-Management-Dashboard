@@ -16,6 +16,17 @@ export function formatDate(value: string | null): string {
   });
 }
 
+export function formatDateTime(value: string | null): string {
+  if (!value) return "—";
+  return new Date(value).toLocaleString("en-AU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["year", 60 * 60 * 24 * 365],
   ["month", 60 * 60 * 24 * 30],

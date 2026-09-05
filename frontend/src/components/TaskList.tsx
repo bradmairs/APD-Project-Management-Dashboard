@@ -130,12 +130,12 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
         </ul>
       )}
 
-      <form onSubmit={handleAdd} className="flex gap-2">
+      <form onSubmit={handleAdd} className="flex flex-wrap gap-2">
         <input
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Add a task…"
-          className="flex-1 text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-1.5"
+          className="flex-1 min-w-[10rem] text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-1.5"
         />
         <input
           type="date"

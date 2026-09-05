@@ -77,7 +77,7 @@ export default function ReportsPage() {
           >
             ← Back to dashboard
           </Link>
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex flex-wrap items-center justify-between gap-y-3 mt-2">
             <div className="flex items-center gap-4">
               <img src={gvwLogo} alt="Goulburn Valley Water" className="h-14 w-auto" />
               <div>

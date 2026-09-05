@@ -11,18 +11,22 @@ import {
   MonthlyReportInput,
   Project,
   ProjectInput,
+  SiteVisit,
+  SiteVisitInput,
   Task,
   TaskStatus,
 } from "../types";
 import {
   createMilestone,
   createMonthlyReport,
+  createSiteVisit,
   createTask,
   deleteAttachment,
   deleteCashFlowEntry,
   deleteMilestone,
   deleteMonthlyReport,
   deleteProject,
+  deleteSiteVisit,
   deleteTask,
   getAttachments,
   getCashFlowEntries,
@@ -30,10 +34,12 @@ import {
   getMonthlyReports,
   getProject,
   getProjectActivity,
+  getSiteVisits,
   reorderMilestone,
   updateMilestone,
   updateMonthlyReport,
   updateProject,
+  updateSiteVisit,
   updateTask,
   uploadAttachment,
   upsertCashFlowEntry,
@@ -45,6 +51,7 @@ import AttachmentsPanel from "../components/AttachmentsPanel";
 import MonthlyReportsPanel from "../components/MonthlyReportsPanel";
 import MilestonesPanel from "../components/MilestonesPanel";
 import CashFlowPanel from "../components/CashFlowPanel";
+import SiteVisitsPanel from "../components/SiteVisitsPanel";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import { canModifyProject } from "../permissions";
@@ -62,6 +69,7 @@ export default function ProjectDetailPage() {
   const [reports, setReports] = useState<MonthlyReport[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
+  const [siteVisits, setSiteVisits] = useState<SiteVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -71,21 +79,30 @@ export default function ProjectDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const [data, activityData, attachmentData, reportData, milestoneData, cashFlowData] =
-        await Promise.all([
-          getProject(id),
-          getProjectActivity(id),
-          getAttachments(id),
-          getMonthlyReports(id),
-          getMilestones(id),
-          getCashFlowEntries(id),
-        ]);
+      const [
+        data,
+        activityData,
+        attachmentData,
+        reportData,
+        milestoneData,
+        cashFlowData,
+        siteVisitData,
+      ] = await Promise.all([
+        getProject(id),
+        getProjectActivity(id),
+        getAttachments(id),
+        getMonthlyReports(id),
+        getMilestones(id),
+        getCashFlowEntries(id),
+        getSiteVisits(id),
+      ]);
       setProject(data);
       setActivity(activityData);
       setAttachments(attachmentData);
       setReports(reportData);
       setMilestones(milestoneData);
       setCashFlowEntries(cashFlowData);
+      setSiteVisits(siteVisitData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -202,6 +219,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateSiteVisit(data: Partial<SiteVisitInput>) {
+    if (!project) return;
+    await createSiteVisit(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateSiteVisit(
+    siteVisit: SiteVisit,
+    data: Partial<SiteVisitInput>
+  ) {
+    await updateSiteVisit(siteVisit.id, data);
+    await load();
+  }
+
+  async function handleDeleteSiteVisit(siteVisit: SiteVisit) {
+    await deleteSiteVisit(siteVisit.id);
+    await load();
+  }
+
   if (loading) {
     return (
       <div className="text-center text-slate-500 dark:text-slate-400 py-12">
@@ -236,7 +272,7 @@ export default function ProjectDetailPage() {
           >
             ← Back to dashboard
           </Link>
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex flex-wrap items-center justify-between gap-y-3 mt-2">
             <div className="flex items-center gap-4">
               <img src={gvwLogo} alt="Goulburn Valley Water" className="h-14 w-auto" />
               <div>
@@ -252,7 +288,7 @@ export default function ProjectDetailPage() {
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {canModifyProject(project, user) ? (
                 <>
                   <button
@@ -333,6 +369,13 @@ export default function ProjectDetailPage() {
           onUpdate={handleUpdateMilestone}
           onDelete={handleDeleteMilestone}
           onReorder={handleReorderMilestone}
+        />
+
+        <SiteVisitsPanel
+          siteVisits={siteVisits}
+          onCreate={handleCreateSiteVisit}
+          onUpdate={handleUpdateSiteVisit}
+          onDelete={handleDeleteSiteVisit}
         />
 
         <AttachmentsPanel

@@ -150,3 +150,21 @@ export type CashFlowEntryInput = Omit<
   CashFlowEntry,
   "id" | "projectId" | "createdAt" | "updatedAt"
 >;
+
+export interface SiteVisit {
+  id: string;
+  projectId: string;
+  visitDate: string;
+  location: string;
+  notes: string | null;
+  discussionNotes: string | null;
+  visitedById: string | null;
+  visitedByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SiteVisitInput = Omit<
+  SiteVisit,
+  "id" | "projectId" | "visitedById" | "visitedByName" | "createdAt" | "updatedAt"
+>;

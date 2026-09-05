@@ -336,6 +336,42 @@ one page that deliberately ignores the toggle and always renders light —
 it's a print/document view meant to look the same on paper regardless of
 which theme you're browsing in, so it carries no `dark:` classes at all.
 
+## Site Visits
+
+Each project has a **Site Visits** panel — a mobile-friendly field log for
+the visits a project manager makes to site, since that's typically entered
+from a phone standing in the field rather than at a desk. A visit records
+Date, Time, Location (free text, with a **📍 Use current** button that
+fills it from the browser's Geolocation API as `lat, lng`), Notes (what was
+observed), and Discussion Notes (points raised or agreed with the
+contractor/site team). Entries render as a stack of full-width cards rather
+than the app's usual table layout — tables don't fit a narrow screen, and a
+project typically has far fewer site visits than tasks or activity-log
+entries, so a card per visit costs little vertical space. Each card expands
+in place to show its Notes/Discussion Notes, matching the Monthly Reports
+panel's expand-on-tap pattern. Like Milestones and Cash Flow entries, a
+site visit is live, editable data with no month-based snapshotting — each
+visit is already its own point-in-time record by nature.
+
+Building this surfaced a pre-existing mobile layout bug: the page header's
+Edit/Delete/theme-toggle/notification-bell/account-menu button row, and the
+Tasks panel's "Add a task" row, didn't wrap on a narrow screen — native
+`<input type="date">`/`<input type="time">` controls have a minimum
+intrinsic width that doesn't shrink, so at phone width the row overflowed
+sideways and forced the entire page's layout viewport wider than the
+device, breaking pinch-zoom-to-fit for the whole page (not just those
+rows). Fixed by allowing those rows to wrap (`flex-wrap`) across the
+Dashboard, Project Detail, Reports, and Admin Users headers, and giving the
+Site Visit form's own Date/Time fields a single column on narrow screens
+(`grid-cols-1 sm:grid-cols-2`) rather than forcing them side by side.
+
+**Not in this PR** — a second phase, planned next: geotagged photos.
+Photos will be attachable per site visit (including directly from the
+device's camera via `<input type="file" capture>`), with GPS coordinates
+read from each photo's EXIF metadata and plotted on a map — a real
+slippy map (Leaflet + OpenStreetMap tiles), since unlike this app's other
+charts, map tiles can't be hand-rolled in SVG.
+
 ## Roadmap ideas (not built yet)
 
 This is intentionally a starting point. Natural next steps to discuss:
