@@ -24,6 +24,8 @@ import {
   SiteVisit,
   SiteVisitInput,
   SiteVisitPhoto,
+  SqeRecord,
+  SqeRecordInput,
   Task,
   TaskStatus,
   Variation,
@@ -37,6 +39,7 @@ import {
   createPermit,
   createRisk,
   createSiteVisit,
+  createSqeRecord,
   createStakeholder,
   createTask,
   createVariation,
@@ -51,6 +54,7 @@ import {
   deleteRisk,
   deleteSiteVisit,
   deleteSiteVisitPhoto,
+  deleteSqeRecord,
   deleteStakeholder,
   deleteTask,
   deleteVariation,
@@ -66,6 +70,7 @@ import {
   getProjectSitePhotos,
   getRisks,
   getSiteVisits,
+  getSqeRecords,
   getStakeholders,
   getVariations,
   reorderMilestone,
@@ -77,6 +82,7 @@ import {
   updateProject,
   updateRisk,
   updateSiteVisit,
+  updateSqeRecord,
   updateStakeholder,
   updateTask,
   updateVariation,
@@ -98,6 +104,7 @@ import ActionsPanel from "../components/ActionsPanel";
 import StakeholdersPanel from "../components/StakeholdersPanel";
 import PermitsPanel from "../components/PermitsPanel";
 import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
+import SqePanel from "../components/SqePanel";
 import HealthBadge from "../components/HealthBadge";
 import { computeProjectHealth } from "../health";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
@@ -125,6 +132,7 @@ export default function ProjectDetailPage() {
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   const [permits, setPermits] = useState<Permit[]>([]);
   const [lessons, setLessons] = useState<LessonLearned[]>([]);
+  const [sqeRecords, setSqeRecords] = useState<SqeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -149,6 +157,7 @@ export default function ProjectDetailPage() {
         stakeholderData,
         permitData,
         lessonData,
+        sqeData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -164,6 +173,7 @@ export default function ProjectDetailPage() {
         getStakeholders(id),
         getPermits(id),
         getLessonsLearned(id),
+        getSqeRecords(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -179,6 +189,7 @@ export default function ProjectDetailPage() {
       setStakeholders(stakeholderData);
       setPermits(permitData);
       setLessons(lessonData);
+      setSqeRecords(sqeData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -432,6 +443,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateSqeRecord(data: Partial<SqeRecordInput>) {
+    if (!project) return;
+    await createSqeRecord(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateSqeRecord(
+    record: SqeRecord,
+    data: Partial<SqeRecordInput>
+  ) {
+    await updateSqeRecord(record.id, data);
+    await load();
+  }
+
+  async function handleDeleteSqeRecord(record: SqeRecord) {
+    await deleteSqeRecord(record.id);
+    await load();
+  }
+
   const health = useMemo(
     () =>
       project ? computeProjectHealth(project, cashFlowEntries, variations, risks) : null,
@@ -586,6 +616,13 @@ export default function ProjectDetailPage() {
           onCreate={handleCreateRisk}
           onUpdate={handleUpdateRisk}
           onDelete={handleDeleteRisk}
+        />
+
+        <SqePanel
+          records={sqeRecords}
+          onCreate={handleCreateSqeRecord}
+          onUpdate={handleUpdateSqeRecord}
+          onDelete={handleDeleteSqeRecord}
         />
 
         <ActionsPanel

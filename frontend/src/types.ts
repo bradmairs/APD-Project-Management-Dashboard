@@ -362,3 +362,39 @@ export type LessonLearnedInput = Omit<
   LessonLearned,
   "id" | "projectId" | "createdById" | "createdByName" | "createdAt" | "updatedAt" | "project"
 >;
+
+export type SqeCategory = "SAFETY" | "QUALITY" | "ENVIRONMENT";
+
+export type SqeSeverity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+
+export type SqeStatus = "OPEN" | "IN_PROGRESS" | "CLOSED";
+
+export interface SqeRecord {
+  id: string;
+  projectId: string;
+  category: SqeCategory;
+  severity: SqeSeverity;
+  title: string;
+  description: string | null;
+  correctiveAction: string | null;
+  dateOccurred: string;
+  status: SqeStatus;
+  dateClosed: string | null;
+  reportedById: string | null;
+  reportedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type SqeRecordInput = Omit<
+  SqeRecord,
+  | "id"
+  | "projectId"
+  | "dateClosed"
+  | "reportedById"
+  | "reportedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

@@ -9,6 +9,7 @@ import {
   ProjectInput,
   ProjectStatus,
   Risk,
+  SqeRecord,
   Task,
   Variation,
 } from "../types";
@@ -19,6 +20,7 @@ import {
   getAllCashFlowEntries,
   getAllPermits,
   getAllRisks,
+  getAllSqeRecords,
   getAllVariations,
   getProjects,
   getRecentActivity,
@@ -33,6 +35,7 @@ import ActivityFeed from "../components/ActivityFeed";
 import TopRisksPanel from "../components/TopRisksPanel";
 import OpenActionsPanel from "../components/OpenActionsPanel";
 import ExpiringPermitsPanel from "../components/ExpiringPermitsPanel";
+import OpenSqePanel from "../components/OpenSqePanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -57,6 +60,7 @@ export default function DashboardPage() {
   const [risks, setRisks] = useState<Risk[]>([]);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [permits, setPermits] = useState<Permit[]>([]);
+  const [sqeRecords, setSqeRecords] = useState<SqeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -79,6 +83,7 @@ export default function DashboardPage() {
         riskData,
         actionItemData,
         permitData,
+        sqeData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -88,6 +93,7 @@ export default function DashboardPage() {
         getAllRisks(),
         getAllActionItems(),
         getAllPermits(),
+        getAllSqeRecords(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -97,6 +103,7 @@ export default function DashboardPage() {
       setRisks(riskData);
       setActionItems(actionItemData);
       setPermits(permitData);
+      setSqeRecords(sqeData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -222,10 +229,11 @@ export default function DashboardPage() {
         <StatCards projects={projects} />
 
         {!loading && projects.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
             <NeedsAttentionPanel projects={projects} healthByProjectId={healthByProjectId} />
             <OpenActionsPanel actionItems={actionItems} />
             <ExpiringPermitsPanel permits={permits} />
+            <OpenSqePanel records={sqeRecords} />
           </div>
         )}
 

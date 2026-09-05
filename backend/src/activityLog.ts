@@ -6,6 +6,7 @@ import {
   Project,
   Risk,
   SiteVisit,
+  SqeRecord,
   Stakeholder,
   Task,
   Variation,
@@ -229,4 +230,22 @@ export function describeLessonLearnedUpdate(
   body: Record<string, unknown>
 ): string {
   return `updated lesson learned "${before.title}"`;
+}
+
+const SQE_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  IN_PROGRESS: "In Progress",
+  CLOSED: "Closed",
+};
+
+export function describeSqeUpdate(
+  before: SqeRecord,
+  body: Record<string, unknown>
+): string {
+  const noun = `${before.category.toLowerCase()} issue`;
+  if ("status" in body && body.status !== before.status) {
+    const label = SQE_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked ${noun} "${before.title}" as ${label}`;
+  }
+  return `updated ${noun} "${before.title}"`;
 }

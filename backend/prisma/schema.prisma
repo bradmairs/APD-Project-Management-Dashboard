@@ -98,6 +98,25 @@ enum LessonType {
   NEGATIVE
 }
 
+enum SqeCategory {
+  SAFETY
+  QUALITY
+  ENVIRONMENT
+}
+
+enum SqeSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SqeStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -118,6 +137,7 @@ model User {
   actionItems    ActionItem[]
   permits        Permit[]
   lessonsLearned LessonLearned[]
+  sqeRecords     SqeRecord[]
 }
 
 model Project {
@@ -155,6 +175,7 @@ model Project {
   stakeholders           Stakeholder[]
   permits                Permit[]
   lessonsLearned         LessonLearned[]
+  sqeRecords             SqeRecord[]
 }
 
 model Task {
@@ -499,6 +520,36 @@ model LessonLearned {
   createdByName  String
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
+
+  @@index([projectId])
+}
+
+// A safety, quality, or environmental incident/observation logged against
+// a project — an SQE register entry. severity follows a standard 4-band
+// scale (Low/Medium/High/Critical) rather than the 5x5 likelihood x
+// consequence matrix Risk uses, since an SQE record documents something
+// that already happened rather than an uncertain future event — there's
+// no "likelihood" left to assess once it's occurred. dateClosed stamps
+// automatically the moment status becomes Closed, the same pattern
+// ActionItem.dateClosed and Variation.dateDecided use. Cascades with its
+// project like the other registers.
+model SqeRecord {
+  id               String      @id @default(cuid())
+  project          Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  category         SqeCategory
+  severity         SqeSeverity
+  title            String
+  description      String?
+  correctiveAction String?
+  dateOccurred     DateTime
+  status           SqeStatus   @default(OPEN)
+  dateClosed       DateTime?
+  reportedBy       User?       @relation(fields: [reportedById], references: [id], onDelete: SetNull)
+  reportedById     String?
+  reportedByName   String
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
   @@index([projectId])
 }

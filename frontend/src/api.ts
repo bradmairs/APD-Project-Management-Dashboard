@@ -21,6 +21,8 @@ import {
   SiteVisit,
   SiteVisitInput,
   SiteVisitPhoto,
+  SqeRecord,
+  SqeRecordInput,
   Stakeholder,
   StakeholderInput,
   Task,
@@ -596,4 +598,38 @@ export function deleteLessonLearned(id: string): Promise<void> {
   return fetch(`${API_BASE}/lessons-learned/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
+}
+
+export function getSqeRecords(projectId: string): Promise<SqeRecord[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/sqe`).then((res) => handle(res));
+}
+
+export function getAllSqeRecords(): Promise<SqeRecord[]> {
+  return fetch(`${API_BASE}/sqe`).then((res) => handle(res));
+}
+
+export function createSqeRecord(
+  projectId: string,
+  data: Partial<SqeRecordInput>
+): Promise<SqeRecord> {
+  return fetch(`${API_BASE}/projects/${projectId}/sqe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateSqeRecord(
+  id: string,
+  data: Partial<SqeRecordInput>
+): Promise<SqeRecord> {
+  return fetch(`${API_BASE}/sqe/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteSqeRecord(id: string): Promise<void> {
+  return fetch(`${API_BASE}/sqe/${id}`, { method: "DELETE" }).then((res) => handle(res));
 }

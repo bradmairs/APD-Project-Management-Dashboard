@@ -355,6 +355,30 @@ current state and status history (via the Activity panel) are what
 matter. Open to any logged-in user to edit, matching Tasks, Attachments,
 Milestones, and Variations.
 
+## Safety, Quality & Environment
+
+Each project has an **SQE** register for logging safety, quality, and
+environmental issues: a Category (Safety/Quality/Environment), a
+Severity (Low/Medium/High/Critical), Title, Description, Corrective
+Action, the date it occurred, and a status of Open/In Progress/Closed
+(changeable inline, like Actions & Decisions).
+
+Severity here is rated directly on a 4-band scale rather than through
+Risk's likelihood × consequence matrix — an SQE record documents
+something that already happened, so there's no "likelihood" left to
+assess once it's occurred, only how severe it turned out to be.
+`dateClosed` stamps automatically the moment status becomes Closed, the
+same pattern Actions & Decisions and Variations use for their own
+closing dates.
+
+The dashboard's portfolio-wide **Open SQE Issues** panel lists every
+open issue across every project, most severe first, linking back to its
+project — sitting alongside Needs Attention, Open Actions, and Permits
+Expiring Soon as a fourth view into what needs a PM's attention today.
+
+Like the other registers, an SQE record is live data with no per-month
+snapshot. Open to any logged-in user to edit.
+
 ## Actions & Decisions
 
 Each project has an **Actions & Decisions** register — one shared
