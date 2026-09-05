@@ -7,6 +7,12 @@ import {
   Attachment,
   CashFlowEntry,
   CashFlowEntryInput,
+  LessonLearned,
+  LessonLearnedInput,
+  Permit,
+  PermitInput,
+  Stakeholder,
+  StakeholderInput,
   Milestone,
   MilestoneInput,
   MonthlyReport,
@@ -25,41 +31,53 @@ import {
 } from "../types";
 import {
   createActionItem,
+  createLessonLearned,
   createMilestone,
   createMonthlyReport,
+  createPermit,
   createRisk,
   createSiteVisit,
+  createStakeholder,
   createTask,
   createVariation,
   deleteActionItem,
   deleteAttachment,
   deleteCashFlowEntry,
+  deleteLessonLearned,
   deleteMilestone,
   deleteMonthlyReport,
+  deletePermit,
   deleteProject,
   deleteRisk,
   deleteSiteVisit,
   deleteSiteVisitPhoto,
+  deleteStakeholder,
   deleteTask,
   deleteVariation,
   getActionItems,
   getAttachments,
   getCashFlowEntries,
+  getLessonsLearned,
   getMilestones,
   getMonthlyReports,
+  getPermits,
   getProject,
   getProjectActivity,
   getProjectSitePhotos,
   getRisks,
   getSiteVisits,
+  getStakeholders,
   getVariations,
   reorderMilestone,
   updateActionItem,
+  updateLessonLearned,
   updateMilestone,
   updateMonthlyReport,
+  updatePermit,
   updateProject,
   updateRisk,
   updateSiteVisit,
+  updateStakeholder,
   updateTask,
   updateVariation,
   uploadAttachment,
@@ -77,6 +95,9 @@ import SiteVisitsPanel from "../components/SiteVisitsPanel";
 import VariationsPanel from "../components/VariationsPanel";
 import RisksPanel from "../components/RisksPanel";
 import ActionsPanel from "../components/ActionsPanel";
+import StakeholdersPanel from "../components/StakeholdersPanel";
+import PermitsPanel from "../components/PermitsPanel";
+import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
 import HealthBadge from "../components/HealthBadge";
 import { computeProjectHealth } from "../health";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
@@ -101,6 +122,9 @@ export default function ProjectDetailPage() {
   const [variations, setVariations] = useState<Variation[]>([]);
   const [risks, setRisks] = useState<Risk[]>([]);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
+  const [permits, setPermits] = useState<Permit[]>([]);
+  const [lessons, setLessons] = useState<LessonLearned[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -122,6 +146,9 @@ export default function ProjectDetailPage() {
         variationData,
         riskData,
         actionItemData,
+        stakeholderData,
+        permitData,
+        lessonData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -134,6 +161,9 @@ export default function ProjectDetailPage() {
         getVariations(id),
         getRisks(id),
         getActionItems(id),
+        getStakeholders(id),
+        getPermits(id),
+        getLessonsLearned(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -146,6 +176,9 @@ export default function ProjectDetailPage() {
       setVariations(variationData);
       setRisks(riskData);
       setActionItems(actionItemData);
+      setStakeholders(stakeholderData);
+      setPermits(permitData);
+      setLessons(lessonData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -345,6 +378,60 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateStakeholder(data: Partial<StakeholderInput>) {
+    if (!project) return;
+    await createStakeholder(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateStakeholder(
+    stakeholder: Stakeholder,
+    data: Partial<StakeholderInput>
+  ) {
+    await updateStakeholder(stakeholder.id, data);
+    await load();
+  }
+
+  async function handleDeleteStakeholder(stakeholder: Stakeholder) {
+    await deleteStakeholder(stakeholder.id);
+    await load();
+  }
+
+  async function handleCreatePermit(data: Partial<PermitInput>) {
+    if (!project) return;
+    await createPermit(project.id, data);
+    await load();
+  }
+
+  async function handleUpdatePermit(permit: Permit, data: Partial<PermitInput>) {
+    await updatePermit(permit.id, data);
+    await load();
+  }
+
+  async function handleDeletePermit(permit: Permit) {
+    await deletePermit(permit.id);
+    await load();
+  }
+
+  async function handleCreateLesson(data: Partial<LessonLearnedInput>) {
+    if (!project) return;
+    await createLessonLearned(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateLesson(
+    lesson: LessonLearned,
+    data: Partial<LessonLearnedInput>
+  ) {
+    await updateLessonLearned(lesson.id, data);
+    await load();
+  }
+
+  async function handleDeleteLesson(lesson: LessonLearned) {
+    await deleteLessonLearned(lesson.id);
+    await load();
+  }
+
   const health = useMemo(
     () =>
       project ? computeProjectHealth(project, cashFlowEntries, variations, risks) : null,
@@ -465,6 +552,20 @@ export default function ProjectDetailPage() {
           <Field label="Created By" value={project.createdBy?.name || "—"} />
         </div>
 
+        <StakeholdersPanel
+          stakeholders={stakeholders}
+          onCreate={handleCreateStakeholder}
+          onUpdate={handleUpdateStakeholder}
+          onDelete={handleDeleteStakeholder}
+        />
+
+        <PermitsPanel
+          permits={permits}
+          onCreate={handleCreatePermit}
+          onUpdate={handleUpdatePermit}
+          onDelete={handleDeletePermit}
+        />
+
         <VariationsPanel
           variations={variations}
           onCreate={handleCreateVariation}
@@ -532,6 +633,13 @@ export default function ProjectDetailPage() {
           onCreate={handleCreateReport}
           onUpdate={handleUpdateReport}
           onDelete={handleDeleteReport}
+        />
+
+        <LessonsLearnedPanel
+          lessons={lessons}
+          onCreate={handleCreateLesson}
+          onUpdate={handleUpdateLesson}
+          onDelete={handleDeleteLesson}
         />
 
         <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">

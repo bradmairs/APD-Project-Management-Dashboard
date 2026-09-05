@@ -1,4 +1,15 @@
-import { ActionItem, Milestone, Project, Risk, SiteVisit, Task, Variation } from "@prisma/client";
+import {
+  ActionItem,
+  LessonLearned,
+  Milestone,
+  Permit,
+  Project,
+  Risk,
+  SiteVisit,
+  Stakeholder,
+  Task,
+  Variation,
+} from "@prisma/client";
 import { prisma } from "./prisma";
 
 interface LogParams {
@@ -187,4 +198,35 @@ export function describeActionItemUpdate(
     return `marked ${noun} "${before.title}" as ${label}`;
   }
   return `updated ${noun} "${before.title}"`;
+}
+
+export function describeStakeholderUpdate(
+  before: Stakeholder,
+  body: Record<string, unknown>
+): string {
+  return `updated stakeholder "${before.name}"`;
+}
+
+const PERMIT_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pending",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
+export function describePermitUpdate(
+  before: Permit,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = PERMIT_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked permit "${before.title}" as ${label}`;
+  }
+  return `updated permit "${before.title}"`;
+}
+
+export function describeLessonLearnedUpdate(
+  before: LessonLearned,
+  body: Record<string, unknown>
+): string {
+  return `updated lesson learned "${before.title}"`;
 }

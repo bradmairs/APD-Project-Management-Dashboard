@@ -386,6 +386,59 @@ Like Risks and Variations, an action item is live data with no per-month
 snapshot. Open to any logged-in user to edit, matching Tasks,
 Attachments, Milestones, Variations, and Risks.
 
+## Stakeholders
+
+Each project has a **Stakeholders** register — a simple contact
+directory of the people and organizations with a stake in the project (a
+landholder, a council contact, a community group): Name, Role,
+Organization, Email, and Phone, with free-text Notes on expand. Unlike
+every other register on this page, a stakeholder has no status or
+lifecycle of its own — it's a directory entry, not something that moves
+through states — so there's nothing to track a transition for beyond the
+plain fact of an edit. No portfolio-wide view exists for this one;
+stakeholders are inherently project-specific in a way that doesn't
+aggregate meaningfully across the portfolio the way an open risk or an
+expiring permit does. Open to any logged-in user to edit.
+
+## Permits & Approvals
+
+Each project has a **Permits & Approvals** register for tracking
+environmental, planning, and regulatory approvals: Title, Category (free
+text, with suggestions like "Environmental" or "Cultural Heritage"),
+Reference Number, Issuing Authority, a Status of Pending/Approved/
+Rejected (changeable inline), Date Applied, Date Approved, an Expiry
+Date, and Notes.
+
+Whether an approved permit is **Expiring Soon** (within 60 days) or
+**Expired** is computed from its expiry date against the current time,
+the same way a project's overdue state is computed rather than stored —
+`frontend/src/permitMeta.ts` — so it can never drift stale the way a
+manually-set "expired" status would the moment nobody's looking. Only an
+Approved permit can meaningfully expire; a Pending or Rejected one was
+never in force. The dashboard's portfolio-wide **Permits Expiring Soon**
+panel lists every flagged permit across every project, soonest first,
+linking back to its project — sitting alongside Needs Attention and Open
+Actions as a third view into what needs a PM's attention today. Open to
+any logged-in user to edit.
+
+## Lessons Learned
+
+Each project has a **Lessons Learned** register — one shared
+`LessonLearned` model with a `type` discriminator (what went well vs.
+what to improve), the same Risk/Opportunity-style pattern used
+elsewhere. Each entry has a Title, Category, a description of what
+happened, and a Recommendation for future projects.
+
+Unlike the other registers, a lesson's value is less about tracking it
+to closure and more about it being **findable later** — by a PM starting
+a new pump station project, say, wanting to know what past pump station
+projects learned. The dashboard header has its own **Lessons Learned**
+page (`/lessons-learned`), separate from the per-project panel, listing
+every lesson across the whole portfolio with type and category filters
+plus a text search, each linking back to its project (and that project's
+asset type, for exactly that "what have we learned about this kind of
+asset" use case). Open to any logged-in user to edit.
+
 ## Project Health
 
 Every project gets a live **Health** rating — Green/Amber/Red — computed

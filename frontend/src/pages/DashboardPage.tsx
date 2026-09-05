@@ -4,6 +4,7 @@ import {
   ActionItem,
   ActivityLogEntry,
   CashFlowEntry,
+  Permit,
   Project,
   ProjectInput,
   ProjectStatus,
@@ -16,6 +17,7 @@ import {
   deleteProject,
   getAllActionItems,
   getAllCashFlowEntries,
+  getAllPermits,
   getAllRisks,
   getAllVariations,
   getProjects,
@@ -30,6 +32,7 @@ import UpcomingDeadlines from "../components/UpcomingDeadlines";
 import ActivityFeed from "../components/ActivityFeed";
 import TopRisksPanel from "../components/TopRisksPanel";
 import OpenActionsPanel from "../components/OpenActionsPanel";
+import ExpiringPermitsPanel from "../components/ExpiringPermitsPanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -53,6 +56,7 @@ export default function DashboardPage() {
   const [variations, setVariations] = useState<Variation[]>([]);
   const [risks, setRisks] = useState<Risk[]>([]);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [permits, setPermits] = useState<Permit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -74,6 +78,7 @@ export default function DashboardPage() {
         variationData,
         riskData,
         actionItemData,
+        permitData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -82,6 +87,7 @@ export default function DashboardPage() {
         getAllVariations(),
         getAllRisks(),
         getAllActionItems(),
+        getAllPermits(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -90,6 +96,7 @@ export default function DashboardPage() {
       setVariations(variationData);
       setRisks(riskData);
       setActionItems(actionItemData);
+      setPermits(permitData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -183,6 +190,12 @@ export default function DashboardPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Link
+              to="/lessons-learned"
+              className="px-4 py-2 text-sm rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+            >
+              Lessons Learned
+            </Link>
+            <Link
               to="/reports"
               className="px-4 py-2 text-sm rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             >
@@ -209,9 +222,10 @@ export default function DashboardPage() {
         <StatCards projects={projects} />
 
         {!loading && projects.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <NeedsAttentionPanel projects={projects} healthByProjectId={healthByProjectId} />
             <OpenActionsPanel actionItems={actionItems} />
+            <ExpiringPermitsPanel permits={permits} />
           </div>
         )}
 

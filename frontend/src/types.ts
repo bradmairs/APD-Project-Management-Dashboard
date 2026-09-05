@@ -296,3 +296,69 @@ export type ActionItemInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export interface Stakeholder {
+  id: string;
+  projectId: string;
+  name: string;
+  organization: string | null;
+  role: string | null;
+  email: string | null;
+  phone: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type StakeholderInput = Omit<
+  Stakeholder,
+  "id" | "projectId" | "createdAt" | "updatedAt"
+>;
+
+export type PermitStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface Permit {
+  id: string;
+  projectId: string;
+  title: string;
+  category: string | null;
+  referenceNumber: string | null;
+  issuingAuthority: string | null;
+  status: PermitStatus;
+  dateApplied: string | null;
+  dateApproved: string | null;
+  expiryDate: string | null;
+  notes: string | null;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type PermitInput = Omit<
+  Permit,
+  "id" | "projectId" | "createdById" | "createdByName" | "createdAt" | "updatedAt" | "project"
+>;
+
+export type LessonType = "POSITIVE" | "NEGATIVE";
+
+export interface LessonLearned {
+  id: string;
+  projectId: string;
+  type: LessonType;
+  title: string;
+  category: string | null;
+  description: string | null;
+  recommendation: string | null;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string; assetType: string | null };
+}
+
+export type LessonLearnedInput = Omit<
+  LessonLearned,
+  "id" | "projectId" | "createdById" | "createdByName" | "createdAt" | "updatedAt" | "project"
+>;

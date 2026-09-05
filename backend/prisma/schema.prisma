@@ -87,6 +87,17 @@ enum ActionItemStatus {
   DONE
 }
 
+enum PermitStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LessonType {
+  POSITIVE
+  NEGATIVE
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -105,6 +116,8 @@ model User {
   variations     Variation[]
   risks          Risk[]
   actionItems    ActionItem[]
+  permits        Permit[]
+  lessonsLearned LessonLearned[]
 }
 
 model Project {
@@ -139,6 +152,9 @@ model Project {
   variations             Variation[]
   risks                  Risk[]
   actionItems            ActionItem[]
+  stakeholders           Stakeholder[]
+  permits                Permit[]
+  lessonsLearned         LessonLearned[]
 }
 
 model Task {
@@ -405,6 +421,84 @@ model ActionItem {
   notes        String?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+
+  @@index([projectId])
+}
+
+// A person or organization with a stake in a project — a landholder, a
+// council contact, a community group. Unlike Risk/Variation/ActionItem
+// this has no status or lifecycle of its own; it's a contact directory
+// entry that simply exists until it's no longer relevant, so there's
+// nothing to log a status transition for. Cascades with its project like
+// the other registers.
+model Stakeholder {
+  id           String   @id @default(cuid())
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+  name         String
+  organization String?
+  role         String?
+  email        String?
+  phone        String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+// An environmental/planning/regulatory permit or approval a project needs.
+// Whether it's "expiring soon" or already expired is computed from
+// expiryDate against the current date (frontend/src/permitMeta.ts), the
+// same way a Project's overdue state is computed rather than stored —
+// storing "expired" as a status would drift stale the moment the clock
+// passes it without anyone touching the row. status here only tracks the
+// application's own outcome (Pending/Approved/Rejected). Cascades with
+// its project like the other registers.
+model Permit {
+  id                String       @id @default(cuid())
+  project           Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId         String
+  title             String
+  category          String?
+  referenceNumber   String?
+  issuingAuthority  String?
+  status            PermitStatus @default(PENDING)
+  dateApplied       DateTime?
+  dateApproved      DateTime?
+  expiryDate        DateTime?
+  notes             String?
+  createdBy         User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById       String?
+  createdByName     String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([projectId])
+}
+
+// A lesson captured from a project for the benefit of future ones — what
+// went well (POSITIVE) or what should be done differently (NEGATIVE),
+// the same Risk/Opportunity-style discriminator on one shared shape.
+// Unlike the other registers this is written once a lesson is identified
+// and then rarely changes; its value is in being browsable across the
+// whole portfolio afterwards (see the dashboard's Lessons Learned page)
+// rather than in tracking a status to closure. Cascades with its project
+// like the other registers.
+model LessonLearned {
+  id             String     @id @default(cuid())
+  project        Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  type           LessonType @default(POSITIVE)
+  title          String
+  category       String?
+  description    String?
+  recommendation String?
+  createdBy      User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdByName  String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   @@index([projectId])
 }
