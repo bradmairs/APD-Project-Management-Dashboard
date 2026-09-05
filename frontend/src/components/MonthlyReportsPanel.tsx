@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { MonthlyReport, MonthlyReportInput, User } from "../types";
 import { RAG_COLORS, RAG_LABELS } from "../ragMeta";
 import { formatReportMonth } from "../format";
@@ -104,22 +105,30 @@ export default function MonthlyReportsPanel({
                       </span>
                     </div>
                   </button>
-                  {canModify && (
-                    <div className="flex items-center gap-3 shrink-0 pt-0.5">
-                      <button
-                        onClick={() => openEdit(report)}
-                        className="text-xs text-blue-600 hover:underline"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(report)}
-                        className="text-xs text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3 shrink-0 pt-0.5">
+                    <Link
+                      to={`/projects/${report.projectId}/reports/${report.id}`}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      View
+                    </Link>
+                    {canModify && (
+                      <>
+                        <button
+                          onClick={() => openEdit(report)}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(report)}
+                          className="text-xs text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {isExpanded && (
