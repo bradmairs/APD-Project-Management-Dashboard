@@ -1,6 +1,8 @@
 import {
   ActivityLogEntry,
   Attachment,
+  Milestone,
+  MilestoneInput,
   MonthlyReport,
   MonthlyReportInput,
   Project,
@@ -219,4 +221,49 @@ export function deleteMonthlyReport(id: string): Promise<void> {
   return fetch(`${API_BASE}/reports/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
+}
+
+export function getMilestones(projectId: string): Promise<Milestone[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/milestones`).then((res) =>
+    handle(res)
+  );
+}
+
+export function createMilestone(
+  projectId: string,
+  data: Partial<MilestoneInput>
+): Promise<Milestone> {
+  return fetch(`${API_BASE}/projects/${projectId}/milestones`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateMilestone(
+  id: string,
+  data: Partial<MilestoneInput>
+): Promise<Milestone> {
+  return fetch(`${API_BASE}/milestones/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteMilestone(id: string): Promise<void> {
+  return fetch(`${API_BASE}/milestones/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function reorderMilestone(
+  id: string,
+  direction: "up" | "down"
+): Promise<Milestone[]> {
+  return fetch(`${API_BASE}/milestones/${id}/reorder`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ direction }),
+  }).then((res) => handle(res));
 }

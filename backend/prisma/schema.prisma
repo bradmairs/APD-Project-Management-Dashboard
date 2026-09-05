@@ -75,6 +75,7 @@ model Project {
   activityLogs           ActivityLog[]
   attachments            Attachment[]
   monthlyReports         MonthlyReport[]
+  milestones             Milestone[]
 }
 
 model Task {
@@ -107,6 +108,33 @@ model Attachment {
   uploadedById   String?
   uploadedByName String
   createdAt      DateTime @default(now())
+
+  @@index([projectId])
+}
+
+// A major project deliverable from the WBS schedule table in the monthly
+// report (Concept Design, Detailed Design, Construction, ...). Unlike
+// MonthlyReport this is a live, current list — matching Task, it reflects
+// where the project's schedule stands right now rather than a per-month
+// snapshot, since re-entering the whole WBS table every month would be
+// needless duplication for rows that mostly don't change month to month.
+// sortOrder preserves the WBS sequence (each new row appends to the end;
+// reordering swaps two rows' values) since that order is meaningful and
+// isn't derivable from any other field.
+model Milestone {
+  id                   String    @id @default(cuid())
+  project              Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId            String
+  wbsItem              String?
+  taskActivity         String
+  percentComplete      Int       @default(0)
+  originalCompletion   DateTime?
+  forecastedCompletion DateTime?
+  actualCompletion     DateTime?
+  notes                String?
+  sortOrder            Int       @default(0)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@index([projectId])
 }

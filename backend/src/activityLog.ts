@@ -1,4 +1,4 @@
-import { Project, Task } from "@prisma/client";
+import { Milestone, Project, Task } from "@prisma/client";
 import { prisma } from "./prisma";
 
 interface LogParams {
@@ -110,4 +110,14 @@ export function describeTaskUpdate(before: Task, body: Record<string, unknown>):
     return `updated the due date for task "${before.title}"`;
   }
   return `updated task "${before.title}"`;
+}
+
+export function describeMilestoneUpdate(
+  before: Milestone,
+  body: Record<string, unknown>
+): string {
+  if ("percentComplete" in body && body.percentComplete !== before.percentComplete) {
+    return `updated milestone "${before.taskActivity}" to ${body.percentComplete}% complete`;
+  }
+  return `updated milestone "${before.taskActivity}"`;
 }

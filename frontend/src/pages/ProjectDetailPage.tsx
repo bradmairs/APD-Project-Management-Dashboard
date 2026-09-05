@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ActivityLogEntry,
   Attachment,
+  Milestone,
+  MilestoneInput,
   MonthlyReport,
   MonthlyReportInput,
   Project,
@@ -11,16 +13,21 @@ import {
   TaskStatus,
 } from "../types";
 import {
+  createMilestone,
   createMonthlyReport,
   createTask,
   deleteAttachment,
+  deleteMilestone,
   deleteMonthlyReport,
   deleteProject,
   deleteTask,
   getAttachments,
+  getMilestones,
   getMonthlyReports,
   getProject,
   getProjectActivity,
+  reorderMilestone,
+  updateMilestone,
   updateMonthlyReport,
   updateProject,
   updateTask,
@@ -31,6 +38,7 @@ import TaskList from "../components/TaskList";
 import ActivityFeed from "../components/ActivityFeed";
 import AttachmentsPanel from "../components/AttachmentsPanel";
 import MonthlyReportsPanel from "../components/MonthlyReportsPanel";
+import MilestonesPanel from "../components/MilestonesPanel";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import { canModifyProject } from "../permissions";
@@ -46,6 +54,7 @@ export default function ProjectDetailPage() {
   const [activity, setActivity] = useState<ActivityLogEntry[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [reports, setReports] = useState<MonthlyReport[]>([]);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -55,16 +64,19 @@ export default function ProjectDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const [data, activityData, attachmentData, reportData] = await Promise.all([
-        getProject(id),
-        getProjectActivity(id),
-        getAttachments(id),
-        getMonthlyReports(id),
-      ]);
+      const [data, activityData, attachmentData, reportData, milestoneData] =
+        await Promise.all([
+          getProject(id),
+          getProjectActivity(id),
+          getAttachments(id),
+          getMonthlyReports(id),
+          getMilestones(id),
+        ]);
       setProject(data);
       setActivity(activityData);
       setAttachments(attachmentData);
       setReports(reportData);
+      setMilestones(milestoneData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -140,6 +152,33 @@ export default function ProjectDetailPage() {
 
   async function handleDeleteReport(report: MonthlyReport) {
     await deleteMonthlyReport(report.id);
+    await load();
+  }
+
+  async function handleCreateMilestone(data: Partial<MilestoneInput>) {
+    if (!project) return;
+    await createMilestone(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateMilestone(
+    milestone: Milestone,
+    data: Partial<MilestoneInput>
+  ) {
+    await updateMilestone(milestone.id, data);
+    await load();
+  }
+
+  async function handleDeleteMilestone(milestone: Milestone) {
+    await deleteMilestone(milestone.id);
+    await load();
+  }
+
+  async function handleReorderMilestone(
+    milestone: Milestone,
+    direction: "up" | "down"
+  ) {
+    await reorderMilestone(milestone.id, direction);
     await load();
   }
 
@@ -247,6 +286,14 @@ export default function ProjectDetailPage() {
           onAdd={handleAddTask}
           onUpdate={handleUpdateTask}
           onDelete={handleDeleteTask}
+        />
+
+        <MilestonesPanel
+          milestones={milestones}
+          onCreate={handleCreateMilestone}
+          onUpdate={handleUpdateMilestone}
+          onDelete={handleDeleteMilestone}
+          onReorder={handleReorderMilestone}
         />
 
         <AttachmentsPanel

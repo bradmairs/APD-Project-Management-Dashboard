@@ -226,14 +226,34 @@ removed or deactivated.
 This is the first phase of a larger effort to bring the full monthly report
 into the dashboard. Not yet built:
 
-- **Milestones / WBS schedule** — the source report's major-deliverable
-  table (% complete, original/forecast/actual completion dates), richer
-  than the existing Task list
 - **Cash flow tracking** — monthly actual/forecast $ by financial year,
   rolling up to the report's expenditure-to-date and variance figures
-- **A formatted report view and export** — once the above exist, a page
-  that lays them out like the source document, with a PDF/print option for
-  board reporting
+- **A formatted report view and export** — once the above exists, a page
+  that lays everything out like the source document, with a PDF/print
+  option for board reporting
+
+## Milestones
+
+Each project has a **Milestones** panel — the source report's WBS schedule
+table: Task/Activity, an optional WBS Item code, Percentage Completed
+(shown as a progress bar), and Original / Forecasted / Actual Completion
+dates, plus free-text notes. A rolled-up "X% complete overall" figure next
+to the panel title is the average across all of a project's milestones,
+matching the source report's "Project Completion" summary row.
+
+Unlike Monthly Reports, milestones are a **live list**, not a per-month
+snapshot — the same way Tasks work. A project's WBS breakdown (Concept
+Design, Detailed Design, Construction, ...) mostly doesn't change month to
+month, so re-entering the whole table on every report would just be
+duplication; a monthly report view (once built) would read the milestones
+as they stand at that time, the same way a real report is a point-in-time
+look at a schedule that itself keeps moving.
+
+Milestones keep their WBS order via up/down arrows (a new one is appended
+to the end) rather than being sorted by date or percentage, since that
+sequence is meaningful on its own and isn't derivable from the other
+fields. Open to any logged-in user to edit, like Tasks and Attachments —
+only the project record itself needs an owner.
 
 ## Roadmap ideas (not built yet)
 
