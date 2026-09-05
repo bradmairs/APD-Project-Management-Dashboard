@@ -59,9 +59,11 @@ export default function MonthlyReportsPanel({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
+    <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-900">Monthly Reports</h2>
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          Monthly Reports
+        </h2>
         <button
           onClick={openCreate}
           className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
@@ -71,9 +73,11 @@ export default function MonthlyReportsPanel({
       </div>
 
       {reports.length === 0 ? (
-        <p className="text-sm text-slate-500">No monthly reports yet.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          No monthly reports yet.
+        </p>
       ) : (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-slate-100 dark:divide-slate-700">
           {reports.map((report) => {
             const canModify = canModifyReport(report, currentUser);
             const isExpanded = expandedId === report.id;
@@ -85,10 +89,10 @@ export default function MonthlyReportsPanel({
                     className="flex-1 min-w-0 text-left"
                   >
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-slate-900">
+                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
                         {formatReportMonth(report.reportingMonth)}
                       </span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
                         {report.projectPhase} · {report.currentStatus}
                       </span>
                     </div>
@@ -108,7 +112,7 @@ export default function MonthlyReportsPanel({
                   <div className="flex items-center gap-3 shrink-0 pt-0.5">
                     <Link
                       to={`/projects/${report.projectId}/reports/${report.id}`}
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       View
                     </Link>
@@ -116,13 +120,13 @@ export default function MonthlyReportsPanel({
                       <>
                         <button
                           onClick={() => openEdit(report)}
-                          className="text-xs text-blue-600 hover:underline"
+                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(report)}
-                          className="text-xs text-red-600 hover:underline"
+                          className="text-xs text-red-600 dark:text-red-400 hover:underline"
                         >
                           Delete
                         </button>
@@ -135,41 +139,45 @@ export default function MonthlyReportsPanel({
                   <div className="mt-3 space-y-3 text-sm">
                     {report.recentlyCompleted && (
                       <div>
-                        <div className="text-xs font-medium text-slate-500 mb-1">
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                           Recently Completed
                         </div>
-                        <p className="text-slate-700 whitespace-pre-line">
+                        <p className="text-slate-700 dark:text-slate-300 whitespace-pre-line">
                           {report.recentlyCompleted}
                         </p>
                       </div>
                     )}
                     {report.monthlyLookahead && (
                       <div>
-                        <div className="text-xs font-medium text-slate-500 mb-1">
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                           Monthly Lookahead
                         </div>
-                        <p className="text-slate-700 whitespace-pre-line">
+                        <p className="text-slate-700 dark:text-slate-300 whitespace-pre-line">
                           {report.monthlyLookahead}
                         </p>
                       </div>
                     )}
                     {report.budgetComments && (
                       <div>
-                        <div className="text-xs font-medium text-slate-500 mb-1">
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                           Budget Comments
                         </div>
-                        <p className="text-slate-700">{report.budgetComments}</p>
+                        <p className="text-slate-700 dark:text-slate-300">
+                          {report.budgetComments}
+                        </p>
                       </div>
                     )}
                     {report.scheduleComments && (
                       <div>
-                        <div className="text-xs font-medium text-slate-500 mb-1">
+                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                           Schedule Comments
                         </div>
-                        <p className="text-slate-700">{report.scheduleComments}</p>
+                        <p className="text-slate-700 dark:text-slate-300">
+                          {report.scheduleComments}
+                        </p>
                       </div>
                     )}
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-slate-400 dark:text-slate-500">
                       Reported by {report.authorName}
                     </div>
                   </div>

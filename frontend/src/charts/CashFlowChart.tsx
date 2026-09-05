@@ -1,11 +1,13 @@
 import { CashFlowEntry } from "../types";
 import { formatCurrency, formatReportMonth } from "../format";
+import { useTheme } from "../theme/ThemeContext";
 import {
   CASH_FLOW_ACTUAL,
   CASH_FLOW_FORECAST,
   CHART_BASELINE,
   CHART_TEXT_MUTED,
   CHART_TEXT_SECONDARY,
+  chartColor,
 } from "./palette";
 
 const CHART_HEIGHT = 140;
@@ -19,23 +21,23 @@ function monthLabel(value: string): string {
   });
 }
 
-function Legend() {
+function Legend({ theme }: { theme: "light" | "dark" }) {
   return (
     <div
       className="flex items-center gap-4 mb-3 text-xs"
-      style={{ color: CHART_TEXT_SECONDARY }}
+      style={{ color: chartColor(CHART_TEXT_SECONDARY, theme) }}
     >
       <span className="flex items-center gap-1.5">
         <span
           className="inline-block w-3 h-3 rounded-sm"
-          style={{ backgroundColor: CASH_FLOW_ACTUAL }}
+          style={{ backgroundColor: chartColor(CASH_FLOW_ACTUAL, theme) }}
         />
         Actual
       </span>
       <span className="flex items-center gap-1.5">
         <span
           className="inline-block w-3 h-3 rounded-sm"
-          style={{ backgroundColor: CASH_FLOW_FORECAST }}
+          style={{ backgroundColor: chartColor(CASH_FLOW_FORECAST, theme) }}
         />
         Forecast
       </span>
@@ -48,9 +50,11 @@ function Legend() {
 // convey. Two categorical bars per month rather than a stacked total, since
 // Actual and Forecast are alternatives for the same month, not parts of one sum.
 export default function CashFlowChart({ entries }: { entries: CashFlowEntry[] }) {
+  const { theme } = useTheme();
+
   if (entries.length === 0) {
     return (
-      <p className="text-sm text-slate-500 py-6 text-center">
+      <p className="text-sm text-slate-500 dark:text-slate-400 py-6 text-center">
         No cash flow entries yet.
       </p>
     );
@@ -69,7 +73,7 @@ export default function CashFlowChart({ entries }: { entries: CashFlowEntry[] })
 
   return (
     <div>
-      <Legend />
+      <Legend theme={theme} />
       <div className="overflow-x-auto">
         <div
           className="flex items-end gap-3"
@@ -87,7 +91,7 @@ export default function CashFlowChart({ entries }: { entries: CashFlowEntry[] })
                   className="flex items-end gap-1"
                   style={{
                     height: CHART_HEIGHT,
-                    borderBottom: `1px solid ${CHART_BASELINE}`,
+                    borderBottom: `1px solid ${chartColor(CHART_BASELINE, theme)}`,
                   }}
                 >
                   {actual !== undefined && (
@@ -96,7 +100,7 @@ export default function CashFlowChart({ entries }: { entries: CashFlowEntry[] })
                       className="w-3.5 rounded-t transition-opacity hover:opacity-80 focus:opacity-80"
                       style={{
                         height: `${Math.max((actual / maxValue) * 100, 2)}%`,
-                        backgroundColor: CASH_FLOW_ACTUAL,
+                        backgroundColor: chartColor(CASH_FLOW_ACTUAL, theme),
                       }}
                       title={`Actual, ${formatReportMonth(month)}: ${formatCurrency(actual)}`}
                     />
@@ -107,7 +111,7 @@ export default function CashFlowChart({ entries }: { entries: CashFlowEntry[] })
                       className="w-3.5 rounded-t transition-opacity hover:opacity-80 focus:opacity-80"
                       style={{
                         height: `${Math.max((forecast / maxValue) * 100, 2)}%`,
-                        backgroundColor: CASH_FLOW_FORECAST,
+                        backgroundColor: chartColor(CASH_FLOW_FORECAST, theme),
                       }}
                       title={`Forecast, ${formatReportMonth(month)}: ${formatCurrency(forecast)}`}
                     />
@@ -115,7 +119,7 @@ export default function CashFlowChart({ entries }: { entries: CashFlowEntry[] })
                 </div>
                 <span
                   className="text-[10px] mt-1 whitespace-nowrap"
-                  style={{ color: CHART_TEXT_MUTED }}
+                  style={{ color: chartColor(CHART_TEXT_MUTED, theme) }}
                 >
                   {monthLabel(month)}
                 </span>
@@ -124,7 +128,7 @@ export default function CashFlowChart({ entries }: { entries: CashFlowEntry[] })
           })}
         </div>
       </div>
-      <p className="text-xs pt-2" style={{ color: CHART_TEXT_MUTED }}>
+      <p className="text-xs pt-2" style={{ color: chartColor(CHART_TEXT_MUTED, theme) }}>
         Bar height is relative to the largest single month shown ({formatCurrency(maxValue)}).
       </p>
     </div>

@@ -49,20 +49,24 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
   const done = tasks.filter((t) => t.status === "DONE").length;
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
+    <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-900">Tasks</h2>
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          Tasks
+        </h2>
         {tasks.length > 0 && (
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             {done}/{tasks.length} complete
           </span>
         )}
       </div>
 
       {tasks.length === 0 ? (
-        <p className="text-sm text-slate-500 mb-3">No tasks yet.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+          No tasks yet.
+        </p>
       ) : (
-        <ul className="divide-y divide-slate-100 mb-3">
+        <ul className="divide-y divide-slate-100 dark:divide-slate-700 mb-3">
           {tasks.map((task) => (
             <li key={task.id} className="py-2 flex items-center gap-3">
               <input
@@ -79,8 +83,8 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
                 <div
                   className={`text-sm ${
                     task.status === "DONE"
-                      ? "line-through text-slate-400"
-                      : "text-slate-900"
+                      ? "line-through text-slate-400 dark:text-slate-500"
+                      : "text-slate-900 dark:text-slate-100"
                   }`}
                 >
                   {task.title}
@@ -91,7 +95,7 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
                 onChange={(e) =>
                   onUpdate(task, { status: e.target.value as TaskStatus })
                 }
-                className="text-xs rounded border border-slate-300 px-2 py-1"
+                className="text-xs rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1"
               >
                 {STATUS_ORDER.map((s) => (
                   <option key={s} value={s}>
@@ -109,15 +113,15 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
                       : null,
                   })
                 }
-                className={`text-xs rounded border px-2 py-1 ${
+                className={`text-xs rounded border px-2 py-1 dark:bg-slate-700 ${
                   isTaskOverdue(task)
-                    ? "border-red-300 text-red-600"
-                    : "border-slate-300 text-slate-700"
+                    ? "border-red-300 dark:border-red-800 text-red-600 dark:text-red-400"
+                    : "border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300"
                 }`}
               />
               <button
                 onClick={() => onDelete(task)}
-                className="text-xs text-red-600 hover:underline"
+                className="text-xs text-red-600 dark:text-red-400 hover:underline"
               >
                 Delete
               </button>
@@ -131,13 +135,13 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Add a task…"
-          className="flex-1 text-sm rounded border border-slate-300 px-3 py-1.5"
+          className="flex-1 text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-1.5"
         />
         <input
           type="date"
           value={newDueDate}
           onChange={(e) => setNewDueDate(e.target.value)}
-          className="text-sm rounded border border-slate-300 px-2 py-1.5"
+          className="text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1.5"
         />
         <button
           type="submit"

@@ -12,14 +12,15 @@ export const STATUS_LABELS: Record<ProjectStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<ProjectStatus, string> = {
-  PLANNING: "bg-slate-200 text-slate-800",
-  DESIGN: "bg-sky-100 text-sky-800",
-  TENDER: "bg-amber-100 text-amber-800",
-  CONSTRUCTION: "bg-blue-100 text-blue-800",
-  DEFECTS_LIABILITY: "bg-purple-100 text-purple-800",
-  COMPLETE: "bg-green-100 text-green-800",
-  ON_HOLD: "bg-orange-100 text-orange-800",
-  CANCELLED: "bg-red-100 text-red-800",
+  PLANNING: "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200",
+  DESIGN: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300",
+  TENDER: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  CONSTRUCTION: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  DEFECTS_LIABILITY:
+    "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
+  COMPLETE: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  ON_HOLD: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
+  CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
 };
 
 export const ALL_STATUSES: ProjectStatus[] = [

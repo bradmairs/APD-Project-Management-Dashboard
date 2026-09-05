@@ -317,6 +317,25 @@ generally used for (the current state of schedule and spend), and it's
 the only way this view can exist without also snapshotting those tables
 monthly, which no one asked for.
 
+## Dark Mode
+
+A sun/moon toggle — in the header next to the notification bell on every
+app page, and top-right on the login page — switches the whole app between
+light and dark. It's built on Tailwind's class-based dark mode
+(`darkMode: "class"`): a `ThemeContext` toggles a `dark` class on `<html>`
+and persists the choice to `localStorage`, defaulting to the OS's
+`prefers-color-scheme` on first visit. Every page, panel, table, and modal
+carries `dark:` variants, and the hand-rolled charts read their colors from
+theme-aware tokens in `frontend/src/charts/palette.ts` (light/dark pairs
+for grid lines, axis text, and the Actual/Forecast categorical pair —
+re-validated for the dark chart surface with the same `dataviz` palette
+checker used for light mode).
+
+The **Formatted Report View** (`/projects/:id/reports/:reportId`) is the
+one page that deliberately ignores the toggle and always renders light —
+it's a print/document view meant to look the same on paper regardless of
+which theme you're browsing in, so it carries no `dark:` classes at all.
+
 ## Roadmap ideas (not built yet)
 
 This is intentionally a starting point. Natural next steps to discuss:

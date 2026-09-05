@@ -27,12 +27,14 @@ export default function StatCards({ projects }: { projects: Project[] }) {
       {cards.map((c) => (
         <div
           key={c.label}
-          className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm"
+          className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 shadow-sm"
         >
-          <div className="text-sm text-slate-500">{c.label}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">{c.label}</div>
           <div
             className={`text-2xl font-semibold mt-1 ${
-              "alert" in c && c.alert ? "text-red-600" : "text-slate-900"
+              "alert" in c && c.alert
+                ? "text-red-600 dark:text-red-400"
+                : "text-slate-900 dark:text-slate-100"
             }`}
           >
             {c.value}

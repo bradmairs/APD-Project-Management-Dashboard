@@ -53,17 +53,24 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-white border-b border-slate-200">
+      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-5">
-          <Link to="/" className="text-sm text-blue-600 hover:underline">
+          <Link
+            to="/"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
             ← Back to dashboard
           </Link>
           <div className="flex items-center justify-between mt-2">
             <div className="flex items-center gap-4">
               <img src={gvwLogo} alt="Goulburn Valley Water" className="h-14 w-auto" />
               <div>
-                <h1 className="text-xl font-semibold text-slate-900">Users</h1>
-                <p className="text-sm text-slate-500">Manage team accounts and roles</p>
+                <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                  Users
+                </h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Manage team accounts and roles
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -81,50 +88,63 @@ export default function AdminUsersPage() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
         {error && (
-          <div className="bg-red-50 text-red-700 text-sm rounded p-3 mb-4">{error}</div>
+          <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm rounded p-3 mb-4">
+            {error}
+          </div>
         )}
 
         {loading ? (
-          <div className="text-center text-slate-500 py-12">Loading…</div>
+          <div className="text-center text-slate-500 dark:text-slate-400 py-12">
+            Loading…
+          </div>
         ) : (
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
-              <thead className="bg-slate-50">
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700 text-sm">
+              <thead className="bg-slate-50 dark:bg-slate-900/50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
                     Name
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
                     Email
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
                     Role
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-slate-600">
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
                     Joined
                   </th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                 {users.map((user) => (
-                  <tr key={user.id} className={user.active ? "" : "bg-slate-50"}>
+                  <tr
+                    key={user.id}
+                    className={user.active ? "" : "bg-slate-50 dark:bg-slate-900/50"}
+                  >
                     <td
                       className={`px-4 py-3 font-medium ${
-                        user.active ? "text-slate-900" : "text-slate-400"
+                        user.active
+                          ? "text-slate-900 dark:text-slate-100"
+                          : "text-slate-400 dark:text-slate-500"
                       }`}
                     >
                       {user.name}
                       {user.id === currentUser?.id && (
-                        <span className="ml-2 text-xs text-slate-400">(you)</span>
+                        <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
+                          (you)
+                        </span>
                       )}
                     </td>
                     <td
                       className={`px-4 py-3 ${
-                        user.active ? "text-slate-700" : "text-slate-400"
+                        user.active
+                          ? "text-slate-700 dark:text-slate-300"
+                          : "text-slate-400 dark:text-slate-500"
                       }`}
                     >
                       {user.email}
@@ -136,7 +156,7 @@ export default function AdminUsersPage() {
                         onChange={(e) =>
                           handleRoleChange(user, e.target.value as Role)
                         }
-                        className="text-sm rounded border border-slate-300 px-2 py-1 disabled:opacity-50"
+                        className="text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1 disabled:opacity-50"
                       >
                         <option value="MEMBER">Member</option>
                         <option value="ADMIN">Admin</option>
@@ -144,18 +164,20 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       {user.active ? (
-                        <span className="text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                        <span className="text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
                           Active
                         </span>
                       ) : (
-                        <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                        <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
                           Deactivated
                         </span>
                       )}
                     </td>
                     <td
                       className={`px-4 py-3 ${
-                        user.active ? "text-slate-700" : "text-slate-400"
+                        user.active
+                          ? "text-slate-700 dark:text-slate-300"
+                          : "text-slate-400 dark:text-slate-500"
                       }`}
                     >
                       {formatDate(user.createdAt)}
@@ -170,7 +192,9 @@ export default function AdminUsersPage() {
                             : undefined
                         }
                         className={`text-xs hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed ${
-                          user.active ? "text-red-600" : "text-blue-600"
+                          user.active
+                            ? "text-red-600 dark:text-red-400"
+                            : "text-blue-600 dark:text-blue-400"
                         }`}
                       >
                         {user.active ? "Deactivate" : "Reactivate"}

@@ -60,19 +60,21 @@ export default function MilestoneFormModal({ milestone, onClose, onSave }: Props
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             {milestone ? "Edit Milestone" : "New Milestone"}
           </h2>
 
           {error && (
-            <div className="bg-red-50 text-red-700 text-sm rounded p-2">{error}</div>
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm rounded p-2">
+              {error}
+            </div>
           )}
 
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Task / Activity
               </label>
               <input
@@ -80,23 +82,23 @@ export default function MilestoneFormModal({ milestone, onClose, onSave }: Props
                 value={taskActivity}
                 onChange={(e) => setTaskActivity(e.target.value)}
                 placeholder="e.g. Concept Design"
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 WBS Item
               </label>
               <input
                 value={wbsItem}
                 onChange={(e) => setWbsItem(e.target.value)}
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Percentage Completed
             </label>
             <div className="flex items-center gap-3">
@@ -109,7 +111,7 @@ export default function MilestoneFormModal({ milestone, onClose, onSave }: Props
                 onChange={(e) => setPercentComplete(Number(e.target.value))}
                 className="flex-1"
               />
-              <span className="text-sm text-slate-700 w-12 text-right">
+              <span className="text-sm text-slate-700 dark:text-slate-300 w-12 text-right">
                 {percentComplete}%
               </span>
             </div>
@@ -117,49 +119,49 @@ export default function MilestoneFormModal({ milestone, onClose, onSave }: Props
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Original Completion
               </label>
               <input
                 type="date"
                 value={originalCompletion}
                 onChange={(e) => setOriginalCompletion(e.target.value)}
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Forecasted Completion
               </label>
               <input
                 type="date"
                 value={forecastedCompletion}
                 onChange={(e) => setForecastedCompletion(e.target.value)}
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Actual Completion
               </label>
               <input
                 type="date"
                 value={actualCompletion}
                 onChange={(e) => setActualCompletion(e.target.value)}
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Notes
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
             />
           </div>
 
@@ -167,7 +169,7 @@ export default function MilestoneFormModal({ milestone, onClose, onSave }: Props
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
+              className="px-4 py-2 text-sm rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             >
               Cancel
             </button>

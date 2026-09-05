@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import ThemeToggle from "../components/ThemeToggle";
 import gvwLogo from "../assets/gvw-logo.png";
 
 export default function LoginPage() {
@@ -32,21 +33,30 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 px-4 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      <div className="w-full max-w-sm bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-6">
         <div className="flex flex-col items-center mb-6">
           <img src={gvwLogo} alt="Goulburn Valley Water" className="h-16 w-auto mb-3" />
-          <h1 className="text-lg font-semibold text-slate-900">APD Project Dashboard</h1>
-          <p className="text-sm text-slate-500">Sign in to continue</p>
+          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            APD Project Dashboard
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Sign in to continue
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-700 text-sm rounded p-2">{error}</div>
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm rounded p-2">
+              {error}
+            </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Email
             </label>
             <input
@@ -55,12 +65,12 @@ export default function LoginPage() {
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Password
             </label>
             <input
@@ -68,7 +78,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
             />
           </div>
 

@@ -34,18 +34,20 @@ export default function CashFlowEntryFormModal({ entry, onClose, onSave }: Props
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm">
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             {entry ? "Edit Cash Flow Entry" : "New Cash Flow Entry"}
           </h2>
 
           {error && (
-            <div className="bg-red-50 text-red-700 text-sm rounded p-2">{error}</div>
+            <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm rounded p-2">
+              {error}
+            </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Month
             </label>
             <input
@@ -54,19 +56,19 @@ export default function CashFlowEntryFormModal({ entry, onClose, onSave }: Props
               disabled={!!entry}
               value={month}
               onChange={(e) => setMonth(e.target.value)}
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
+              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:text-slate-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Type
             </label>
             <select
               disabled={!!entry}
               value={type}
               onChange={(e) => setType(e.target.value as CashFlowType)}
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-500"
+              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:text-slate-500"
             >
               <option value="ACTUAL">Actual</option>
               <option value="FORECAST">Forecast</option>
@@ -74,7 +76,7 @@ export default function CashFlowEntryFormModal({ entry, onClose, onSave }: Props
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Amount ($)
             </label>
             <input
@@ -83,7 +85,7 @@ export default function CashFlowEntryFormModal({ entry, onClose, onSave }: Props
               min={0}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
             />
           </div>
 
@@ -91,7 +93,7 @@ export default function CashFlowEntryFormModal({ entry, onClose, onSave }: Props
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
+              className="px-4 py-2 text-sm rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             >
               Cancel
             </button>

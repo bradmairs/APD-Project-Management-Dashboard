@@ -203,16 +203,23 @@ export default function ProjectDetailPage() {
   }
 
   if (loading) {
-    return <div className="text-center text-slate-500 py-12">Loading…</div>;
+    return (
+      <div className="text-center text-slate-500 dark:text-slate-400 py-12">
+        Loading…
+      </div>
+    );
   }
 
   if (error || !project) {
     return (
       <div className="max-w-3xl mx-auto p-6">
-        <div className="bg-red-50 text-red-700 text-sm rounded p-3">
+        <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm rounded p-3">
           {error || "Project not found"}
         </div>
-        <Link to="/" className="text-blue-600 hover:underline text-sm mt-4 inline-block">
+        <Link
+          to="/"
+          className="text-blue-600 dark:text-blue-400 hover:underline text-sm mt-4 inline-block"
+        >
           ← Back to dashboard
         </Link>
       </div>
@@ -221,16 +228,19 @@ export default function ProjectDetailPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-white border-b border-slate-200">
+      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
-          <Link to="/" className="text-sm text-blue-600 hover:underline">
+          <Link
+            to="/"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
             ← Back to dashboard
           </Link>
           <div className="flex items-center justify-between mt-2">
             <div className="flex items-center gap-4">
               <img src={gvwLogo} alt="Goulburn Valley Water" className="h-14 w-auto" />
               <div>
-                <h1 className="text-xl font-semibold text-slate-900">
+                <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                   {project.name}
                 </h1>
                 <span
@@ -247,20 +257,20 @@ export default function ProjectDetailPage() {
                 <>
                   <button
                     onClick={() => setShowModal(true)}
-                    className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50"
+                    className="px-4 py-2 text-sm rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
                   >
                     Edit
                   </button>
                   <button
                     onClick={handleDeleteProject}
-                    className="px-4 py-2 text-sm rounded border border-red-300 text-red-600 hover:bg-red-50"
+                    className="px-4 py-2 text-sm rounded border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
                   >
                     Delete
                   </button>
                 </>
               ) : (
                 project.createdBy && (
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
                     Only {project.createdBy.name} or an admin can edit this project
                   </span>
                 )
@@ -273,7 +283,9 @@ export default function ProjectDetailPage() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {project.description && (
-          <p className="text-slate-700 text-sm">{project.description}</p>
+          <p className="text-slate-700 dark:text-slate-300 text-sm">
+            {project.description}
+          </p>
         )}
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -337,8 +349,10 @@ export default function ProjectDetailPage() {
           onDelete={handleDeleteReport}
         />
 
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
-          <h2 className="text-sm font-semibold text-slate-900 mb-3">Activity</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
+            Activity
+          </h2>
           <ActivityFeed entries={activity} emptyMessage="No activity recorded yet." />
         </div>
       </main>
@@ -356,9 +370,11 @@ export default function ProjectDetailPage() {
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-3">
-      <div className="text-xs text-slate-500">{label}</div>
-      <div className="text-sm font-medium text-slate-900 mt-0.5">{value}</div>
+    <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+      <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
+      <div className="text-sm font-medium text-slate-900 dark:text-slate-100 mt-0.5">
+        {value}
+      </div>
     </div>
   );
 }
