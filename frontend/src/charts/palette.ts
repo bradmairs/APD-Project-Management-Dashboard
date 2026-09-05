@@ -16,3 +16,9 @@ export const TASK_STATUS_COLORS: Record<"TODO" | "IN_PROGRESS" | "DONE", string>
   IN_PROGRESS: SEQUENTIAL_BLUE,
   DONE: "#008300",
 };
+
+// Actual vs. Forecast spend — categorical slots 1 (blue) and 2 (orange) from
+// the reference palette, validated as a passing adjacent pair (CVD ΔE 24.7,
+// normal-vision ΔE 33.6 — see dataviz skill).
+export const CASH_FLOW_ACTUAL = SEQUENTIAL_BLUE;
+export const CASH_FLOW_FORECAST = "#eb6834";

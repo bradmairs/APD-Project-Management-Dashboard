@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CashFlowEntry, CashFlowEntryInput, Project } from "../types";
 import { formatCurrency, formatReportMonth } from "../format";
+import CashFlowChart from "../charts/CashFlowChart";
 import CashFlowEntryFormModal from "./CashFlowEntryFormModal";
 
 interface Props {
@@ -76,39 +77,51 @@ export default function CashFlowPanel({ project, entries, onUpsert, onDelete }: 
       {entries.length === 0 ? (
         <p className="text-sm text-slate-500">No cash flow entries yet.</p>
       ) : (
-        <ul className="divide-y divide-slate-100">
-          {entries.map((entry) => (
-            <li key={entry.id} className="py-2 flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-900">{formatReportMonth(entry.month)}</span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full ${
-                    entry.type === "ACTUAL"
-                      ? "bg-slate-100 text-slate-700"
-                      : "bg-sky-50 text-sky-700"
-                  }`}
-                >
-                  {entry.type === "ACTUAL" ? "Actual" : "Forecast"}
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-slate-900">{formatCurrency(entry.amount)}</span>
-                <button
-                  onClick={() => openEdit(entry)}
-                  className="text-xs text-blue-600 hover:underline"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(entry)}
-                  className="text-xs text-red-600 hover:underline"
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <>
+          <div className="mb-4">
+            <CashFlowChart entries={entries} />
+          </div>
+          <ul className="divide-y divide-slate-100">
+            {entries.map((entry) => (
+              <li
+                key={entry.id}
+                className="py-2 flex items-center justify-between text-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-900">
+                    {formatReportMonth(entry.month)}
+                  </span>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full ${
+                      entry.type === "ACTUAL"
+                        ? "bg-slate-100 text-slate-700"
+                        : "bg-sky-50 text-sky-700"
+                    }`}
+                  >
+                    {entry.type === "ACTUAL" ? "Actual" : "Forecast"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="text-slate-900">
+                    {formatCurrency(entry.amount)}
+                  </span>
+                  <button
+                    onClick={() => openEdit(entry)}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(entry)}
+                    className="text-xs text-red-600 hover:underline"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
       {showModal && (

@@ -14,6 +14,9 @@ import ProjectTable from "../components/ProjectTable";
 import ProjectFormModal from "../components/ProjectFormModal";
 import UpcomingDeadlines from "../components/UpcomingDeadlines";
 import ActivityFeed from "../components/ActivityFeed";
+import ChartCard from "../components/ChartCard";
+import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
+import { SEQUENTIAL_BLUE } from "../charts/palette";
 import { ALL_STATUSES, STATUS_LABELS } from "../statusMeta";
 import UserMenu from "../components/UserMenu";
 import { useAuth } from "../auth/AuthContext";
@@ -56,6 +59,15 @@ export default function DashboardPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const statusData: BarDatum[] = useMemo(
+    () =>
+      ALL_STATUSES.map((status) => ({
+        label: STATUS_LABELS[status],
+        value: projects.filter((p) => p.status === status).length,
+      })),
+    [projects]
+  );
 
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
@@ -138,6 +150,16 @@ export default function DashboardPage() {
         )}
 
         <StatCards projects={projects} />
+
+        {!loading && projects.length > 0 && (
+          <ChartCard title="Projects by Status">
+            <HorizontalBarChart
+              data={statusData}
+              color={SEQUENTIAL_BLUE}
+              formatValue={(v) => String(v)}
+            />
+          </ChartCard>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <UpcomingDeadlines tasks={upcomingTasks} />
