@@ -223,11 +223,8 @@ creator-or-admin permission rule as projects — the report's author is
 snapshotted by name so it stays attributed even if that account is later
 removed or deactivated.
 
-This is the first phase of a larger effort to bring the full monthly report
-into the dashboard. Not yet built:
-
-- **A formatted report view and export** — a page that lays everything out
-  like the source document, with a PDF/print option for board reporting
+Click a report's **View** link to open it as a formatted, printable page —
+see **Formatted Report View** below.
 
 ## Milestones
 
@@ -275,6 +272,29 @@ Like Milestones, this is live data rather than a per-month snapshot — an
 Actual figure doesn't need re-editing once entered, and a Forecast is
 expected to be revised as the project progresses. Open to any logged-in
 user to edit, matching Tasks, Attachments, and Milestones.
+
+## Formatted Report View
+
+Clicking **View** on a monthly report opens it as its own page at
+`/projects/:id/reports/:reportId`, laid out like the source document —
+Project Information, Current Status, Cash Flows, and Schedule / Major
+Milestones as the same four blue-headed sections, with a "Print / Save as
+PDF" button. There's no server-side PDF generation (no headless-browser
+dependency to run in Docker); it uses the browser's own print dialog,
+which on every modern browser includes a "Save as PDF" destination, so a
+board-ready PDF is one click and one native dialog away.
+
+The Project Information and Current Status sections come straight from
+that report's locked snapshot, so they show the record as it was for that
+month. The Cash Flows and Schedule / Major Milestones sections, though,
+pull from the **live** Milestones and Cash Flow data described above —
+opening an old report shows those exactly as they stand today, not as
+they stood in that reporting month. That's the tradeoff of keeping
+milestones and cash flow live rather than re-snapshotting them every
+month (see those sections above); it matches what the real report is
+generally used for (the current state of schedule and spend), and it's
+the only way this view can exist without also snapshotting those tables
+monthly, which no one asked for.
 
 ## Roadmap ideas (not built yet)
 

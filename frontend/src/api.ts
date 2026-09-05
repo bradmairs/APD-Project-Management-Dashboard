@@ -197,6 +197,10 @@ export function getMonthlyReports(projectId: string): Promise<MonthlyReport[]> {
   );
 }
 
+export function getMonthlyReport(id: string): Promise<MonthlyReport> {
+  return fetch(`${API_BASE}/reports/${id}`).then((res) => handle(res));
+}
+
 export function createMonthlyReport(
   projectId: string,
   data: Partial<MonthlyReportInput>

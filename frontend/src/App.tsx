@@ -5,6 +5,7 @@ import AdminRoute from "./auth/AdminRoute";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
+import MonthlyReportViewPage from "./pages/MonthlyReportViewPage";
 import ReportsPage from "./pages/ReportsPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 
@@ -26,6 +27,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <ProjectDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:projectId/reports/:reportId"
+          element={
+            <ProtectedRoute>
+              <MonthlyReportViewPage />
             </ProtectedRoute>
           }
         />
