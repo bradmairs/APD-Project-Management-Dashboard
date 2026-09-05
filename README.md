@@ -226,11 +226,8 @@ removed or deactivated.
 This is the first phase of a larger effort to bring the full monthly report
 into the dashboard. Not yet built:
 
-- **Cash flow tracking** — monthly actual/forecast $ by financial year,
-  rolling up to the report's expenditure-to-date and variance figures
-- **A formatted report view and export** — once the above exists, a page
-  that lays everything out like the source document, with a PDF/print
-  option for board reporting
+- **A formatted report view and export** — a page that lays everything out
+  like the source document, with a PDF/print option for board reporting
 
 ## Milestones
 
@@ -254,6 +251,30 @@ to the end) rather than being sorted by date or percentage, since that
 sequence is meaningful on its own and isn't derivable from the other
 fields. Open to any logged-in user to edit, like Tasks and Attachments —
 only the project record itself needs an owner.
+
+## Cash Flow
+
+Each project has a **Cash Flow** panel — the source report's monthly
+actual/forecast breakdown. Every entry is one project, one month, one
+type (Actual or Forecast) and an amount; adding an entry for a month that
+already has one of that type overwrites it rather than erroring, so
+correcting a figure is just re-entering it.
+
+Above the entry list, a stat row shows Approved Budget and Included
+Contingency (from the project's own fields) alongside three figures
+computed live from the entries, matching the "(formula)" cells in the
+source report:
+
+- **Expenditure to Date** — the sum of all Actual entries
+- **Forecast Total** — Expenditure to Date plus the sum of all Forecast
+  entries
+- **Variance** — Approved Budget minus Forecast Total (shown in red if
+  the project is forecast to run over)
+
+Like Milestones, this is live data rather than a per-month snapshot — an
+Actual figure doesn't need re-editing once entered, and a Forecast is
+expected to be revised as the project progresses. Open to any logged-in
+user to edit, matching Tasks, Attachments, and Milestones.
 
 ## Roadmap ideas (not built yet)
 

@@ -35,6 +35,11 @@ enum RagStatus {
   RED
 }
 
+enum CashFlowType {
+  ACTUAL
+  FORECAST
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -63,6 +68,7 @@ model Project {
   location               String?
   contractor             String?
   budget                 Decimal?      @db.Decimal(14, 2)
+  contingency            Decimal?      @db.Decimal(14, 2)
   contractValue          Decimal?      @db.Decimal(14, 2)
   startDate              DateTime?
   targetCompletionDate   DateTime?
@@ -76,6 +82,7 @@ model Project {
   attachments            Attachment[]
   monthlyReports         MonthlyReport[]
   milestones             Milestone[]
+  cashFlowEntries        CashFlowEntry[]
 }
 
 model Task {
@@ -136,6 +143,29 @@ model Milestone {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
+  @@index([projectId])
+}
+
+// One month's actual or forecast spend, from the monthly cash flow
+// breakdown tables in the report. Like Milestone (and unlike MonthlyReport)
+// this is live, current data — a month's actual figure, once entered,
+// generally doesn't need re-editing, and a forecast is expected to be
+// revised as the project progresses, so there's no value in snapshotting
+// it per report. Unique on (project, month, type) rather than treating
+// actual/forecast as one row per month, since a month can carry both (a
+// forecast entered ahead of time, later followed by that month's actual
+// once it closes) without one overwriting the other.
+model CashFlowEntry {
+  id        String       @id @default(cuid())
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  month     DateTime
+  type      CashFlowType
+  amount    Decimal      @db.Decimal(14, 2)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([projectId, month, type])
   @@index([projectId])
 }
 

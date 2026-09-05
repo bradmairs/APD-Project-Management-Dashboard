@@ -51,6 +51,7 @@ export interface Project {
   location: string | null;
   contractor: string | null;
   budget: string | null;
+  contingency: string | null;
   contractValue: string | null;
   startDate: string | null;
   targetCompletionDate: string | null;
@@ -131,4 +132,21 @@ export interface Milestone {
 export type MilestoneInput = Omit<
   Milestone,
   "id" | "projectId" | "sortOrder" | "createdAt" | "updatedAt"
+>;
+
+export type CashFlowType = "ACTUAL" | "FORECAST";
+
+export interface CashFlowEntry {
+  id: string;
+  projectId: string;
+  month: string;
+  type: CashFlowType;
+  amount: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CashFlowEntryInput = Omit<
+  CashFlowEntry,
+  "id" | "projectId" | "createdAt" | "updatedAt"
 >;
