@@ -365,12 +365,33 @@ Dashboard, Project Detail, Reports, and Admin Users headers, and giving the
 Site Visit form's own Date/Time fields a single column on narrow screens
 (`grid-cols-1 sm:grid-cols-2`) rather than forcing them side by side.
 
-**Not in this PR** — a second phase, planned next: geotagged photos.
-Photos will be attachable per site visit (including directly from the
-device's camera via `<input type="file" capture>`), with GPS coordinates
-read from each photo's EXIF metadata and plotted on a map — a real
-slippy map (Leaflet + OpenStreetMap tiles), since unlike this app's other
-charts, map tiles can't be hand-rolled in SVG.
+### Site Photos
+
+Each site visit card has a **Photos** section with two upload paths: **📷
+Take Photo** (`<input type="file" accept="image/*" capture="environment">`,
+which opens the device's camera directly on a phone) and **🖼 Add from
+Gallery** (a plain multi-select file picker). Uploaded photos appear as a
+thumbnail grid, click-through to the full image.
+
+GPS coordinates and the capture time are read server-side from each
+photo's own EXIF tags at upload time (`backend/src/exif.ts`, via the
+`exifr` package) — never trusted from the client, the same way file type
+is validated server-side for every other upload in this app. A photo
+without a GPS tag (location services were off, or it came from a gallery
+rather than the camera) still uploads and shows in the thumbnail grid,
+just tagged "no GPS" and left off the map.
+
+Above the site visit list, a **Site Photos** map plots every geotagged
+photo across the project's site visits, with a pin per photo — clicking
+one opens a popup with that photo's thumbnail, the visit's location, and
+its date. This is the one component in the app that reaches for a mapping
+library: unlike the hand-rolled SVG/HTML charts everywhere else, real map
+tiles can't be drawn by hand, so it uses **Leaflet** with **OpenStreetMap**
+tiles (no API key required). The marker is a small inline-SVG pin via a
+Leaflet `divIcon` rather than Leaflet's bundled marker images, which
+sidesteps a well-known bundler issue where `Icon.Default`'s image paths
+resolve relative to the `leaflet` package rather than the built app and
+404 in production.
 
 ## Roadmap ideas (not built yet)
 

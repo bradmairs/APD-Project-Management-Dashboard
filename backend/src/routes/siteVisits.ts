@@ -1,6 +1,7 @@
 import { Request, Response, Router } from "express";
 import { prisma } from "../prisma";
 import { describeSiteVisitUpdate, logActivity } from "../activityLog";
+import projectSiteVisitPhotosRouter from "./siteVisitPhotos";
 
 function parseVisitDate(value: unknown): Date | null {
   if (typeof value !== "string" && typeof value !== "number") return null;
@@ -67,6 +68,8 @@ projectSiteVisitsRouter.post(
 );
 
 export const siteVisitsRouter = Router();
+
+siteVisitsRouter.use("/:id/photos", projectSiteVisitPhotosRouter);
 
 siteVisitsRouter.put("/:id", async (req, res) => {
   const before = await prisma.siteVisit.findUnique({

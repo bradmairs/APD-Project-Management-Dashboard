@@ -1,20 +1,30 @@
 import { useState } from "react";
-import { SiteVisit, SiteVisitInput } from "../types";
+import { SiteVisit, SiteVisitInput, SiteVisitPhoto } from "../types";
 import { formatDateTime } from "../format";
 import SiteVisitFormModal from "./SiteVisitFormModal";
+import SiteVisitPhotoGrid from "./SiteVisitPhotoGrid";
+import SitePhotosMap from "./SitePhotosMap";
 
 interface Props {
   siteVisits: SiteVisit[];
+  photosByVisit: Record<string, SiteVisitPhoto[]>;
+  allPhotos: SiteVisitPhoto[];
   onCreate: (data: Partial<SiteVisitInput>) => Promise<void>;
   onUpdate: (siteVisit: SiteVisit, data: Partial<SiteVisitInput>) => Promise<void>;
   onDelete: (siteVisit: SiteVisit) => Promise<void>;
+  onUploadPhotos: (siteVisit: SiteVisit, files: File[]) => Promise<void>;
+  onDeletePhoto: (photo: SiteVisitPhoto) => Promise<void>;
 }
 
 export default function SiteVisitsPanel({
   siteVisits,
+  photosByVisit,
+  allPhotos,
   onCreate,
   onUpdate,
   onDelete,
+  onUploadPhotos,
+  onDeletePhoto,
 }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<SiteVisit | null>(null);
@@ -62,6 +72,15 @@ export default function SiteVisitsPanel({
         </button>
       </div>
 
+      {allPhotos.length > 0 && (
+        <div className="mb-4">
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+            Site Photos
+          </div>
+          <SitePhotosMap photos={allPhotos} />
+        </div>
+      )}
+
       {siteVisits.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">
           No site visits logged yet.
@@ -70,6 +89,7 @@ export default function SiteVisitsPanel({
         <div className="space-y-3">
           {siteVisits.map((siteVisit) => {
             const isExpanded = expandedId === siteVisit.id;
+            const photos = photosByVisit[siteVisit.id] ?? [];
             return (
               <div
                 key={siteVisit.id}
@@ -88,6 +108,8 @@ export default function SiteVisitsPanel({
                     </div>
                     <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                       Visited by {siteVisit.visitedByName}
+                      {photos.length > 0 &&
+                        ` · ${photos.length} photo${photos.length === 1 ? "" : "s"}`}
                     </div>
                   </button>
                   <div className="flex items-center gap-3 shrink-0 pt-0.5">
@@ -106,7 +128,7 @@ export default function SiteVisitsPanel({
                   </div>
                 </div>
 
-                {isExpanded && (siteVisit.notes || siteVisit.discussionNotes) && (
+                {isExpanded && (
                   <div className="mt-3 space-y-3 text-sm border-t border-slate-100 dark:border-slate-700 pt-3">
                     {siteVisit.notes && (
                       <div>
@@ -128,6 +150,11 @@ export default function SiteVisitsPanel({
                         </p>
                       </div>
                     )}
+                    <SiteVisitPhotoGrid
+                      photos={photos}
+                      onUpload={(files) => onUploadPhotos(siteVisit, files)}
+                      onDelete={onDeletePhoto}
+                    />
                   </div>
                 )}
               </div>

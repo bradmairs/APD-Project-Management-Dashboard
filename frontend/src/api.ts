@@ -12,6 +12,7 @@ import {
   Role,
   SiteVisit,
   SiteVisitInput,
+  SiteVisitPhoto,
   Task,
   TaskInput,
   User,
@@ -331,4 +332,38 @@ export function deleteSiteVisit(id: string): Promise<void> {
   return fetch(`${API_BASE}/site-visits/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
+}
+
+export function getProjectSitePhotos(projectId: string): Promise<SiteVisitPhoto[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/site-visit-photos`).then((res) =>
+    handle(res)
+  );
+}
+
+export function getSiteVisitPhotos(siteVisitId: string): Promise<SiteVisitPhoto[]> {
+  return fetch(`${API_BASE}/site-visits/${siteVisitId}/photos`).then((res) =>
+    handle(res)
+  );
+}
+
+export function uploadSiteVisitPhotos(
+  siteVisitId: string,
+  files: File[]
+): Promise<SiteVisitPhoto[]> {
+  const formData = new FormData();
+  files.forEach((file) => formData.append("photos", file));
+  return fetch(`${API_BASE}/site-visits/${siteVisitId}/photos`, {
+    method: "POST",
+    body: formData,
+  }).then((res) => handle(res));
+}
+
+export function deleteSiteVisitPhoto(id: string): Promise<void> {
+  return fetch(`${API_BASE}/site-visit-photos/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function siteVisitPhotoFileUrl(id: string): string {
+  return `${API_BASE}/site-visit-photos/${id}/file`;
 }

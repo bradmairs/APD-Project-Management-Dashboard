@@ -13,6 +13,7 @@ import {
   ProjectInput,
   SiteVisit,
   SiteVisitInput,
+  SiteVisitPhoto,
   Task,
   TaskStatus,
 } from "../types";
@@ -27,6 +28,7 @@ import {
   deleteMonthlyReport,
   deleteProject,
   deleteSiteVisit,
+  deleteSiteVisitPhoto,
   deleteTask,
   getAttachments,
   getCashFlowEntries,
@@ -34,6 +36,7 @@ import {
   getMonthlyReports,
   getProject,
   getProjectActivity,
+  getProjectSitePhotos,
   getSiteVisits,
   reorderMilestone,
   updateMilestone,
@@ -42,6 +45,7 @@ import {
   updateSiteVisit,
   updateTask,
   uploadAttachment,
+  uploadSiteVisitPhotos,
   upsertCashFlowEntry,
 } from "../api";
 import ProjectFormModal from "../components/ProjectFormModal";
@@ -70,6 +74,7 @@ export default function ProjectDetailPage() {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
   const [siteVisits, setSiteVisits] = useState<SiteVisit[]>([]);
+  const [sitePhotos, setSitePhotos] = useState<SiteVisitPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -87,6 +92,7 @@ export default function ProjectDetailPage() {
         milestoneData,
         cashFlowData,
         siteVisitData,
+        sitePhotoData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -95,6 +101,7 @@ export default function ProjectDetailPage() {
         getMilestones(id),
         getCashFlowEntries(id),
         getSiteVisits(id),
+        getProjectSitePhotos(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -103,6 +110,7 @@ export default function ProjectDetailPage() {
       setMilestones(milestoneData);
       setCashFlowEntries(cashFlowData);
       setSiteVisits(siteVisitData);
+      setSitePhotos(sitePhotoData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -235,6 +243,16 @@ export default function ProjectDetailPage() {
 
   async function handleDeleteSiteVisit(siteVisit: SiteVisit) {
     await deleteSiteVisit(siteVisit.id);
+    await load();
+  }
+
+  async function handleUploadSiteVisitPhotos(siteVisit: SiteVisit, files: File[]) {
+    await uploadSiteVisitPhotos(siteVisit.id, files);
+    await load();
+  }
+
+  async function handleDeleteSiteVisitPhoto(photo: SiteVisitPhoto) {
+    await deleteSiteVisitPhoto(photo.id);
     await load();
   }
 
@@ -373,9 +391,13 @@ export default function ProjectDetailPage() {
 
         <SiteVisitsPanel
           siteVisits={siteVisits}
+          photosByVisit={groupPhotosByVisit(sitePhotos)}
+          allPhotos={sitePhotos}
           onCreate={handleCreateSiteVisit}
           onUpdate={handleUpdateSiteVisit}
           onDelete={handleDeleteSiteVisit}
+          onUploadPhotos={handleUploadSiteVisitPhotos}
+          onDeletePhoto={handleDeleteSiteVisitPhoto}
         />
 
         <AttachmentsPanel
@@ -409,6 +431,16 @@ export default function ProjectDetailPage() {
       )}
     </div>
   );
+}
+
+function groupPhotosByVisit(
+  photos: SiteVisitPhoto[]
+): Record<string, SiteVisitPhoto[]> {
+  const grouped: Record<string, SiteVisitPhoto[]> = {};
+  for (const photo of photos) {
+    (grouped[photo.siteVisitId] ??= []).push(photo);
+  }
+  return grouped;
 }
 
 function Field({ label, value }: { label: string; value: string }) {
