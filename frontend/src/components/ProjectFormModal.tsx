@@ -33,6 +33,7 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
   const [location, setLocation] = useState(project?.location ?? "");
   const [contractor, setContractor] = useState(project?.contractor ?? "");
   const [budget, setBudget] = useState(project?.budget ?? "");
+  const [contingency, setContingency] = useState(project?.contingency ?? "");
   const [contractValue, setContractValue] = useState(
     project?.contractValue ?? ""
   );
@@ -62,6 +63,7 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
         location: location || null,
         contractor: contractor || null,
         budget: budget ? String(budget) : null,
+        contingency: contingency ? String(contingency) : null,
         contractValue: contractValue ? String(contractValue) : null,
         startDate: startDate ? new Date(startDate).toISOString() : null,
         targetCompletionDate: targetCompletionDate
@@ -236,7 +238,17 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
                 className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
               />
             </div>
-            <div />
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Included Contingency ($)
+              </label>
+              <input
+                type="number"
+                value={contingency}
+                onChange={(e) => setContingency(e.target.value)}
+                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

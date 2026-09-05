@@ -1,6 +1,8 @@
 import {
   ActivityLogEntry,
   Attachment,
+  CashFlowEntry,
+  CashFlowEntryInput,
   Milestone,
   MilestoneInput,
   MonthlyReport,
@@ -266,4 +268,27 @@ export function reorderMilestone(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ direction }),
   }).then((res) => handle(res));
+}
+
+export function getCashFlowEntries(projectId: string): Promise<CashFlowEntry[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/cashflow`).then((res) =>
+    handle(res)
+  );
+}
+
+export function upsertCashFlowEntry(
+  projectId: string,
+  data: Partial<CashFlowEntryInput>
+): Promise<CashFlowEntry> {
+  return fetch(`${API_BASE}/projects/${projectId}/cashflow`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteCashFlowEntry(id: string): Promise<void> {
+  return fetch(`${API_BASE}/cashflow/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
 }

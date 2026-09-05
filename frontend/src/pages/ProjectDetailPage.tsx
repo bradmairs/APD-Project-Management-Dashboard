@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ActivityLogEntry,
   Attachment,
+  CashFlowEntry,
+  CashFlowEntryInput,
   Milestone,
   MilestoneInput,
   MonthlyReport,
@@ -17,11 +19,13 @@ import {
   createMonthlyReport,
   createTask,
   deleteAttachment,
+  deleteCashFlowEntry,
   deleteMilestone,
   deleteMonthlyReport,
   deleteProject,
   deleteTask,
   getAttachments,
+  getCashFlowEntries,
   getMilestones,
   getMonthlyReports,
   getProject,
@@ -32,6 +36,7 @@ import {
   updateProject,
   updateTask,
   uploadAttachment,
+  upsertCashFlowEntry,
 } from "../api";
 import ProjectFormModal from "../components/ProjectFormModal";
 import TaskList from "../components/TaskList";
@@ -39,6 +44,7 @@ import ActivityFeed from "../components/ActivityFeed";
 import AttachmentsPanel from "../components/AttachmentsPanel";
 import MonthlyReportsPanel from "../components/MonthlyReportsPanel";
 import MilestonesPanel from "../components/MilestonesPanel";
+import CashFlowPanel from "../components/CashFlowPanel";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import { canModifyProject } from "../permissions";
@@ -55,6 +61,7 @@ export default function ProjectDetailPage() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [reports, setReports] = useState<MonthlyReport[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -64,19 +71,21 @@ export default function ProjectDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const [data, activityData, attachmentData, reportData, milestoneData] =
+      const [data, activityData, attachmentData, reportData, milestoneData, cashFlowData] =
         await Promise.all([
           getProject(id),
           getProjectActivity(id),
           getAttachments(id),
           getMonthlyReports(id),
           getMilestones(id),
+          getCashFlowEntries(id),
         ]);
       setProject(data);
       setActivity(activityData);
       setAttachments(attachmentData);
       setReports(reportData);
       setMilestones(milestoneData);
+      setCashFlowEntries(cashFlowData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -182,6 +191,17 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleUpsertCashFlowEntry(data: Partial<CashFlowEntryInput>) {
+    if (!project) return;
+    await upsertCashFlowEntry(project.id, data);
+    await load();
+  }
+
+  async function handleDeleteCashFlowEntry(entry: CashFlowEntry) {
+    await deleteCashFlowEntry(entry.id);
+    await load();
+  }
+
   if (loading) {
     return <div className="text-center text-slate-500 py-12">Loading…</div>;
   }
@@ -280,6 +300,13 @@ export default function ProjectDetailPage() {
           />
           <Field label="Created By" value={project.createdBy?.name || "—"} />
         </div>
+
+        <CashFlowPanel
+          project={project}
+          entries={cashFlowEntries}
+          onUpsert={handleUpsertCashFlowEntry}
+          onDelete={handleDeleteCashFlowEntry}
+        />
 
         <TaskList
           tasks={project.tasks ?? []}
