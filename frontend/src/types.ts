@@ -430,3 +430,39 @@ export type EotClaimInput = Omit<
   | "createdAt"
   | "updatedAt"
 >;
+
+export type ChecklistPhase = "COMMISSIONING" | "HANDOVER";
+
+export type ChecklistItemStatus =
+  | "NOT_STARTED"
+  | "IN_PROGRESS"
+  | "COMPLETE"
+  | "NOT_APPLICABLE";
+
+export interface ChecklistItem {
+  id: string;
+  projectId: string;
+  phase: ChecklistPhase;
+  title: string;
+  description: string | null;
+  responsible: string | null;
+  dueDate: string | null;
+  completedDate: string | null;
+  status: ChecklistItemStatus;
+  notes: string | null;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ChecklistItemInput = Omit<
+  ChecklistItem,
+  | "id"
+  | "projectId"
+  | "completedDate"
+  | "createdById"
+  | "createdByName"
+  | "createdAt"
+  | "updatedAt"
+>;

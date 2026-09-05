@@ -7,6 +7,8 @@ import {
   Attachment,
   CashFlowEntry,
   CashFlowEntryInput,
+  ChecklistItem,
+  ChecklistItemInput,
   EotClaim,
   EotClaimInput,
   LessonLearned,
@@ -35,6 +37,7 @@ import {
 } from "../types";
 import {
   createActionItem,
+  createChecklistItem,
   createEotClaim,
   createLessonLearned,
   createMilestone,
@@ -49,6 +52,7 @@ import {
   deleteActionItem,
   deleteAttachment,
   deleteCashFlowEntry,
+  deleteChecklistItem,
   deleteEotClaim,
   deleteLessonLearned,
   deleteMilestone,
@@ -65,6 +69,7 @@ import {
   getActionItems,
   getAttachments,
   getCashFlowEntries,
+  getChecklistItems,
   getEotClaims,
   getLessonsLearned,
   getMilestones,
@@ -80,6 +85,7 @@ import {
   getVariations,
   reorderMilestone,
   updateActionItem,
+  updateChecklistItem,
   updateEotClaim,
   updateLessonLearned,
   updateMilestone,
@@ -112,6 +118,7 @@ import PermitsPanel from "../components/PermitsPanel";
 import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
 import SqePanel from "../components/SqePanel";
 import EotPanel from "../components/EotPanel";
+import ChecklistPanel from "../components/ChecklistPanel";
 import HealthBadge from "../components/HealthBadge";
 import { computeProjectHealth } from "../health";
 import { revisedCompletionDate } from "../eot";
@@ -142,6 +149,7 @@ export default function ProjectDetailPage() {
   const [lessons, setLessons] = useState<LessonLearned[]>([]);
   const [sqeRecords, setSqeRecords] = useState<SqeRecord[]>([]);
   const [eotClaims, setEotClaims] = useState<EotClaim[]>([]);
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -168,6 +176,7 @@ export default function ProjectDetailPage() {
         lessonData,
         sqeData,
         eotData,
+        checklistData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -185,6 +194,7 @@ export default function ProjectDetailPage() {
         getLessonsLearned(id),
         getSqeRecords(id),
         getEotClaims(id),
+        getChecklistItems(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -202,6 +212,7 @@ export default function ProjectDetailPage() {
       setLessons(lessonData);
       setSqeRecords(sqeData);
       setEotClaims(eotData);
+      setChecklistItems(checklistData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -490,6 +501,22 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateChecklistItem(data: Partial<ChecklistItemInput>) {
+    if (!project) return;
+    await createChecklistItem(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateChecklistItem(item: ChecklistItem, data: Partial<ChecklistItemInput>) {
+    await updateChecklistItem(item.id, data);
+    await load();
+  }
+
+  async function handleDeleteChecklistItem(item: ChecklistItem) {
+    await deleteChecklistItem(item.id);
+    await load();
+  }
+
   const revisedTargetCompletion = useMemo(
     () => (project ? revisedCompletionDate(project, eotClaims) : null),
     [project, eotClaims]
@@ -694,6 +721,13 @@ export default function ProjectDetailPage() {
           onCreate={handleCreateEotClaim}
           onUpdate={handleUpdateEotClaim}
           onDelete={handleDeleteEotClaim}
+        />
+
+        <ChecklistPanel
+          items={checklistItems}
+          onCreate={handleCreateChecklistItem}
+          onUpdate={handleUpdateChecklistItem}
+          onDelete={handleDeleteChecklistItem}
         />
 
         <SiteVisitsPanel

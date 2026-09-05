@@ -352,6 +352,34 @@ literal contractual date.
 Like Variations, an EOT claim is live data with no per-month snapshot.
 Open to any logged-in user to edit.
 
+## Commissioning & Handover
+
+Each project has a **Commissioning & Handover** checklist — one shared
+`ChecklistItem` model with a `phase` discriminator (Commissioning or
+Handover), the same discriminator pattern used by Risks/Opportunities and
+Lessons Learned, since both phases track the same shape of item (a
+Title, Description, Responsible party, Due Date, Status, and Notes) and
+only which stage of project closeout they belong to differs. Milestones
+already track high-level WBS-phase dates, but commissioning and handover
+each involve many small, checkable steps (functional tests, O&M manual
+handover, training, defects sign-off) that don't warrant their own
+milestone rows — this checklist gives them a home.
+
+Status is Not Started, In Progress, Complete, or Not Applicable,
+changeable inline from the panel. `completedDate` stamps automatically
+the moment status changes to Complete, and clears if it's moved back off
+Complete — the same auto-stamp pattern used by Variations'
+`dateDecided`, Actions' `dateClosed`, SQE's `dateClosed`, and EOT's
+`dateDecided`. The panel header shows a running count per phase (e.g.
+"Commissioning 2/5 complete · Handover 0/3 complete"), excluding
+Not Applicable items from the denominator so they don't dilute the
+completion picture.
+
+Like Stakeholders, this register has no portfolio-wide view — a
+project's commissioning checklist doesn't aggregate meaningfully across
+the portfolio the way an open risk or an expiring permit does. Open to
+any logged-in user to edit.
+
 ## Risks & Opportunities
 
 Each project has a **Risks & Opportunities** register — one shared `Risk`

@@ -5,6 +5,8 @@ import {
   Attachment,
   CashFlowEntry,
   CashFlowEntryInput,
+  ChecklistItem,
+  ChecklistItemInput,
   EotClaim,
   EotClaimInput,
   LessonLearned,
@@ -668,6 +670,40 @@ export function updateEotClaim(
 
 export function deleteEotClaim(id: string): Promise<void> {
   return fetch(`${API_BASE}/eot-claims/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getChecklistItems(projectId: string): Promise<ChecklistItem[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/checklist-items`).then((res) =>
+    handle(res)
+  );
+}
+
+export function createChecklistItem(
+  projectId: string,
+  data: Partial<ChecklistItemInput>
+): Promise<ChecklistItem> {
+  return fetch(`${API_BASE}/projects/${projectId}/checklist-items`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateChecklistItem(
+  id: string,
+  data: Partial<ChecklistItemInput>
+): Promise<ChecklistItem> {
+  return fetch(`${API_BASE}/checklist-items/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteChecklistItem(id: string): Promise<void> {
+  return fetch(`${API_BASE}/checklist-items/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }

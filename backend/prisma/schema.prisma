@@ -123,6 +123,18 @@ enum EotStatus {
   REJECTED
 }
 
+enum ChecklistPhase {
+  COMMISSIONING
+  HANDOVER
+}
+
+enum ChecklistItemStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+  NOT_APPLICABLE
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -145,6 +157,7 @@ model User {
   lessonsLearned LessonLearned[]
   sqeRecords     SqeRecord[]
   eotClaims      EotClaim[]
+  checklistItems ChecklistItem[]
 }
 
 model Project {
@@ -184,6 +197,7 @@ model Project {
   lessonsLearned         LessonLearned[]
   sqeRecords             SqeRecord[]
   eotClaims              EotClaim[]
+  checklistItems         ChecklistItem[]
 }
 
 model Task {
@@ -594,6 +608,36 @@ model EotClaim {
   notes        String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// A commissioning or handover checklist line item — the granular,
+// checkable counterpart to Milestone's high-level WBS phases. Both
+// phases share one shape (title/responsible/dueDate/status/notes), the
+// same discriminator pattern as Risk/Opportunity and Lesson Learned's
+// POSITIVE/NEGATIVE, since a handover item and a commissioning item
+// track identically shaped work at different points in the same
+// closeout process. completedDate stamps automatically the moment
+// status becomes COMPLETE, the same pattern SqeRecord.dateClosed uses.
+// Cascades with its project like the other registers.
+model ChecklistItem {
+  id            String              @id @default(cuid())
+  project       Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  phase         ChecklistPhase
+  title         String
+  description   String?
+  responsible   String?
+  dueDate       DateTime?
+  completedDate DateTime?
+  status        ChecklistItemStatus @default(NOT_STARTED)
+  notes         String?
+  createdBy     User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById   String?
+  createdByName String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
   @@index([projectId])
 }

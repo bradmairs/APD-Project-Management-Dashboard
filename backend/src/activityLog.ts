@@ -1,5 +1,6 @@
 import {
   ActionItem,
+  ChecklistItem,
   EotClaim,
   LessonLearned,
   Milestone,
@@ -270,4 +271,23 @@ export function describeEotClaimUpdate(
     return `marked EOT claim "${before.title}" as ${label}${grantedNote}`;
   }
   return `updated EOT claim "${before.title}"`;
+}
+
+const CHECKLIST_STATUS_LABELS: Record<string, string> = {
+  NOT_STARTED: "Not Started",
+  IN_PROGRESS: "In Progress",
+  COMPLETE: "Complete",
+  NOT_APPLICABLE: "Not Applicable",
+};
+
+export function describeChecklistItemUpdate(
+  before: ChecklistItem,
+  body: Record<string, unknown>
+): string {
+  const noun = before.phase === "HANDOVER" ? "handover item" : "commissioning item";
+  if ("status" in body && body.status !== before.status) {
+    const label = CHECKLIST_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked ${noun} "${before.title}" as ${label}`;
+  }
+  return `updated ${noun} "${before.title}"`;
 }
