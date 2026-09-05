@@ -56,7 +56,8 @@ Each **Project** tracks:
 - Name, description, asset type (e.g. Pipeline, Pump Station, Treatment Plant)
 - Status: Planning → Design → Tender → Construction → Defects Liability → Complete
   (plus On Hold / Cancelled)
-- Project manager, location, contractor
+- BP Ref. No., Project Manager, Project Director, Project Sponsor
+- Location, contractor
 - Budget vs. contract value
 - Start date, target completion date, actual completion date
 
@@ -203,6 +204,36 @@ backend):
 Chart colors and layout follow a small internal palette in
 `frontend/src/charts/palette.ts`, chosen for colorblind-safe contrast between
 task-status colors.
+
+## Monthly Reports
+
+Each project has a **Monthly Reports** panel, modelled on GVW's existing
+board-reporting template: Reporting Month, Project Phase (e.g. "3 - Plan"),
+Current Status (e.g. "Concept Design"), free-text "Recently Completed" and
+"Monthly Lookahead" notes, and a Budget Health / Schedule Health traffic
+light (Green / Amber / Red) each with its own comments.
+
+A report is a **locked snapshot**, not a live view: each (project, month)
+pair is its own row, created once and then left alone as the historical
+record for that month, the same way the source document is a point-in-time
+report rather than something that keeps changing after the fact. Only one
+report can exist per project per month. Editing an existing month's report
+is still possible (for correcting a mistake), and follows the same
+creator-or-admin permission rule as projects — the report's author is
+snapshotted by name so it stays attributed even if that account is later
+removed or deactivated.
+
+This is the first phase of a larger effort to bring the full monthly report
+into the dashboard. Not yet built:
+
+- **Milestones / WBS schedule** — the source report's major-deliverable
+  table (% complete, original/forecast/actual completion dates), richer
+  than the existing Task list
+- **Cash flow tracking** — monthly actual/forecast $ by financial year,
+  rolling up to the report's expenditure-to-date and variance figures
+- **A formatted report view and export** — once the above exist, a page
+  that lays them out like the source document, with a PDF/print option for
+  board reporting
 
 ## Roadmap ideas (not built yet)
 

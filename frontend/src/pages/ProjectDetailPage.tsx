@@ -3,19 +3,25 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ActivityLogEntry,
   Attachment,
+  MonthlyReport,
+  MonthlyReportInput,
   Project,
   ProjectInput,
   Task,
   TaskStatus,
 } from "../types";
 import {
+  createMonthlyReport,
   createTask,
   deleteAttachment,
+  deleteMonthlyReport,
   deleteProject,
   deleteTask,
   getAttachments,
+  getMonthlyReports,
   getProject,
   getProjectActivity,
+  updateMonthlyReport,
   updateProject,
   updateTask,
   uploadAttachment,
@@ -24,6 +30,7 @@ import ProjectFormModal from "../components/ProjectFormModal";
 import TaskList from "../components/TaskList";
 import ActivityFeed from "../components/ActivityFeed";
 import AttachmentsPanel from "../components/AttachmentsPanel";
+import MonthlyReportsPanel from "../components/MonthlyReportsPanel";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import { canModifyProject } from "../permissions";
@@ -38,6 +45,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [activity, setActivity] = useState<ActivityLogEntry[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [reports, setReports] = useState<MonthlyReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -47,14 +55,16 @@ export default function ProjectDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const [data, activityData, attachmentData] = await Promise.all([
+      const [data, activityData, attachmentData, reportData] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
         getAttachments(id),
+        getMonthlyReports(id),
       ]);
       setProject(data);
       setActivity(activityData);
       setAttachments(attachmentData);
+      setReports(reportData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -111,6 +121,25 @@ export default function ProjectDetailPage() {
   async function handleDeleteAttachment(attachment: Attachment) {
     if (!confirm(`Delete "${attachment.originalName}"? This cannot be undone.`)) return;
     await deleteAttachment(attachment.id);
+    await load();
+  }
+
+  async function handleCreateReport(data: Partial<MonthlyReportInput>) {
+    if (!project) return;
+    await createMonthlyReport(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateReport(
+    report: MonthlyReport,
+    data: Partial<MonthlyReportInput>
+  ) {
+    await updateMonthlyReport(report.id, data);
+    await load();
+  }
+
+  async function handleDeleteReport(report: MonthlyReport) {
+    await deleteMonthlyReport(report.id);
     await load();
   }
 
@@ -189,8 +218,11 @@ export default function ProjectDetailPage() {
         )}
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Field label="BP Ref. No." value={project.bpRefNo || "—"} />
           <Field label="Asset Type" value={project.assetType || "—"} />
           <Field label="Project Manager" value={project.projectManager || "—"} />
+          <Field label="Project Director" value={project.projectDirector || "—"} />
+          <Field label="Project Sponsor" value={project.projectSponsor || "—"} />
           <Field label="Location" value={project.location || "—"} />
           <Field label="Contractor" value={project.contractor || "—"} />
           <Field label="Budget" value={formatCurrency(project.budget)} />
@@ -221,6 +253,14 @@ export default function ProjectDetailPage() {
           attachments={attachments}
           onUpload={handleUploadAttachment}
           onDelete={handleDeleteAttachment}
+        />
+
+        <MonthlyReportsPanel
+          reports={reports}
+          currentUser={user}
+          onCreate={handleCreateReport}
+          onUpdate={handleUpdateReport}
+          onDelete={handleDeleteReport}
         />
 
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">

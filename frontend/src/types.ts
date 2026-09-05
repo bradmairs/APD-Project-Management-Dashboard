@@ -44,7 +44,10 @@ export interface Project {
   description: string | null;
   assetType: string | null;
   status: ProjectStatus;
+  bpRefNo: string | null;
   projectManager: string | null;
+  projectDirector: string | null;
+  projectSponsor: string | null;
   location: string | null;
   contractor: string | null;
   budget: string | null;
@@ -84,3 +87,28 @@ export interface Attachment {
   uploadedByName: string;
   createdAt: string;
 }
+
+export type RagStatus = "GREEN" | "AMBER" | "RED";
+
+export interface MonthlyReport {
+  id: string;
+  projectId: string;
+  reportingMonth: string;
+  projectPhase: string;
+  currentStatus: string;
+  recentlyCompleted: string | null;
+  monthlyLookahead: string | null;
+  budgetHealth: RagStatus;
+  budgetComments: string | null;
+  scheduleHealth: RagStatus;
+  scheduleComments: string | null;
+  createdById: string | null;
+  authorName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type MonthlyReportInput = Omit<
+  MonthlyReport,
+  "id" | "projectId" | "createdById" | "authorName" | "createdAt" | "updatedAt"
+>;

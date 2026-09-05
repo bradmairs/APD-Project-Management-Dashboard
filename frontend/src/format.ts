@@ -37,6 +37,17 @@ export function formatRelativeTime(value: string): string {
   return relativeFormatter.format(Math.round(seconds), "second");
 }
 
+export function formatReportMonth(value: string): string {
+  // timeZone: "UTC" matters here — reportingMonth is stored as UTC midnight
+  // on the 1st, and a local-time formatter in a negative-UTC-offset zone
+  // would render it as the last day of the *previous* month.
+  return new Date(value).toLocaleDateString("en-AU", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   const units = ["KB", "MB", "GB"];
