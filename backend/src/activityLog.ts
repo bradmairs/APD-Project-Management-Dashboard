@@ -1,4 +1,15 @@
-import { Milestone, Project, SiteVisit, Task } from "@prisma/client";
+import {
+  ActionItem,
+  LessonLearned,
+  Milestone,
+  Permit,
+  Project,
+  Risk,
+  SiteVisit,
+  Stakeholder,
+  Task,
+  Variation,
+} from "@prisma/client";
 import { prisma } from "./prisma";
 
 interface LogParams {
@@ -130,4 +141,92 @@ export function describeSiteVisitUpdate(
     return `updated the site visit location to "${body.location}"`;
   }
   return `updated the site visit at ${before.location}`;
+}
+
+const VARIATION_STATUS_LABELS: Record<string, string> = {
+  PROPOSED: "Proposed",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
+export function describeVariationUpdate(
+  before: Variation,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = VARIATION_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked variation "${before.title}" as ${label}`;
+  }
+  return `updated variation "${before.title}"`;
+}
+
+const RISK_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  MITIGATING: "Mitigating",
+  CLOSED: "Closed",
+};
+
+export function describeRiskUpdate(before: Risk, body: Record<string, unknown>): string {
+  const noun = before.type === "OPPORTUNITY" ? "opportunity" : "risk";
+  if ("status" in body && body.status !== before.status) {
+    const label = RISK_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked ${noun} "${before.title}" as ${label}`;
+  }
+  if (
+    ("residualLikelihood" in body || "residualConsequence" in body) &&
+    (body.residualLikelihood !== before.residualLikelihood ||
+      body.residualConsequence !== before.residualConsequence)
+  ) {
+    return `updated the residual rating for ${noun} "${before.title}"`;
+  }
+  return `updated ${noun} "${before.title}"`;
+}
+
+const ACTION_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  IN_PROGRESS: "In Progress",
+  DONE: "Done",
+};
+
+export function describeActionItemUpdate(
+  before: ActionItem,
+  body: Record<string, unknown>
+): string {
+  const noun = before.type === "DECISION" ? "decision" : "action";
+  if ("status" in body && body.status !== before.status) {
+    const label = ACTION_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked ${noun} "${before.title}" as ${label}`;
+  }
+  return `updated ${noun} "${before.title}"`;
+}
+
+export function describeStakeholderUpdate(
+  before: Stakeholder,
+  body: Record<string, unknown>
+): string {
+  return `updated stakeholder "${before.name}"`;
+}
+
+const PERMIT_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pending",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
+export function describePermitUpdate(
+  before: Permit,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = PERMIT_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked permit "${before.title}" as ${label}`;
+  }
+  return `updated permit "${before.title}"`;
+}
+
+export function describeLessonLearnedUpdate(
+  before: LessonLearned,
+  body: Record<string, unknown>
+): string {
+  return `updated lesson learned "${before.title}"`;
 }

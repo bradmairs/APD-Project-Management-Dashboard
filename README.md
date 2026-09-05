@@ -192,23 +192,43 @@ has something real to demonstrate out of the box.
 
 ## Charts
 
-The dashboard shows a **Projects by Status** chart right below the stat
-cards — a bar per pipeline stage, so the portfolio's shape is visible
-without a click. The "Reports" link opens a dedicated page with that same
-chart plus two more, all built from the same project/task data (no
-separate reporting backend):
+The dashboard shows a **Spend vs Budget Over Time — All Projects** chart
+right below the stat cards, then a **Projects by Status** chart below
+that — so both the portfolio's financial trajectory and its pipeline
+shape are visible without a click. The "Reports" link opens a dedicated
+page with the status chart plus two more, all built from the same
+project/task data (no separate reporting backend):
 
 - **Projects by Status** — count of projects at each pipeline stage
 - **Budget by Asset Type** — total budget grouped by asset type
 - **Task Progress by Project** — a To Do / In Progress / Done breakdown per
   project, sorted so the least-progressed projects surface first
 
+The dashboard's **Spend vs Budget Over Time — All Projects** chart is the
+portfolio-wide sibling of each project's own chart described below: every
+project's own cumulative Actual-then-Forecast series (see the per-project
+description for how that series is built) is computed independently and
+only then summed by month, rather than pooling every project's raw cash
+flow entries into one bucket — that distinction matters because a project
+still on Forecast for a given month must keep contributing its forecast
+figure to the total even in a month where some *other* project has
+already booked an Actual, which a naive combined-entries approach would
+silently drop. The reference line sums every project's *revised* budget
+(Approved Budget plus its own approved variations — see Variations
+below), relabeling itself "Total Revised Budget" once any project in the
+portfolio has one, the same way the per-project chart's own reference
+line does. Both this and the per-project chart share their SVG rendering
+(`frontend/src/charts/CumulativeSpendChartView.tsx`) and cumulative-series
+math (`frontend/src/charts/cumulativeSpend.ts`).
+
 Each project's Cash Flow panel has two charts:
 
 - **Spend vs Budget Over Time** — a cumulative line: Actual spend (solid
   blue) running into Forecast spend (dashed orange) as the project's
-  Actual entries run out, plotted against a flat Approved Budget reference
-  line (dashed gray) and a "Today" marker. The x-axis spans the project's
+  Actual entries run out, plotted against a flat budget reference line
+  (dashed gray, labelled "Revised Budget" once the project has an
+  approved variation, "Approved Budget" otherwise) and a "Today" marker.
+  The x-axis spans the project's
   own Start Date to Target Completion (extended to cover any entry outside
   that range), so the chart doubles as a where-are-we-in-the-schedule view,
   not just a spend total. This is the one chart in the app drawn as an SVG
@@ -270,6 +290,187 @@ sequence is meaningful on its own and isn't derivable from the other
 fields. Open to any logged-in user to edit, like Tasks and Attachments —
 only the project record itself needs an owner.
 
+## Variations
+
+Each project has a **Variations** panel for tracking contract variations
+(scope, cost, and time changes) as they move through their own lifecycle:
+Proposed → Approved or Rejected, changeable inline from the panel itself
+(a status `<select>` per row) or from the full edit form. A variation
+records a Reference (e.g. "VAR-01"), Title, Category (free text, with
+suggestions like "Latent Conditions" or "Scope Change"), Description, a
+Cost Impact (can be negative, for a credit/deduction), an optional Time
+Impact in days, the date it was raised, and free-text notes. `dateDecided`
+is stamped automatically the moment a variation leaves Proposed, rather
+than needing to be entered by hand. The panel header totals the value of
+every currently Approved variation and flags how many are still awaiting
+a decision.
+
+Only an **Approved** variation counts toward a project's budget — a
+Proposed one hasn't been agreed to yet, and a Rejected one never
+happened. `frontend/src/variations.ts` computes each project's *revised
+budget* (its Approved Budget plus the sum of its approved variations'
+cost impact) once, and every other budget-aware figure in the app —
+the Cash Flow panel's Variance calculation, both cumulative-spend charts'
+budget reference line — reads from that revised figure rather than the
+raw project budget. When a project has no approved variations the revised
+budget is identical to the Approved Budget, so nothing downstream changes
+its wording or behavior until a variation is actually approved.
+
+Like Milestones and Cash Flow entries, a variation is live data with no
+per-month snapshot — its current state (and history of status changes,
+via the Activity panel) is what matters, not what it looked like on some
+past reporting date. Open to any logged-in user to edit, matching Tasks,
+Attachments, and Milestones.
+
+## Risks & Opportunities
+
+Each project has a **Risks & Opportunities** register — one shared `Risk`
+model with a `type` discriminator, since both track the same structure
+(only the polarity of the underlying uncertainty differs). Each entry has
+a Title, Type (Risk or Opportunity), Category (free text), Description,
+an owner, an optional due date, and a status of Open, Mitigating, or
+Closed, changeable inline from the panel (a status `<select>` per row) or
+from the full edit form.
+
+Likelihood and consequence are rated on a standard 5×5 matrix — Rare
+through Almost Certain, Insignificant through Severe — captured twice:
+an **Inherent** rating (before any mitigation) is required on every
+entry, and an optional **Residual** rating (after mitigation) can be
+added once a response is in place. `frontend/src/riskScoring.ts` maps
+each rating to a 1-5 value, multiplies likelihood × consequence for a
+score from 1 to 25, and bands it Low/Medium/High/Critical — this scoring
+is computed client-side rather than persisted, so changing the band
+thresholds doesn't require a migration. The panel sorts by inherent
+score (highest first) and shows both score badges side by side when a
+residual rating exists, so the effect of mitigation is visible at a
+glance.
+
+The Dashboard has its own portfolio-wide **Top Risks & Opportunities**
+panel, listing the highest-scored open items across every project with a
+link back to each one — matching the Risks panel's per-project register
+without needing to open every project to see what needs attention.
+
+Like Variations, a risk is live data with no per-month snapshot — its
+current state and status history (via the Activity panel) are what
+matter. Open to any logged-in user to edit, matching Tasks, Attachments,
+Milestones, and Variations.
+
+## Actions & Decisions
+
+Each project has an **Actions & Decisions** register — one shared
+`ActionItem` model with a `type` discriminator, the same pattern as
+Risk/Opportunity. It's deliberately separate from Tasks: a Task is a
+general to-do, while an Action or Decision is raised in a specific
+context (a design review, a site meeting) and tracked back to that
+origin. Both share a Title, Category (free text), Description, an
+owner, an optional due date, and a status of Open, In Progress, or Done,
+changeable inline from the panel or the full edit form.
+
+A **Decision** is, by nature, usually already resolved the moment it's
+recorded — there's no work left to do, just a record of what was agreed
+— so creating one defaults its status straight to Done rather than Open
+the way a new Action does; both remain fully editable afterwards (a
+decision can be revisited and reopened) since the type only changes the
+starting point, not what's allowed. `dateClosed` stamps automatically
+the moment status becomes Done, and clears if it moves off Done again —
+the same pattern `dateDecided` uses on a Variation.
+
+The Dashboard has its own portfolio-wide **Open Actions** panel, listing
+every open Action/Decision across every project — the ones with a due
+date first, soonest (or most overdue) at the top — each linking back to
+its project. It sits beside the Needs Attention panel since both answer
+the same question: what does a PM need to look at today, across the
+whole portfolio, without opening every project one by one.
+
+Like Risks and Variations, an action item is live data with no per-month
+snapshot. Open to any logged-in user to edit, matching Tasks,
+Attachments, Milestones, Variations, and Risks.
+
+## Stakeholders
+
+Each project has a **Stakeholders** register — a simple contact
+directory of the people and organizations with a stake in the project (a
+landholder, a council contact, a community group): Name, Role,
+Organization, Email, and Phone, with free-text Notes on expand. Unlike
+every other register on this page, a stakeholder has no status or
+lifecycle of its own — it's a directory entry, not something that moves
+through states — so there's nothing to track a transition for beyond the
+plain fact of an edit. No portfolio-wide view exists for this one;
+stakeholders are inherently project-specific in a way that doesn't
+aggregate meaningfully across the portfolio the way an open risk or an
+expiring permit does. Open to any logged-in user to edit.
+
+## Permits & Approvals
+
+Each project has a **Permits & Approvals** register for tracking
+environmental, planning, and regulatory approvals: Title, Category (free
+text, with suggestions like "Environmental" or "Cultural Heritage"),
+Reference Number, Issuing Authority, a Status of Pending/Approved/
+Rejected (changeable inline), Date Applied, Date Approved, an Expiry
+Date, and Notes.
+
+Whether an approved permit is **Expiring Soon** (within 60 days) or
+**Expired** is computed from its expiry date against the current time,
+the same way a project's overdue state is computed rather than stored —
+`frontend/src/permitMeta.ts` — so it can never drift stale the way a
+manually-set "expired" status would the moment nobody's looking. Only an
+Approved permit can meaningfully expire; a Pending or Rejected one was
+never in force. The dashboard's portfolio-wide **Permits Expiring Soon**
+panel lists every flagged permit across every project, soonest first,
+linking back to its project — sitting alongside Needs Attention and Open
+Actions as a third view into what needs a PM's attention today. Open to
+any logged-in user to edit.
+
+## Lessons Learned
+
+Each project has a **Lessons Learned** register — one shared
+`LessonLearned` model with a `type` discriminator (what went well vs.
+what to improve), the same Risk/Opportunity-style pattern used
+elsewhere. Each entry has a Title, Category, a description of what
+happened, and a Recommendation for future projects.
+
+Unlike the other registers, a lesson's value is less about tracking it
+to closure and more about it being **findable later** — by a PM starting
+a new pump station project, say, wanting to know what past pump station
+projects learned. The dashboard header has its own **Lessons Learned**
+page (`/lessons-learned`), separate from the per-project panel, listing
+every lesson across the whole portfolio with type and category filters
+plus a text search, each linking back to its project (and that project's
+asset type, for exactly that "what have we learned about this kind of
+asset" use case). Open to any logged-in user to edit.
+
+## Project Health
+
+Every project gets a live **Health** rating — Green/Amber/Red — computed
+from data that's already there, rather than typed in by hand. This is
+distinct from a Monthly Report's `budgetHealth`/`scheduleHealth`, which
+are a PM's own judgement call as of that report's month: Project Health
+recalculates on every page load from whatever the project's schedule,
+cash flow, and risk register currently say, so a project that's drifted
+off track shows up immediately rather than waiting for the next report.
+
+`frontend/src/health.ts` rates three dimensions independently, then takes
+the worst of the three as the overall rating:
+
+- **Schedule** — Red if the project is overdue (its target completion
+  date has passed and it isn't Defects Liability/Complete/Cancelled, the
+  same rule the dashboard's Overdue stat uses); Amber if that date is
+  within the next 30 days; Green otherwise
+- **Budget** — Red if the Forecast Total (from Cash Flow) exceeds the
+  project's current budget (revised by any approved Variations); Amber
+  once it passes 90% of that budget; Green otherwise, and Green when
+  there's no cash flow data yet rather than guessing
+- **Risk** — Red if any open Risk (not an Opportunity, not Closed) has a
+  Critical inherent score; Amber for High; Green otherwise
+
+The dashboard's **Needs Attention** panel lists every project rated
+Amber or Red portfolio-wide, naming which dimension(s) triggered it and
+linking straight to the project — the exception-surfacing view of what a
+PM should look at today, rather than a database they have to go dig
+through. The same rating shows as a compact badge in the dashboard's
+project table (hover for the per-dimension breakdown) and as the full
+Schedule/Budget/Risk breakdown in each project's own header.
+
 ## Cash Flow
 
 Each project has a **Cash Flow** panel — the source report's monthly
@@ -286,8 +487,14 @@ source report:
 - **Expenditure to Date** — the sum of all Actual entries
 - **Forecast Total** — Expenditure to Date plus the sum of all Forecast
   entries
-- **Variance** — Approved Budget minus Forecast Total (shown in red if
-  the project is forecast to run over)
+- **Variance** — the project's current budget (Approved Budget, revised
+  by any Approved variations — see Variations above) minus Forecast
+  Total, shown in red if the project is forecast to run over
+
+When at least one variation has been approved, two extra stats appear —
+**Approved Variations** (their total cost impact) and **Revised Budget**
+— so the original figure and its revision are both visible side by side
+rather than the original quietly being replaced.
 
 Like Milestones, this is live data rather than a per-month snapshot — an
 Actual figure doesn't need re-editing once entered, and a Forecast is

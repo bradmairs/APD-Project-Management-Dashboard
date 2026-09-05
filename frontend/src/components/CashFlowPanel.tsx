@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { CashFlowEntry, CashFlowEntryInput, Project } from "../types";
+import { CashFlowEntry, CashFlowEntryInput, Project, Variation } from "../types";
 import { formatCurrency, formatReportMonth } from "../format";
+import { approvedVariationsTotal, revisedBudget } from "../variations";
 import CashFlowChart from "../charts/CashFlowChart";
 import CumulativeSpendChart from "../charts/CumulativeSpendChart";
 import CashFlowEntryFormModal from "./CashFlowEntryFormModal";
@@ -8,11 +9,18 @@ import CashFlowEntryFormModal from "./CashFlowEntryFormModal";
 interface Props {
   project: Project;
   entries: CashFlowEntry[];
+  variations: Variation[];
   onUpsert: (data: Partial<CashFlowEntryInput>) => Promise<void>;
   onDelete: (entry: CashFlowEntry) => Promise<void>;
 }
 
-export default function CashFlowPanel({ project, entries, onUpsert, onDelete }: Props) {
+export default function CashFlowPanel({
+  project,
+  entries,
+  variations,
+  onUpsert,
+  onDelete,
+}: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<CashFlowEntry | null>(null);
 
@@ -23,7 +31,9 @@ export default function CashFlowPanel({ project, entries, onUpsert, onDelete }: 
     .filter((e) => e.type === "FORECAST")
     .reduce((sum, e) => sum + Number(e.amount), 0);
   const forecastTotal = expenditureToDate + forecastRemaining;
-  const variance = project.budget === null ? null : Number(project.budget) - forecastTotal;
+  const approvedVariations = approvedVariationsTotal(variations);
+  const currentBudget = revisedBudget(project, variations);
+  const variance = currentBudget === null ? null : currentBudget - forecastTotal;
 
   function openCreate() {
     setEditing(null);
@@ -67,6 +77,12 @@ export default function CashFlowPanel({ project, entries, onUpsert, onDelete }: 
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
         <Stat label="Approved Budget" value={formatCurrency(project.budget)} />
+        {approvedVariations !== 0 && (
+          <>
+            <Stat label="Approved Variations" value={formatCurrency(approvedVariations)} />
+            <Stat label="Revised Budget" value={formatCurrency(currentBudget)} />
+          </>
+        )}
         <Stat label="Contingency" value={formatCurrency(project.contingency)} />
         <Stat label="Expenditure to Date" value={formatCurrency(expenditureToDate)} />
         <Stat label="Forecast Total" value={formatCurrency(forecastTotal)} />
@@ -81,7 +97,7 @@ export default function CashFlowPanel({ project, entries, onUpsert, onDelete }: 
         <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
           Spend vs Budget Over Time
         </h3>
-        <CumulativeSpendChart project={project} entries={entries} />
+        <CumulativeSpendChart project={project} entries={entries} variations={variations} />
       </div>
 
       {entries.length === 0 ? (

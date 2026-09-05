@@ -40,6 +40,64 @@ enum CashFlowType {
   FORECAST
 }
 
+enum VariationStatus {
+  PROPOSED
+  APPROVED
+  REJECTED
+}
+
+enum RiskType {
+  RISK
+  OPPORTUNITY
+}
+
+// A standard 5-point risk-matrix scale, used for both likelihood and
+// consequence — see frontend/src/riskScoring.ts for how the two combine
+// into a numeric score and a Low/Medium/High/Critical band.
+enum RiskLikelihood {
+  RARE
+  UNLIKELY
+  POSSIBLE
+  LIKELY
+  ALMOST_CERTAIN
+}
+
+enum RiskConsequence {
+  INSIGNIFICANT
+  MINOR
+  MODERATE
+  MAJOR
+  SEVERE
+}
+
+enum RiskStatus {
+  OPEN
+  MITIGATING
+  CLOSED
+}
+
+enum ActionType {
+  ACTION
+  DECISION
+}
+
+enum ActionItemStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
+enum PermitStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LessonType {
+  POSITIVE
+  NEGATIVE
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -55,6 +113,11 @@ model User {
   monthlyReports MonthlyReport[]
   siteVisits     SiteVisit[]
   siteVisitPhotos SiteVisitPhoto[]
+  variations     Variation[]
+  risks          Risk[]
+  actionItems    ActionItem[]
+  permits        Permit[]
+  lessonsLearned LessonLearned[]
 }
 
 model Project {
@@ -86,6 +149,12 @@ model Project {
   milestones             Milestone[]
   cashFlowEntries        CashFlowEntry[]
   siteVisits             SiteVisit[]
+  variations             Variation[]
+  risks                  Risk[]
+  actionItems            ActionItem[]
+  stakeholders           Stakeholder[]
+  permits                Permit[]
+  lessonsLearned         LessonLearned[]
 }
 
 model Task {
@@ -252,6 +321,186 @@ model SiteVisitPhoto {
   createdAt      DateTime  @default(now())
 
   @@index([siteVisitId])
+}
+
+// A contract variation (scope/cost/time change) raised against a project.
+// Like Milestone/CashFlowEntry (and unlike MonthlyReport) this is live data,
+// not a monthly snapshot — a variation moves through Proposed -> Approved/
+// Rejected over its own lifetime, and that current state is what matters,
+// not what it looked like at some past reporting date. costImpact can be
+// negative (a deduction/credit); an APPROVED variation's costImpact is what
+// revises a project's budget for variance calculations elsewhere in the
+// app — see frontend/src/variations.ts — a Proposed or Rejected one doesn't
+// count yet (or ever). Cascades with its project for the same reason
+// Milestone does: a variation only makes sense in that project's context.
+model Variation {
+  id             String          @id @default(cuid())
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  reference      String?
+  title          String
+  description    String?
+  category       String?
+  costImpact     Decimal         @db.Decimal(14, 2)
+  timeImpactDays Int?
+  status         VariationStatus @default(PROPOSED)
+  dateRaised     DateTime
+  dateDecided    DateTime?
+  raisedBy       User?           @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById     String?
+  raisedByName   String
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([projectId])
+}
+
+// A project risk register entry — or, when type is OPPORTUNITY, its mirror
+// image (an upside worth chasing rather than a downside to mitigate), kept
+// in the same table since the two share every field. inherentLikelihood/
+// inherentConsequence score the risk with no controls in place; the
+// residual pair (both optional) score it after mitigation is applied — a
+// risk with no residual score yet simply hasn't been assessed post-
+// mitigation. Scoring math (the 1-5 scale behind each enum value, and the
+// Low/Medium/High/Critical band a score falls into) lives in
+// frontend/src/riskScoring.ts rather than being stored, the same way a
+// Milestone's overall percent is computed rather than persisted. Cascades
+// with its project like Milestone/Variation — a risk only makes sense in
+// that project's context.
+model Risk {
+  id                   String           @id @default(cuid())
+  project              Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId            String
+  type                 RiskType         @default(RISK)
+  title                String
+  description          String?
+  category             String?
+  inherentLikelihood   RiskLikelihood
+  inherentConsequence  RiskConsequence
+  residualLikelihood   RiskLikelihood?
+  residualConsequence  RiskConsequence?
+  mitigation           String?
+  ownerName            String?
+  dueDate              DateTime?
+  status               RiskStatus       @default(OPEN)
+  createdBy            User?            @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById          String?
+  createdByName        String
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  @@index([projectId])
+}
+
+// A meeting action or decision logged against a project — distinct from
+// Task (a general to-do) in that it's raised in a specific context (a
+// meeting, a review) and, for a DECISION, is typically already resolved
+// the moment it's recorded rather than something to work through. Both
+// share the same shape, the same way Risk/Opportunity do, since a
+// decision is really just an action whose lifecycle is already complete.
+// dateClosed stamps automatically the moment status becomes DONE, the
+// same way Variation.dateDecided stamps on leaving PROPOSED. Cascades
+// with its project like Variation/Risk.
+model ActionItem {
+  id           String           @id @default(cuid())
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+  type         ActionType       @default(ACTION)
+  title        String
+  description  String?
+  category     String?
+  ownerName    String?
+  dueDate      DateTime?
+  status       ActionItemStatus @default(OPEN)
+  dateRaised   DateTime
+  dateClosed   DateTime?
+  raisedBy     User?            @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById   String?
+  raisedByName String
+  notes        String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([projectId])
+}
+
+// A person or organization with a stake in a project — a landholder, a
+// council contact, a community group. Unlike Risk/Variation/ActionItem
+// this has no status or lifecycle of its own; it's a contact directory
+// entry that simply exists until it's no longer relevant, so there's
+// nothing to log a status transition for. Cascades with its project like
+// the other registers.
+model Stakeholder {
+  id           String   @id @default(cuid())
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+  name         String
+  organization String?
+  role         String?
+  email        String?
+  phone        String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+// An environmental/planning/regulatory permit or approval a project needs.
+// Whether it's "expiring soon" or already expired is computed from
+// expiryDate against the current date (frontend/src/permitMeta.ts), the
+// same way a Project's overdue state is computed rather than stored —
+// storing "expired" as a status would drift stale the moment the clock
+// passes it without anyone touching the row. status here only tracks the
+// application's own outcome (Pending/Approved/Rejected). Cascades with
+// its project like the other registers.
+model Permit {
+  id                String       @id @default(cuid())
+  project           Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId         String
+  title             String
+  category          String?
+  referenceNumber   String?
+  issuingAuthority  String?
+  status            PermitStatus @default(PENDING)
+  dateApplied       DateTime?
+  dateApproved      DateTime?
+  expiryDate        DateTime?
+  notes             String?
+  createdBy         User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById       String?
+  createdByName     String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([projectId])
+}
+
+// A lesson captured from a project for the benefit of future ones — what
+// went well (POSITIVE) or what should be done differently (NEGATIVE),
+// the same Risk/Opportunity-style discriminator on one shared shape.
+// Unlike the other registers this is written once a lesson is identified
+// and then rarely changes; its value is in being browsable across the
+// whole portfolio afterwards (see the dashboard's Lessons Learned page)
+// rather than in tracking a status to closure. Cascades with its project
+// like the other registers.
+model LessonLearned {
+  id             String     @id @default(cuid())
+  project        Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  type           LessonType @default(POSITIVE)
+  title          String
+  category       String?
+  description    String?
+  recommendation String?
+  createdBy      User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdByName  String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([projectId])
 }
 
 // Append-only audit trail. projectName/userName are snapshots taken at write

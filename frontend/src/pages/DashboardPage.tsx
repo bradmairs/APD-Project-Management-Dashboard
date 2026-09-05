@@ -1,9 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ActivityLogEntry, Project, ProjectInput, ProjectStatus, Task } from "../types";
+import {
+  ActionItem,
+  ActivityLogEntry,
+  CashFlowEntry,
+  Permit,
+  Project,
+  ProjectInput,
+  ProjectStatus,
+  Risk,
+  Task,
+  Variation,
+} from "../types";
 import {
   createProject,
   deleteProject,
+  getAllActionItems,
+  getAllCashFlowEntries,
+  getAllPermits,
+  getAllRisks,
+  getAllVariations,
   getProjects,
   getRecentActivity,
   getUpcomingTasks,
@@ -14,11 +30,17 @@ import ProjectTable from "../components/ProjectTable";
 import ProjectFormModal from "../components/ProjectFormModal";
 import UpcomingDeadlines from "../components/UpcomingDeadlines";
 import ActivityFeed from "../components/ActivityFeed";
+import TopRisksPanel from "../components/TopRisksPanel";
+import OpenActionsPanel from "../components/OpenActionsPanel";
+import ExpiringPermitsPanel from "../components/ExpiringPermitsPanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
+import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
 import { SEQUENTIAL_BLUE, chartColor } from "../charts/palette";
 import { useTheme } from "../theme/ThemeContext";
 import { ALL_STATUSES, STATUS_LABELS } from "../statusMeta";
+import { computeProjectHealth, ProjectHealth } from "../health";
+import NeedsAttentionPanel from "../components/NeedsAttentionPanel";
 import UserMenu from "../components/UserMenu";
 import { useAuth } from "../auth/AuthContext";
 import gvwLogo from "../assets/gvw-logo.png";
@@ -30,6 +52,11 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityLogEntry[]>([]);
+  const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
+  const [variations, setVariations] = useState<Variation[]>([]);
+  const [risks, setRisks] = useState<Risk[]>([]);
+  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [permits, setPermits] = useState<Permit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -43,14 +70,33 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const [projectData, taskData, activityData] = await Promise.all([
+      const [
+        projectData,
+        taskData,
+        activityData,
+        cashFlowData,
+        variationData,
+        riskData,
+        actionItemData,
+        permitData,
+      ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
         getRecentActivity(),
+        getAllCashFlowEntries(),
+        getAllVariations(),
+        getAllRisks(),
+        getAllActionItems(),
+        getAllPermits(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
       setRecentActivity(activityData);
+      setCashFlowEntries(cashFlowData);
+      setVariations(variationData);
+      setRisks(riskData);
+      setActionItems(actionItemData);
+      setPermits(permitData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -70,6 +116,22 @@ export default function DashboardPage() {
       })),
     [projects]
   );
+
+  const healthByProjectId: Record<string, ProjectHealth> = useMemo(() => {
+    const result: Record<string, ProjectHealth> = {};
+    for (const project of projects) {
+      const projectEntries = cashFlowEntries.filter((e) => e.projectId === project.id);
+      const projectVariations = variations.filter((v) => v.projectId === project.id);
+      const projectRisks = risks.filter((r) => r.projectId === project.id);
+      result[project.id] = computeProjectHealth(
+        project,
+        projectEntries,
+        projectVariations,
+        projectRisks
+      );
+    }
+    return result;
+  }, [projects, cashFlowEntries, variations, risks]);
 
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
@@ -128,6 +190,12 @@ export default function DashboardPage() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Link
+              to="/lessons-learned"
+              className="px-4 py-2 text-sm rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+            >
+              Lessons Learned
+            </Link>
+            <Link
               to="/reports"
               className="px-4 py-2 text-sm rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             >
@@ -154,17 +222,36 @@ export default function DashboardPage() {
         <StatCards projects={projects} />
 
         {!loading && projects.length > 0 && (
-          <ChartCard title="Projects by Status">
-            <HorizontalBarChart
-              data={statusData}
-              color={chartColor(SEQUENTIAL_BLUE, theme)}
-              formatValue={(v) => String(v)}
-            />
-          </ChartCard>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <NeedsAttentionPanel projects={projects} healthByProjectId={healthByProjectId} />
+            <OpenActionsPanel actionItems={actionItems} />
+            <ExpiringPermitsPanel permits={permits} />
+          </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {!loading && projects.length > 0 && (
+          <>
+            <ChartCard title="Spend vs Budget Over Time — All Projects">
+              <PortfolioCumulativeSpendChart
+                projects={projects}
+                entries={cashFlowEntries}
+                variations={variations}
+              />
+            </ChartCard>
+
+            <ChartCard title="Projects by Status">
+              <HorizontalBarChart
+                data={statusData}
+                color={chartColor(SEQUENTIAL_BLUE, theme)}
+                formatValue={(v) => String(v)}
+              />
+            </ChartCard>
+          </>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <UpcomingDeadlines tasks={upcomingTasks} />
+          <TopRisksPanel risks={risks} />
           {recentActivity.length > 0 && (
             <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
               <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
@@ -217,6 +304,7 @@ export default function DashboardPage() {
           <ProjectTable
             projects={filteredProjects}
             currentUser={user}
+            healthByProjectId={healthByProjectId}
             onOpen={(project) => navigate(`/projects/${project.id}`)}
             onEdit={openEditProject}
             onDelete={handleDelete}

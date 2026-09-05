@@ -183,3 +183,182 @@ export interface SiteVisitPhoto {
   createdAt: string;
   siteVisit?: { id: string; location: string; visitDate: string };
 }
+
+export type VariationStatus = "PROPOSED" | "APPROVED" | "REJECTED";
+
+export interface Variation {
+  id: string;
+  projectId: string;
+  reference: string | null;
+  title: string;
+  description: string | null;
+  category: string | null;
+  costImpact: string;
+  timeImpactDays: number | null;
+  status: VariationStatus;
+  dateRaised: string;
+  dateDecided: string | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type VariationInput = Omit<
+  Variation,
+  | "id"
+  | "projectId"
+  | "dateDecided"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+>;
+
+export type RiskType = "RISK" | "OPPORTUNITY";
+
+export type RiskLikelihood =
+  | "RARE"
+  | "UNLIKELY"
+  | "POSSIBLE"
+  | "LIKELY"
+  | "ALMOST_CERTAIN";
+
+export type RiskConsequence =
+  | "INSIGNIFICANT"
+  | "MINOR"
+  | "MODERATE"
+  | "MAJOR"
+  | "SEVERE";
+
+export type RiskStatus = "OPEN" | "MITIGATING" | "CLOSED";
+
+export interface Risk {
+  id: string;
+  projectId: string;
+  type: RiskType;
+  title: string;
+  description: string | null;
+  category: string | null;
+  inherentLikelihood: RiskLikelihood;
+  inherentConsequence: RiskConsequence;
+  residualLikelihood: RiskLikelihood | null;
+  residualConsequence: RiskConsequence | null;
+  mitigation: string | null;
+  ownerName: string | null;
+  dueDate: string | null;
+  status: RiskStatus;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type RiskInput = Omit<
+  Risk,
+  "id" | "projectId" | "createdById" | "createdByName" | "createdAt" | "updatedAt" | "project"
+>;
+
+export type ActionType = "ACTION" | "DECISION";
+
+export type ActionItemStatus = "OPEN" | "IN_PROGRESS" | "DONE";
+
+export interface ActionItem {
+  id: string;
+  projectId: string;
+  type: ActionType;
+  title: string;
+  description: string | null;
+  category: string | null;
+  ownerName: string | null;
+  dueDate: string | null;
+  status: ActionItemStatus;
+  dateRaised: string;
+  dateClosed: string | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type ActionItemInput = Omit<
+  ActionItem,
+  | "id"
+  | "projectId"
+  | "dateClosed"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
+
+export interface Stakeholder {
+  id: string;
+  projectId: string;
+  name: string;
+  organization: string | null;
+  role: string | null;
+  email: string | null;
+  phone: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type StakeholderInput = Omit<
+  Stakeholder,
+  "id" | "projectId" | "createdAt" | "updatedAt"
+>;
+
+export type PermitStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface Permit {
+  id: string;
+  projectId: string;
+  title: string;
+  category: string | null;
+  referenceNumber: string | null;
+  issuingAuthority: string | null;
+  status: PermitStatus;
+  dateApplied: string | null;
+  dateApproved: string | null;
+  expiryDate: string | null;
+  notes: string | null;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type PermitInput = Omit<
+  Permit,
+  "id" | "projectId" | "createdById" | "createdByName" | "createdAt" | "updatedAt" | "project"
+>;
+
+export type LessonType = "POSITIVE" | "NEGATIVE";
+
+export interface LessonLearned {
+  id: string;
+  projectId: string;
+  type: LessonType;
+  title: string;
+  category: string | null;
+  description: string | null;
+  recommendation: string | null;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string; assetType: string | null };
+}
+
+export type LessonLearnedInput = Omit<
+  LessonLearned,
+  "id" | "projectId" | "createdById" | "createdByName" | "createdAt" | "updatedAt" | "project"
+>;

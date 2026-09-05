@@ -1,49 +1,85 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  ActionItem,
+  ActionItemInput,
   ActivityLogEntry,
   Attachment,
   CashFlowEntry,
   CashFlowEntryInput,
+  LessonLearned,
+  LessonLearnedInput,
+  Permit,
+  PermitInput,
+  Stakeholder,
+  StakeholderInput,
   Milestone,
   MilestoneInput,
   MonthlyReport,
   MonthlyReportInput,
   Project,
   ProjectInput,
+  Risk,
+  RiskInput,
   SiteVisit,
   SiteVisitInput,
   SiteVisitPhoto,
   Task,
   TaskStatus,
+  Variation,
+  VariationInput,
 } from "../types";
 import {
+  createActionItem,
+  createLessonLearned,
   createMilestone,
   createMonthlyReport,
+  createPermit,
+  createRisk,
   createSiteVisit,
+  createStakeholder,
   createTask,
+  createVariation,
+  deleteActionItem,
   deleteAttachment,
   deleteCashFlowEntry,
+  deleteLessonLearned,
   deleteMilestone,
   deleteMonthlyReport,
+  deletePermit,
   deleteProject,
+  deleteRisk,
   deleteSiteVisit,
   deleteSiteVisitPhoto,
+  deleteStakeholder,
   deleteTask,
+  deleteVariation,
+  getActionItems,
   getAttachments,
   getCashFlowEntries,
+  getLessonsLearned,
   getMilestones,
   getMonthlyReports,
+  getPermits,
   getProject,
   getProjectActivity,
   getProjectSitePhotos,
+  getRisks,
   getSiteVisits,
+  getStakeholders,
+  getVariations,
   reorderMilestone,
+  updateActionItem,
+  updateLessonLearned,
   updateMilestone,
   updateMonthlyReport,
+  updatePermit,
   updateProject,
+  updateRisk,
   updateSiteVisit,
+  updateStakeholder,
   updateTask,
+  updateVariation,
   uploadAttachment,
   uploadSiteVisitPhotos,
   upsertCashFlowEntry,
@@ -56,6 +92,14 @@ import MonthlyReportsPanel from "../components/MonthlyReportsPanel";
 import MilestonesPanel from "../components/MilestonesPanel";
 import CashFlowPanel from "../components/CashFlowPanel";
 import SiteVisitsPanel from "../components/SiteVisitsPanel";
+import VariationsPanel from "../components/VariationsPanel";
+import RisksPanel from "../components/RisksPanel";
+import ActionsPanel from "../components/ActionsPanel";
+import StakeholdersPanel from "../components/StakeholdersPanel";
+import PermitsPanel from "../components/PermitsPanel";
+import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
+import HealthBadge from "../components/HealthBadge";
+import { computeProjectHealth } from "../health";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import { canModifyProject } from "../permissions";
@@ -75,6 +119,12 @@ export default function ProjectDetailPage() {
   const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
   const [siteVisits, setSiteVisits] = useState<SiteVisit[]>([]);
   const [sitePhotos, setSitePhotos] = useState<SiteVisitPhoto[]>([]);
+  const [variations, setVariations] = useState<Variation[]>([]);
+  const [risks, setRisks] = useState<Risk[]>([]);
+  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
+  const [permits, setPermits] = useState<Permit[]>([]);
+  const [lessons, setLessons] = useState<LessonLearned[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -93,6 +143,12 @@ export default function ProjectDetailPage() {
         cashFlowData,
         siteVisitData,
         sitePhotoData,
+        variationData,
+        riskData,
+        actionItemData,
+        stakeholderData,
+        permitData,
+        lessonData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -102,6 +158,12 @@ export default function ProjectDetailPage() {
         getCashFlowEntries(id),
         getSiteVisits(id),
         getProjectSitePhotos(id),
+        getVariations(id),
+        getRisks(id),
+        getActionItems(id),
+        getStakeholders(id),
+        getPermits(id),
+        getLessonsLearned(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -111,6 +173,12 @@ export default function ProjectDetailPage() {
       setCashFlowEntries(cashFlowData);
       setSiteVisits(siteVisitData);
       setSitePhotos(sitePhotoData);
+      setVariations(variationData);
+      setRisks(riskData);
+      setActionItems(actionItemData);
+      setStakeholders(stakeholderData);
+      setPermits(permitData);
+      setLessons(lessonData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -256,6 +324,120 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateVariation(data: Partial<VariationInput>) {
+    if (!project) return;
+    await createVariation(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateVariation(
+    variation: Variation,
+    data: Partial<VariationInput>
+  ) {
+    await updateVariation(variation.id, data);
+    await load();
+  }
+
+  async function handleDeleteVariation(variation: Variation) {
+    await deleteVariation(variation.id);
+    await load();
+  }
+
+  async function handleCreateRisk(data: Partial<RiskInput>) {
+    if (!project) return;
+    await createRisk(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateRisk(risk: Risk, data: Partial<RiskInput>) {
+    await updateRisk(risk.id, data);
+    await load();
+  }
+
+  async function handleDeleteRisk(risk: Risk) {
+    await deleteRisk(risk.id);
+    await load();
+  }
+
+  async function handleCreateActionItem(data: Partial<ActionItemInput>) {
+    if (!project) return;
+    await createActionItem(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateActionItem(
+    actionItem: ActionItem,
+    data: Partial<ActionItemInput>
+  ) {
+    await updateActionItem(actionItem.id, data);
+    await load();
+  }
+
+  async function handleDeleteActionItem(actionItem: ActionItem) {
+    await deleteActionItem(actionItem.id);
+    await load();
+  }
+
+  async function handleCreateStakeholder(data: Partial<StakeholderInput>) {
+    if (!project) return;
+    await createStakeholder(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateStakeholder(
+    stakeholder: Stakeholder,
+    data: Partial<StakeholderInput>
+  ) {
+    await updateStakeholder(stakeholder.id, data);
+    await load();
+  }
+
+  async function handleDeleteStakeholder(stakeholder: Stakeholder) {
+    await deleteStakeholder(stakeholder.id);
+    await load();
+  }
+
+  async function handleCreatePermit(data: Partial<PermitInput>) {
+    if (!project) return;
+    await createPermit(project.id, data);
+    await load();
+  }
+
+  async function handleUpdatePermit(permit: Permit, data: Partial<PermitInput>) {
+    await updatePermit(permit.id, data);
+    await load();
+  }
+
+  async function handleDeletePermit(permit: Permit) {
+    await deletePermit(permit.id);
+    await load();
+  }
+
+  async function handleCreateLesson(data: Partial<LessonLearnedInput>) {
+    if (!project) return;
+    await createLessonLearned(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateLesson(
+    lesson: LessonLearned,
+    data: Partial<LessonLearnedInput>
+  ) {
+    await updateLessonLearned(lesson.id, data);
+    await load();
+  }
+
+  async function handleDeleteLesson(lesson: LessonLearned) {
+    await deleteLessonLearned(lesson.id);
+    await load();
+  }
+
+  const health = useMemo(
+    () =>
+      project ? computeProjectHealth(project, cashFlowEntries, variations, risks) : null,
+    [project, cashFlowEntries, variations, risks]
+  );
+
   if (loading) {
     return (
       <div className="text-center text-slate-500 dark:text-slate-400 py-12">
@@ -297,13 +479,16 @@ export default function ProjectDetailPage() {
                 <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                   {project.name}
                 </h1>
-                <span
-                  className={`inline-block mt-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                    STATUS_COLORS[project.status]
-                  }`}
-                >
-                  {STATUS_LABELS[project.status]}
-                </span>
+                <div className="flex items-center gap-2 flex-wrap mt-1">
+                  <span
+                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                      STATUS_COLORS[project.status]
+                    }`}
+                  >
+                    {STATUS_LABELS[project.status]}
+                  </span>
+                  {health && <HealthBadge health={health} detailed />}
+                </div>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -367,11 +552,47 @@ export default function ProjectDetailPage() {
           <Field label="Created By" value={project.createdBy?.name || "—"} />
         </div>
 
+        <StakeholdersPanel
+          stakeholders={stakeholders}
+          onCreate={handleCreateStakeholder}
+          onUpdate={handleUpdateStakeholder}
+          onDelete={handleDeleteStakeholder}
+        />
+
+        <PermitsPanel
+          permits={permits}
+          onCreate={handleCreatePermit}
+          onUpdate={handleUpdatePermit}
+          onDelete={handleDeletePermit}
+        />
+
+        <VariationsPanel
+          variations={variations}
+          onCreate={handleCreateVariation}
+          onUpdate={handleUpdateVariation}
+          onDelete={handleDeleteVariation}
+        />
+
         <CashFlowPanel
           project={project}
           entries={cashFlowEntries}
+          variations={variations}
           onUpsert={handleUpsertCashFlowEntry}
           onDelete={handleDeleteCashFlowEntry}
+        />
+
+        <RisksPanel
+          risks={risks}
+          onCreate={handleCreateRisk}
+          onUpdate={handleUpdateRisk}
+          onDelete={handleDeleteRisk}
+        />
+
+        <ActionsPanel
+          actionItems={actionItems}
+          onCreate={handleCreateActionItem}
+          onUpdate={handleUpdateActionItem}
+          onDelete={handleDeleteActionItem}
         />
 
         <TaskList
@@ -412,6 +633,13 @@ export default function ProjectDetailPage() {
           onCreate={handleCreateReport}
           onUpdate={handleUpdateReport}
           onDelete={handleDeleteReport}
+        />
+
+        <LessonsLearnedPanel
+          lessons={lessons}
+          onCreate={handleCreateLesson}
+          onUpdate={handleUpdateLesson}
+          onDelete={handleDeleteLesson}
         />
 
         <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">

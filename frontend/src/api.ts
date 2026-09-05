@@ -1,21 +1,33 @@
 import {
+  ActionItem,
+  ActionItemInput,
   ActivityLogEntry,
   Attachment,
   CashFlowEntry,
   CashFlowEntryInput,
+  LessonLearned,
+  LessonLearnedInput,
   Milestone,
   MilestoneInput,
   MonthlyReport,
   MonthlyReportInput,
+  Permit,
+  PermitInput,
   Project,
   ProjectInput,
+  Risk,
+  RiskInput,
   Role,
   SiteVisit,
   SiteVisitInput,
   SiteVisitPhoto,
+  Stakeholder,
+  StakeholderInput,
   Task,
   TaskInput,
   User,
+  Variation,
+  VariationInput,
 } from "./types";
 
 const API_BASE = "/api";
@@ -283,6 +295,10 @@ export function getCashFlowEntries(projectId: string): Promise<CashFlowEntry[]> 
   );
 }
 
+export function getAllCashFlowEntries(): Promise<CashFlowEntry[]> {
+  return fetch(`${API_BASE}/cashflow`).then((res) => handle(res));
+}
+
 export function upsertCashFlowEntry(
   projectId: string,
   data: Partial<CashFlowEntryInput>
@@ -366,4 +382,218 @@ export function deleteSiteVisitPhoto(id: string): Promise<void> {
 
 export function siteVisitPhotoFileUrl(id: string): string {
   return `${API_BASE}/site-visit-photos/${id}/file`;
+}
+
+export function getVariations(projectId: string): Promise<Variation[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/variations`).then((res) =>
+    handle(res)
+  );
+}
+
+export function getAllVariations(): Promise<Variation[]> {
+  return fetch(`${API_BASE}/variations`).then((res) => handle(res));
+}
+
+export function createVariation(
+  projectId: string,
+  data: Partial<VariationInput>
+): Promise<Variation> {
+  return fetch(`${API_BASE}/projects/${projectId}/variations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateVariation(
+  id: string,
+  data: Partial<VariationInput>
+): Promise<Variation> {
+  return fetch(`${API_BASE}/variations/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteVariation(id: string): Promise<void> {
+  return fetch(`${API_BASE}/variations/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getRisks(projectId: string): Promise<Risk[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/risks`).then((res) => handle(res));
+}
+
+export function getAllRisks(): Promise<Risk[]> {
+  return fetch(`${API_BASE}/risks`).then((res) => handle(res));
+}
+
+export function createRisk(
+  projectId: string,
+  data: Partial<RiskInput>
+): Promise<Risk> {
+  return fetch(`${API_BASE}/projects/${projectId}/risks`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateRisk(id: string, data: Partial<RiskInput>): Promise<Risk> {
+  return fetch(`${API_BASE}/risks/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteRisk(id: string): Promise<void> {
+  return fetch(`${API_BASE}/risks/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getActionItems(projectId: string): Promise<ActionItem[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/action-items`).then((res) =>
+    handle(res)
+  );
+}
+
+export function getAllActionItems(): Promise<ActionItem[]> {
+  return fetch(`${API_BASE}/action-items`).then((res) => handle(res));
+}
+
+export function createActionItem(
+  projectId: string,
+  data: Partial<ActionItemInput>
+): Promise<ActionItem> {
+  return fetch(`${API_BASE}/projects/${projectId}/action-items`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateActionItem(
+  id: string,
+  data: Partial<ActionItemInput>
+): Promise<ActionItem> {
+  return fetch(`${API_BASE}/action-items/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteActionItem(id: string): Promise<void> {
+  return fetch(`${API_BASE}/action-items/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getStakeholders(projectId: string): Promise<Stakeholder[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/stakeholders`).then((res) =>
+    handle(res)
+  );
+}
+
+export function createStakeholder(
+  projectId: string,
+  data: Partial<StakeholderInput>
+): Promise<Stakeholder> {
+  return fetch(`${API_BASE}/projects/${projectId}/stakeholders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateStakeholder(
+  id: string,
+  data: Partial<StakeholderInput>
+): Promise<Stakeholder> {
+  return fetch(`${API_BASE}/stakeholders/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteStakeholder(id: string): Promise<void> {
+  return fetch(`${API_BASE}/stakeholders/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getPermits(projectId: string): Promise<Permit[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/permits`).then((res) => handle(res));
+}
+
+export function getAllPermits(): Promise<Permit[]> {
+  return fetch(`${API_BASE}/permits`).then((res) => handle(res));
+}
+
+export function createPermit(
+  projectId: string,
+  data: Partial<PermitInput>
+): Promise<Permit> {
+  return fetch(`${API_BASE}/projects/${projectId}/permits`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updatePermit(id: string, data: Partial<PermitInput>): Promise<Permit> {
+  return fetch(`${API_BASE}/permits/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deletePermit(id: string): Promise<void> {
+  return fetch(`${API_BASE}/permits/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getLessonsLearned(projectId: string): Promise<LessonLearned[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/lessons-learned`).then((res) =>
+    handle(res)
+  );
+}
+
+export function getAllLessonsLearned(): Promise<LessonLearned[]> {
+  return fetch(`${API_BASE}/lessons-learned`).then((res) => handle(res));
+}
+
+export function createLessonLearned(
+  projectId: string,
+  data: Partial<LessonLearnedInput>
+): Promise<LessonLearned> {
+  return fetch(`${API_BASE}/projects/${projectId}/lessons-learned`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateLessonLearned(
+  id: string,
+  data: Partial<LessonLearnedInput>
+): Promise<LessonLearned> {
+  return fetch(`${API_BASE}/lessons-learned/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteLessonLearned(id: string): Promise<void> {
+  return fetch(`${API_BASE}/lessons-learned/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
 }

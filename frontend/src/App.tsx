@@ -8,6 +8,7 @@ import DashboardPage from "./pages/DashboardPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import MonthlyReportViewPage from "./pages/MonthlyReportViewPage";
 import ReportsPage from "./pages/ReportsPage";
+import LessonsLearnedPage from "./pages/LessonsLearnedPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 
 export default function App() {
@@ -45,6 +46,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <ReportsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/lessons-learned"
+            element={
+              <ProtectedRoute>
+                <LessonsLearnedPage />
               </ProtectedRoute>
             }
           />
