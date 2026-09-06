@@ -149,6 +149,11 @@ enum PaymentClaimStatus {
   PAID
 }
 
+enum InsuranceWarrantyType {
+  INSURANCE
+  WARRANTY
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -174,6 +179,7 @@ model User {
   checklistItems ChecklistItem[]
   defectItems    DefectItem[]
   paymentClaims  PaymentClaim[]
+  insuranceWarranties InsuranceWarranty[]
 }
 
 model Project {
@@ -216,6 +222,7 @@ model Project {
   checklistItems         ChecklistItem[]
   defectItems            DefectItem[]
   paymentClaims          PaymentClaim[]
+  insuranceWarranties    InsuranceWarranty[]
 }
 
 model Task {
@@ -731,6 +738,39 @@ model PaymentClaim {
   notes            String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
+
+  @@index([projectId])
+}
+
+// An insurance policy or product/workmanship warranty held against the
+// project — a `type` discriminator (INSURANCE/WARRANTY) rather than two
+// near-identical models, the same pattern as Risk/Opportunity, Lesson
+// Learned, and ChecklistItem, since both track the same shape (who
+// provides the cover, a reference number, what's covered, and when it
+// lapses). Unlike Permit there's no application workflow — a policy or
+// warranty exists in force from the moment it's entered — so there's no
+// status field; whether it's expiring soon or already expired is
+// computed from expiryDate against the current time
+// (frontend/src/insuranceWarrantyMeta.ts), the same reasoning as
+// Permit's isPermitExpired/isPermitExpiringSoon. Cascades with its
+// project like the other registers.
+model InsuranceWarranty {
+  id               String                @id @default(cuid())
+  project          Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  type             InsuranceWarrantyType
+  title            String
+  provider         String?
+  referenceNumber  String?
+  coverageDetails  String?
+  startDate        DateTime?
+  expiryDate       DateTime?
+  notes            String?
+  createdBy        User?                 @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById      String?
+  createdByName    String
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
 
   @@index([projectId])
 }

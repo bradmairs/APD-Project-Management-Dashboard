@@ -11,6 +11,8 @@ import {
   DefectItemInput,
   EotClaim,
   EotClaimInput,
+  InsuranceWarranty,
+  InsuranceWarrantyInput,
   LessonLearned,
   LessonLearnedInput,
   Milestone,
@@ -778,6 +780,44 @@ export function updatePaymentClaim(
 
 export function deletePaymentClaim(id: string): Promise<void> {
   return fetch(`${API_BASE}/payment-claims/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getInsuranceWarranties(projectId: string): Promise<InsuranceWarranty[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/insurance-warranties`).then((res) =>
+    handle(res)
+  );
+}
+
+export function getAllInsuranceWarranties(): Promise<InsuranceWarranty[]> {
+  return fetch(`${API_BASE}/insurance-warranties`).then((res) => handle(res));
+}
+
+export function createInsuranceWarranty(
+  projectId: string,
+  data: Partial<InsuranceWarrantyInput>
+): Promise<InsuranceWarranty> {
+  return fetch(`${API_BASE}/projects/${projectId}/insurance-warranties`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateInsuranceWarranty(
+  id: string,
+  data: Partial<InsuranceWarrantyInput>
+): Promise<InsuranceWarranty> {
+  return fetch(`${API_BASE}/insurance-warranties/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteInsuranceWarranty(id: string): Promise<void> {
+  return fetch(`${API_BASE}/insurance-warranties/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }

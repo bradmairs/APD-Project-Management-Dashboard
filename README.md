@@ -556,6 +556,29 @@ linking back to its project — sitting alongside Needs Attention and Open
 Actions as a third view into what needs a PM's attention today. Open to
 any logged-in user to edit.
 
+## Insurance & Warranties
+
+Each project has an **Insurance & Warranties** register — one shared
+`InsuranceWarranty` model with a `type` discriminator (Insurance or
+Warranty), the same discriminator pattern used elsewhere (Risk/
+Opportunity, Lesson Learned, ChecklistItem), since both track the same
+shape: who provides the cover, a reference number, what's covered, and
+when it lapses. Fields are Title, Type, Provider (the insurer, or the
+manufacturer/contractor for a warranty), Reference Number, Coverage
+Details (free text — what's covered and for how much), Start Date,
+Expiry Date, and Notes.
+
+Unlike Permits & Approvals there's no application workflow — a policy
+or warranty is in force from the moment it's entered — so there's no
+status field. Whether an item is **Expiring Soon** (within 60 days) or
+**Expired** is computed from its expiry date against the current time,
+the same reasoning as `permitMeta.ts`'s expiry logic but without the
+Approved-status gate (`frontend/src/insuranceWarrantyMeta.ts`). The
+dashboard's portfolio-wide **Insurance & Warranties Expiring Soon**
+panel lists every flagged item across every project, soonest first,
+linking back to its project — alongside the other exception panels.
+Open to any logged-in user to edit.
+
 ## Lessons Learned
 
 Each project has a **Lessons Learned** register — one shared

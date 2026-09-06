@@ -6,6 +6,7 @@ import {
   CashFlowEntry,
   DefectItem,
   EotClaim,
+  InsuranceWarranty,
   PaymentClaim,
   Permit,
   Project,
@@ -23,6 +24,7 @@ import {
   getAllCashFlowEntries,
   getAllDefects,
   getAllEotClaims,
+  getAllInsuranceWarranties,
   getAllPaymentClaims,
   getAllPermits,
   getAllRisks,
@@ -41,6 +43,7 @@ import ActivityFeed from "../components/ActivityFeed";
 import TopRisksPanel from "../components/TopRisksPanel";
 import OpenActionsPanel from "../components/OpenActionsPanel";
 import ExpiringPermitsPanel from "../components/ExpiringPermitsPanel";
+import ExpiringInsuranceWarrantiesPanel from "../components/ExpiringInsuranceWarrantiesPanel";
 import OpenSqePanel from "../components/OpenSqePanel";
 import OpenDefectsPanel from "../components/OpenDefectsPanel";
 import OpenPaymentClaimsPanel from "../components/OpenPaymentClaimsPanel";
@@ -72,6 +75,7 @@ export default function DashboardPage() {
   const [eotClaims, setEotClaims] = useState<EotClaim[]>([]);
   const [defects, setDefects] = useState<DefectItem[]>([]);
   const [paymentClaims, setPaymentClaims] = useState<PaymentClaim[]>([]);
+  const [insuranceWarranties, setInsuranceWarranties] = useState<InsuranceWarranty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -98,6 +102,7 @@ export default function DashboardPage() {
         eotData,
         defectData,
         paymentClaimData,
+        insuranceWarrantyData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -111,6 +116,7 @@ export default function DashboardPage() {
         getAllEotClaims(),
         getAllDefects(),
         getAllPaymentClaims(),
+        getAllInsuranceWarranties(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -123,6 +129,7 @@ export default function DashboardPage() {
       setSqeRecords(sqeData);
       setDefects(defectData);
       setPaymentClaims(paymentClaimData);
+      setInsuranceWarranties(insuranceWarrantyData);
       setEotClaims(eotData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
@@ -258,6 +265,7 @@ export default function DashboardPage() {
             <OpenSqePanel records={sqeRecords} />
             <OpenDefectsPanel defects={defects} />
             <OpenPaymentClaimsPanel claims={paymentClaims} />
+            <ExpiringInsuranceWarrantiesPanel items={insuranceWarranties} />
           </div>
         )}
 

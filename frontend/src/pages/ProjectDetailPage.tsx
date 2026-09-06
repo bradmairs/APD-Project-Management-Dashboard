@@ -13,6 +13,8 @@ import {
   DefectItemInput,
   EotClaim,
   EotClaimInput,
+  InsuranceWarranty,
+  InsuranceWarrantyInput,
   LessonLearned,
   LessonLearnedInput,
   PaymentClaim,
@@ -44,6 +46,7 @@ import {
   createChecklistItem,
   createDefect,
   createEotClaim,
+  createInsuranceWarranty,
   createLessonLearned,
   createMilestone,
   createMonthlyReport,
@@ -61,6 +64,7 @@ import {
   deleteChecklistItem,
   deleteDefect,
   deleteEotClaim,
+  deleteInsuranceWarranty,
   deleteLessonLearned,
   deleteMilestone,
   deleteMonthlyReport,
@@ -80,6 +84,7 @@ import {
   getChecklistItems,
   getDefects,
   getEotClaims,
+  getInsuranceWarranties,
   getLessonsLearned,
   getMilestones,
   getMonthlyReports,
@@ -98,6 +103,7 @@ import {
   updateChecklistItem,
   updateDefect,
   updateEotClaim,
+  updateInsuranceWarranty,
   updateLessonLearned,
   updateMilestone,
   updateMonthlyReport,
@@ -127,6 +133,7 @@ import RisksPanel from "../components/RisksPanel";
 import ActionsPanel from "../components/ActionsPanel";
 import StakeholdersPanel from "../components/StakeholdersPanel";
 import PermitsPanel from "../components/PermitsPanel";
+import InsuranceWarrantiesPanel from "../components/InsuranceWarrantiesPanel";
 import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
 import SqePanel from "../components/SqePanel";
 import EotPanel from "../components/EotPanel";
@@ -160,6 +167,7 @@ export default function ProjectDetailPage() {
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   const [permits, setPermits] = useState<Permit[]>([]);
+  const [insuranceWarranties, setInsuranceWarranties] = useState<InsuranceWarranty[]>([]);
   const [lessons, setLessons] = useState<LessonLearned[]>([]);
   const [sqeRecords, setSqeRecords] = useState<SqeRecord[]>([]);
   const [eotClaims, setEotClaims] = useState<EotClaim[]>([]);
@@ -195,6 +203,7 @@ export default function ProjectDetailPage() {
         checklistData,
         defectData,
         paymentClaimData,
+        insuranceWarrantyData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -215,6 +224,7 @@ export default function ProjectDetailPage() {
         getChecklistItems(id),
         getDefects(id),
         getPaymentClaims(id),
+        getInsuranceWarranties(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -235,6 +245,7 @@ export default function ProjectDetailPage() {
       setChecklistItems(checklistData);
       setDefects(defectData);
       setPaymentClaims(paymentClaimData);
+      setInsuranceWarranties(insuranceWarrantyData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -574,6 +585,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateInsuranceWarranty(data: Partial<InsuranceWarrantyInput>) {
+    if (!project) return;
+    await createInsuranceWarranty(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateInsuranceWarranty(
+    item: InsuranceWarranty,
+    data: Partial<InsuranceWarrantyInput>
+  ) {
+    await updateInsuranceWarranty(item.id, data);
+    await load();
+  }
+
+  async function handleDeleteInsuranceWarranty(item: InsuranceWarranty) {
+    await deleteInsuranceWarranty(item.id);
+    await load();
+  }
+
   const revisedTargetCompletion = useMemo(
     () => (project ? revisedCompletionDate(project, eotClaims) : null),
     [project, eotClaims]
@@ -720,6 +750,13 @@ export default function ProjectDetailPage() {
           onCreate={handleCreatePermit}
           onUpdate={handleUpdatePermit}
           onDelete={handleDeletePermit}
+        />
+
+        <InsuranceWarrantiesPanel
+          items={insuranceWarranties}
+          onCreate={handleCreateInsuranceWarranty}
+          onUpdate={handleUpdateInsuranceWarranty}
+          onDelete={handleDeleteInsuranceWarranty}
         />
 
         <VariationsPanel

@@ -535,3 +535,34 @@ export type PaymentClaimInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export type InsuranceWarrantyType = "INSURANCE" | "WARRANTY";
+
+export interface InsuranceWarranty {
+  id: string;
+  projectId: string;
+  type: InsuranceWarrantyType;
+  title: string;
+  provider: string | null;
+  referenceNumber: string | null;
+  coverageDetails: string | null;
+  startDate: string | null;
+  expiryDate: string | null;
+  notes: string | null;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type InsuranceWarrantyInput = Omit<
+  InsuranceWarranty,
+  | "id"
+  | "projectId"
+  | "createdById"
+  | "createdByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

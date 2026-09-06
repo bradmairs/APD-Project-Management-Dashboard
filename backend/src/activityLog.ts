@@ -3,6 +3,7 @@ import {
   ChecklistItem,
   DefectItem,
   EotClaim,
+  InsuranceWarranty,
   LessonLearned,
   Milestone,
   PaymentClaim,
@@ -332,4 +333,12 @@ export function describePaymentClaimUpdate(
     return `marked payment claim "${before.claimNumber}" as ${label}${certifiedNote}`;
   }
   return `updated payment claim "${before.claimNumber}"`;
+}
+
+export function describeInsuranceWarrantyUpdate(
+  before: InsuranceWarranty,
+  body: Record<string, unknown>
+): string {
+  const noun = before.type === "WARRANTY" ? "warranty" : "insurance policy";
+  return `updated ${noun} "${before.title}"`;
 }
