@@ -669,3 +669,36 @@ export type CommunityEnquiryInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export type SubcontractorStatus = "ENGAGED" | "ACTIVE" | "COMPLETED" | "TERMINATED";
+
+export interface Subcontractor {
+  id: string;
+  projectId: string;
+  companyName: string;
+  trade: string | null;
+  contactName: string | null;
+  contactDetails: string | null;
+  contractValue: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  status: SubcontractorStatus;
+  insuranceExpiry: string | null;
+  notes: string | null;
+  addedById: string | null;
+  addedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type SubcontractorInput = Omit<
+  Subcontractor,
+  | "id"
+  | "projectId"
+  | "addedById"
+  | "addedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

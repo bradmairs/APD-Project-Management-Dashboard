@@ -41,6 +41,8 @@ import {
   SqeRecordInput,
   Stakeholder,
   StakeholderInput,
+  Subcontractor,
+  SubcontractorInput,
   Task,
   TaskInput,
   User,
@@ -924,6 +926,42 @@ export function updateCommunityEnquiry(
 
 export function deleteCommunityEnquiry(id: string): Promise<void> {
   return fetch(`${API_BASE}/community-enquiries/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getSubcontractors(projectId: string): Promise<Subcontractor[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/subcontractors`).then((res) => handle(res));
+}
+
+export function getAllSubcontractors(): Promise<Subcontractor[]> {
+  return fetch(`${API_BASE}/subcontractors`).then((res) => handle(res));
+}
+
+export function createSubcontractor(
+  projectId: string,
+  data: Partial<SubcontractorInput>
+): Promise<Subcontractor> {
+  return fetch(`${API_BASE}/projects/${projectId}/subcontractors`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateSubcontractor(
+  id: string,
+  data: Partial<SubcontractorInput>
+): Promise<Subcontractor> {
+  return fetch(`${API_BASE}/subcontractors/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteSubcontractor(id: string): Promise<void> {
+  return fetch(`${API_BASE}/subcontractors/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }

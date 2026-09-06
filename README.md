@@ -641,6 +641,28 @@ linking back to its project — sitting alongside Needs Attention and Open
 Actions as a third view into what needs a PM's attention today. Open to
 any logged-in user to edit.
 
+## Subcontractors
+
+Each project has a **Subcontractors** register — the trade contractors
+engaged on the project, distinct from `Project.contractor` (a single
+freeform field naming just the head contractor). A subcontractor has a
+Company Name, Trade (free text, with suggestions like "Electrical" or
+"Concreting"), contact details, an optional Contract Value, Start/End
+Dates, a Status of Engaged/Active/Completed/Terminated (changeable
+inline), an Insurance Expiry date, and Notes.
+
+Whether a subcontractor's insurance is **Expiring Soon** (within 60 days)
+or **Expired** is computed from that date against the current time rather
+than stored — the same computed-not-stored pattern Permits' expiry state
+uses (`frontend/src/subcontractorMeta.ts`). Only an Engaged or Active
+subcontractor's insurance still matters; a Completed or Terminated one is
+no longer on site. The panel sorts currently-on-site subcontractors first
+(Active, then Engaged but not yet started), with Completed/Terminated
+sinking to the bottom. The Dashboard's Alerts tab has a portfolio-wide
+**Subcontractor Insurance Expiring Soon** panel listing every flagged
+subcontractor across every project, soonest first. Open to any logged-in
+user to edit.
+
 ## Insurance & Warranties
 
 Each project has an **Insurance & Warranties** register — one shared

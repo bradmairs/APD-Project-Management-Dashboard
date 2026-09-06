@@ -186,6 +186,13 @@ enum EnquiryStatus {
   CLOSED
 }
 
+enum SubcontractorStatus {
+  ENGAGED
+  ACTIVE
+  COMPLETED
+  TERMINATED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -215,6 +222,7 @@ model User {
   rfis           Rfi[]
   documents      DocumentRecord[]
   communityEnquiries CommunityEnquiry[]
+  subcontractors Subcontractor[]
 }
 
 model Project {
@@ -261,6 +269,7 @@ model Project {
   rfis                   Rfi[]
   documents              DocumentRecord[]
   communityEnquiries     CommunityEnquiry[]
+  subcontractors         Subcontractor[]
 }
 
 model Task {
@@ -896,6 +905,34 @@ model CommunityEnquiry {
   notes          String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
+  @@index([projectId])
+}
+
+// A trade contractor engaged on a project — distinct from Project.contractor
+// (a single freeform field naming the head contractor). insuranceExpiry
+// mirrors Permit's computed-not-stored expiry pattern: never a stored
+// "expiring soon"/"expired" flag, just a date the frontend compares against
+// the current time.
+model Subcontractor {
+  id              String              @id @default(cuid())
+  project         Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  companyName     String
+  trade           String?
+  contactName     String?
+  contactDetails  String?
+  contractValue   Decimal?            @db.Decimal(14, 2)
+  startDate       DateTime?
+  endDate         DateTime?
+  status          SubcontractorStatus @default(ENGAGED)
+  insuranceExpiry DateTime?
+  notes           String?
+  addedBy         User?               @relation(fields: [addedById], references: [id], onDelete: SetNull)
+  addedById       String?
+  addedByName     String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
 
   @@index([projectId])
 }

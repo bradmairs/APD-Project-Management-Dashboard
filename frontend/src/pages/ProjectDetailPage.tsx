@@ -42,6 +42,8 @@ import {
   SiteVisitPhoto,
   SqeRecord,
   SqeRecordInput,
+  Subcontractor,
+  SubcontractorInput,
   Task,
   TaskStatus,
   Variation,
@@ -65,6 +67,7 @@ import {
   createSiteVisit,
   createSqeRecord,
   createStakeholder,
+  createSubcontractor,
   createTask,
   createVariation,
   deleteActionItem,
@@ -88,6 +91,7 @@ import {
   deleteSiteVisitPhoto,
   deleteSqeRecord,
   deleteStakeholder,
+  deleteSubcontractor,
   deleteTask,
   deleteVariation,
   getActionItems,
@@ -112,6 +116,7 @@ import {
   getSiteVisits,
   getSqeRecords,
   getStakeholders,
+  getSubcontractors,
   getVariations,
   reorderMilestone,
   updateActionItem,
@@ -132,6 +137,7 @@ import {
   updateSiteVisit,
   updateSqeRecord,
   updateStakeholder,
+  updateSubcontractor,
   updateTask,
   updateVariation,
   uploadAttachment,
@@ -151,6 +157,7 @@ import RisksPanel from "../components/RisksPanel";
 import RfisPanel from "../components/RfisPanel";
 import ActionsPanel from "../components/ActionsPanel";
 import StakeholdersPanel from "../components/StakeholdersPanel";
+import SubcontractorsPanel from "../components/SubcontractorsPanel";
 import PermitsPanel from "../components/PermitsPanel";
 import InsuranceWarrantiesPanel from "../components/InsuranceWarrantiesPanel";
 import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
@@ -209,6 +216,7 @@ export default function ProjectDetailPage() {
   const [paymentClaims, setPaymentClaims] = useState<PaymentClaim[]>([]);
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [communityEnquiries, setCommunityEnquiries] = useState<CommunityEnquiry[]>([]);
+  const [subcontractors, setSubcontractors] = useState<Subcontractor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -243,6 +251,7 @@ export default function ProjectDetailPage() {
         rfiData,
         documentData,
         communityEnquiryData,
+        subcontractorData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -267,6 +276,7 @@ export default function ProjectDetailPage() {
         getRfis(id),
         getDocuments(id),
         getCommunityEnquiries(id),
+        getSubcontractors(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -291,6 +301,7 @@ export default function ProjectDetailPage() {
       setRfis(rfiData);
       setDocuments(documentData);
       setCommunityEnquiries(communityEnquiryData);
+      setSubcontractors(subcontractorData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -703,6 +714,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateSubcontractor(data: Partial<SubcontractorInput>) {
+    if (!project) return;
+    await createSubcontractor(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateSubcontractor(
+    subcontractor: Subcontractor,
+    data: Partial<SubcontractorInput>
+  ) {
+    await updateSubcontractor(subcontractor.id, data);
+    await load();
+  }
+
+  async function handleDeleteSubcontractor(subcontractor: Subcontractor) {
+    await deleteSubcontractor(subcontractor.id);
+    await load();
+  }
+
   const revisedTargetCompletion = useMemo(
     () => (project ? revisedCompletionDate(project, eotClaims) : null),
     [project, eotClaims]
@@ -940,6 +970,13 @@ export default function ProjectDetailPage() {
                 onCreate={handleCreatePermit}
                 onUpdate={handleUpdatePermit}
                 onDelete={handleDeletePermit}
+              />
+
+              <SubcontractorsPanel
+                subcontractors={subcontractors}
+                onCreate={handleCreateSubcontractor}
+                onUpdate={handleUpdateSubcontractor}
+                onDelete={handleDeleteSubcontractor}
               />
             </>
           )}

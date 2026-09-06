@@ -16,6 +16,7 @@ import {
   SiteVisit,
   SqeRecord,
   Stakeholder,
+  Subcontractor,
   Task,
   Variation,
 } from "@prisma/client";
@@ -395,4 +396,22 @@ export function describeCommunityEnquiryUpdate(
     return `marked community enquiry ${label} as ${statusLabel}`;
   }
   return `updated community enquiry ${label}`;
+}
+
+const SUBCONTRACTOR_STATUS_LABELS: Record<string, string> = {
+  ENGAGED: "Engaged",
+  ACTIVE: "Active",
+  COMPLETED: "Completed",
+  TERMINATED: "Terminated",
+};
+
+export function describeSubcontractorUpdate(
+  before: Subcontractor,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = SUBCONTRACTOR_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked subcontractor "${before.companyName}" as ${label}`;
+  }
+  return `updated subcontractor "${before.companyName}"`;
 }

@@ -5,6 +5,7 @@ import {
   ActivityLogEntry,
   CashFlowEntry,
   CommunityEnquiry,
+  Subcontractor,
   DefectItem,
   EotClaim,
   InsuranceWarranty,
@@ -25,6 +26,7 @@ import {
   getAllActionItems,
   getAllCashFlowEntries,
   getAllCommunityEnquiries,
+  getAllSubcontractors,
   getAllDefects,
   getAllEotClaims,
   getAllInsuranceWarranties,
@@ -53,6 +55,7 @@ import OpenDefectsPanel from "../components/OpenDefectsPanel";
 import OpenPaymentClaimsPanel from "../components/OpenPaymentClaimsPanel";
 import OpenRfisPanel from "../components/OpenRfisPanel";
 import OpenEnquiriesPanel from "../components/OpenEnquiriesPanel";
+import ExpiringSubcontractorInsurancePanel from "../components/ExpiringSubcontractorInsurancePanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -94,6 +97,7 @@ export default function DashboardPage() {
   const [insuranceWarranties, setInsuranceWarranties] = useState<InsuranceWarranty[]>([]);
   const [rfis, setRfis] = useState<Rfi[]>([]);
   const [communityEnquiries, setCommunityEnquiries] = useState<CommunityEnquiry[]>([]);
+  const [subcontractors, setSubcontractors] = useState<Subcontractor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -124,6 +128,7 @@ export default function DashboardPage() {
         insuranceWarrantyData,
         rfiData,
         communityEnquiryData,
+        subcontractorData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -140,6 +145,7 @@ export default function DashboardPage() {
         getAllInsuranceWarranties(),
         getAllRfis(),
         getAllCommunityEnquiries(),
+        getAllSubcontractors(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -156,6 +162,7 @@ export default function DashboardPage() {
       setRfis(rfiData);
       setEotClaims(eotData);
       setCommunityEnquiries(communityEnquiryData);
+      setSubcontractors(subcontractorData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -348,6 +355,7 @@ export default function DashboardPage() {
             <ExpiringInsuranceWarrantiesPanel items={insuranceWarranties} />
             <OpenRfisPanel rfis={rfis} />
             <OpenEnquiriesPanel enquiries={communityEnquiries} />
+            <ExpiringSubcontractorInsurancePanel subcontractors={subcontractors} />
           </div>
         )}
 
