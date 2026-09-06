@@ -51,6 +51,8 @@ import {
   SubcontractorInput,
   Task,
   TaskInput,
+  ToolboxTalk,
+  ToolboxTalkInput,
   TrainingRecord,
   TrainingRecordInput,
   User,
@@ -1114,4 +1116,34 @@ export function deletePerformanceReview(id: string): Promise<void> {
   return fetch(`${API_BASE}/performance-reviews/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
+}
+
+export function getToolboxTalks(projectId: string): Promise<ToolboxTalk[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/toolbox-talks`).then((res) => handle(res));
+}
+
+export function createToolboxTalk(
+  projectId: string,
+  data: Partial<ToolboxTalkInput>
+): Promise<ToolboxTalk> {
+  return fetch(`${API_BASE}/projects/${projectId}/toolbox-talks`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateToolboxTalk(
+  id: string,
+  data: Partial<ToolboxTalkInput>
+): Promise<ToolboxTalk> {
+  return fetch(`${API_BASE}/toolbox-talks/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteToolboxTalk(id: string): Promise<void> {
+  return fetch(`${API_BASE}/toolbox-talks/${id}`, { method: "DELETE" }).then((res) => handle(res));
 }
