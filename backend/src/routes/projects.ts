@@ -24,6 +24,7 @@ import projectDocumentsRouter from "./documents";
 import projectCommunityEnquiriesRouter from "./communityEnquiries";
 import projectSubcontractorsRouter from "./subcontractors";
 import projectMeetingMinutesRouter from "./meetingMinutes";
+import projectCorrespondenceRouter from "./correspondence";
 import { describeProjectChanges, logActivity } from "../activityLog";
 import { projectUploadDir, upload } from "../upload";
 import { canModifyProject } from "../permissions";
@@ -53,6 +54,7 @@ router.use("/:id/documents", projectDocumentsRouter);
 router.use("/:id/community-enquiries", projectCommunityEnquiriesRouter);
 router.use("/:id/subcontractors", projectSubcontractorsRouter);
 router.use("/:id/meeting-minutes", projectMeetingMinutesRouter);
+router.use("/:id/correspondence", projectCorrespondenceRouter);
 
 router.get("/", async (_req, res) => {
   const projects = await prisma.project.findMany({

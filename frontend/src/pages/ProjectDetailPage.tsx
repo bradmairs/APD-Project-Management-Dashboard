@@ -11,6 +11,8 @@ import {
   ChecklistItemInput,
   CommunityEnquiry,
   CommunityEnquiryInput,
+  Correspondence,
+  CorrespondenceInput,
   DefectItem,
   DefectItemInput,
   DocumentRecord,
@@ -55,6 +57,7 @@ import {
   createActionItem,
   createChecklistItem,
   createCommunityEnquiry,
+  createCorrespondence,
   createDefect,
   createDocument,
   createEotClaim,
@@ -78,6 +81,7 @@ import {
   deleteCashFlowEntry,
   deleteChecklistItem,
   deleteCommunityEnquiry,
+  deleteCorrespondence,
   deleteDefect,
   deleteDocument,
   deleteEotClaim,
@@ -103,6 +107,7 @@ import {
   getCashFlowEntries,
   getChecklistItems,
   getCommunityEnquiries,
+  getCorrespondence,
   getDefects,
   getDocuments,
   getEotClaims,
@@ -127,6 +132,7 @@ import {
   updateActionItem,
   updateChecklistItem,
   updateCommunityEnquiry,
+  updateCorrespondence,
   updateDefect,
   updateDocument,
   updateEotClaim,
@@ -174,6 +180,7 @@ import ChecklistPanel from "../components/ChecklistPanel";
 import DefectsPanel from "../components/DefectsPanel";
 import DocumentsPanel from "../components/DocumentsPanel";
 import EnquiriesPanel from "../components/EnquiriesPanel";
+import CorrespondencePanel from "../components/CorrespondencePanel";
 import Tabs from "../components/Tabs";
 import PaymentClaimsPanel from "../components/PaymentClaimsPanel";
 import HealthBadge from "../components/HealthBadge";
@@ -225,6 +232,7 @@ export default function ProjectDetailPage() {
   const [communityEnquiries, setCommunityEnquiries] = useState<CommunityEnquiry[]>([]);
   const [subcontractors, setSubcontractors] = useState<Subcontractor[]>([]);
   const [meetingMinutes, setMeetingMinutes] = useState<MeetingMinutes[]>([]);
+  const [correspondence, setCorrespondence] = useState<Correspondence[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -261,6 +269,7 @@ export default function ProjectDetailPage() {
         communityEnquiryData,
         subcontractorData,
         meetingMinutesData,
+        correspondenceData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -287,6 +296,7 @@ export default function ProjectDetailPage() {
         getCommunityEnquiries(id),
         getSubcontractors(id),
         getMeetingMinutes(id),
+        getCorrespondence(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -313,6 +323,7 @@ export default function ProjectDetailPage() {
       setCommunityEnquiries(communityEnquiryData);
       setSubcontractors(subcontractorData);
       setMeetingMinutes(meetingMinutesData);
+      setCorrespondence(correspondenceData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -687,6 +698,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateCorrespondence(data: Partial<CorrespondenceInput>) {
+    if (!project) return;
+    await createCorrespondence(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateCorrespondence(
+    item: Correspondence,
+    data: Partial<CorrespondenceInput>
+  ) {
+    await updateCorrespondence(item.id, data);
+    await load();
+  }
+
+  async function handleDeleteCorrespondence(item: Correspondence) {
+    await deleteCorrespondence(item.id);
+    await load();
+  }
+
   async function handleCreateDocument(data: Partial<DocumentRecordInput>) {
     if (!project) return;
     await createDocument(project.id, data);
@@ -1053,6 +1083,13 @@ export default function ProjectDetailPage() {
                 onCreate={handleCreateDocument}
                 onUpdate={handleUpdateDocument}
                 onDelete={handleDeleteDocument}
+              />
+
+              <CorrespondencePanel
+                items={correspondence}
+                onCreate={handleCreateCorrespondence}
+                onUpdate={handleUpdateCorrespondence}
+                onDelete={handleDeleteCorrespondence}
               />
             </>
           )}

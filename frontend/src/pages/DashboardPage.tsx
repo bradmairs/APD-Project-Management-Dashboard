@@ -5,6 +5,7 @@ import {
   ActivityLogEntry,
   CashFlowEntry,
   CommunityEnquiry,
+  Correspondence,
   Subcontractor,
   DefectItem,
   EotClaim,
@@ -26,6 +27,7 @@ import {
   getAllActionItems,
   getAllCashFlowEntries,
   getAllCommunityEnquiries,
+  getAllCorrespondence,
   getAllSubcontractors,
   getAllDefects,
   getAllEotClaims,
@@ -55,6 +57,7 @@ import OpenDefectsPanel from "../components/OpenDefectsPanel";
 import OpenPaymentClaimsPanel from "../components/OpenPaymentClaimsPanel";
 import OpenRfisPanel from "../components/OpenRfisPanel";
 import OpenEnquiriesPanel from "../components/OpenEnquiriesPanel";
+import OpenCorrespondencePanel from "../components/OpenCorrespondencePanel";
 import ExpiringSubcontractorInsurancePanel from "../components/ExpiringSubcontractorInsurancePanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
@@ -98,6 +101,7 @@ export default function DashboardPage() {
   const [rfis, setRfis] = useState<Rfi[]>([]);
   const [communityEnquiries, setCommunityEnquiries] = useState<CommunityEnquiry[]>([]);
   const [subcontractors, setSubcontractors] = useState<Subcontractor[]>([]);
+  const [correspondence, setCorrespondence] = useState<Correspondence[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -129,6 +133,7 @@ export default function DashboardPage() {
         rfiData,
         communityEnquiryData,
         subcontractorData,
+        correspondenceData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -146,6 +151,7 @@ export default function DashboardPage() {
         getAllRfis(),
         getAllCommunityEnquiries(),
         getAllSubcontractors(),
+        getAllCorrespondence(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -163,6 +169,7 @@ export default function DashboardPage() {
       setEotClaims(eotData);
       setCommunityEnquiries(communityEnquiryData);
       setSubcontractors(subcontractorData);
+      setCorrespondence(correspondenceData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -356,6 +363,7 @@ export default function DashboardPage() {
             <OpenRfisPanel rfis={rfis} />
             <OpenEnquiriesPanel enquiries={communityEnquiries} />
             <ExpiringSubcontractorInsurancePanel subcontractors={subcontractors} />
+            <OpenCorrespondencePanel items={correspondence} />
           </div>
         )}
 

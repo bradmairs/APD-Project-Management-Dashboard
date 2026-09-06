@@ -193,6 +193,16 @@ enum SubcontractorStatus {
   TERMINATED
 }
 
+enum CorrespondenceDirection {
+  INCOMING
+  OUTGOING
+}
+
+enum CorrespondenceStatus {
+  OPEN
+  CLOSED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -224,6 +234,7 @@ model User {
   communityEnquiries CommunityEnquiry[]
   subcontractors Subcontractor[]
   meetingMinutes MeetingMinutes[]
+  correspondence Correspondence[]
 }
 
 model Project {
@@ -272,6 +283,7 @@ model Project {
   communityEnquiries     CommunityEnquiry[]
   subcontractors         Subcontractor[]
   meetingMinutes         MeetingMinutes[]
+  correspondence         Correspondence[]
 }
 
 model Task {
@@ -959,6 +971,37 @@ model MeetingMinutes {
   recordedByName  String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// A formal letter or notice to/from a consultant or contractor — a delay
+// notice, a notice to show cause, a formal direction — distinct from Rfi
+// (a technical question needing an answer to proceed with works) and
+// CommunityEnquiry (the public, not a project party). dateClosed stamps
+// automatically the moment status becomes Closed, and clears if it moves
+// back to Open — the single-implication version of the dual-implication
+// pattern Rfi's dateAnswered uses, since Correspondence has only one
+// closing state.
+model Correspondence {
+  id               String                  @id @default(cuid())
+  project          Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  reference        String?
+  direction        CorrespondenceDirection
+  correspondent    String
+  subject          String
+  summary          String?
+  dateSent         DateTime
+  responseDueDate  DateTime?
+  status           CorrespondenceStatus    @default(OPEN)
+  dateClosed       DateTime?
+  notes            String?
+  loggedBy         User?                   @relation(fields: [loggedById], references: [id], onDelete: SetNull)
+  loggedById       String?
+  loggedByName     String
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
 
   @@index([projectId])
 }

@@ -21,6 +21,8 @@ import {
   LessonLearnedInput,
   MeetingMinutes,
   MeetingMinutesInput,
+  Correspondence,
+  CorrespondenceInput,
   Milestone,
   MilestoneInput,
   MonthlyReport,
@@ -996,6 +998,42 @@ export function updateMeetingMinutes(
 
 export function deleteMeetingMinutes(id: string): Promise<void> {
   return fetch(`${API_BASE}/meeting-minutes/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getCorrespondence(projectId: string): Promise<Correspondence[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/correspondence`).then((res) => handle(res));
+}
+
+export function getAllCorrespondence(): Promise<Correspondence[]> {
+  return fetch(`${API_BASE}/correspondence`).then((res) => handle(res));
+}
+
+export function createCorrespondence(
+  projectId: string,
+  data: Partial<CorrespondenceInput>
+): Promise<Correspondence> {
+  return fetch(`${API_BASE}/projects/${projectId}/correspondence`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateCorrespondence(
+  id: string,
+  data: Partial<CorrespondenceInput>
+): Promise<Correspondence> {
+  return fetch(`${API_BASE}/correspondence/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteCorrespondence(id: string): Promise<void> {
+  return fetch(`${API_BASE}/correspondence/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }

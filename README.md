@@ -620,6 +620,31 @@ Like Site Visits, this is a plain log with no status workflow — nothing
 to mark open or closed, just a record of what happened. The panel sorts
 by meeting date, most recent first. Open to any logged-in user to edit.
 
+## Correspondence
+
+Each project has a **Correspondence Register** — a log of formal letters
+and notices exchanged with consultants and contractors (a notice of
+delay, a show-cause notice, a formal direction, a contractual notice),
+distinct from **RFIs** (a technical question needing an answer to
+proceed with works) and **Community Enquiries** (correspondence with the
+public, not a project party). An entry has a Reference, a Direction of
+Incoming/Outgoing, the Correspondent, a Subject, a Summary, the Date
+Sent, an optional Response Due date, a Status of Open/Closed, and Notes.
+
+`responseDueDate` is the contractually meaningful deadline, the same role
+`Rfi.dateRequired` plays for RFIs: only an Open item can be overdue or
+due soon (`frontend/src/correspondenceMeta.ts`'s
+`isCorrespondenceOverdue`/`isCorrespondenceDueSoon`). `dateClosed` stamps
+automatically the moment status reaches Closed and clears if moved back
+to Open — a single-implication version of the dual-implication pattern
+`Rfi.dateAnswered` uses, since Correspondence has only one closing status.
+The panel sorts open correspondence ahead of closed and flags overdue
+items in red.
+
+The Dashboard has a portfolio-wide **Open Correspondence** panel listing
+every non-closed entry across every project, overdue ones first, then
+soonest due. Open to any logged-in user to edit.
+
 ## Stakeholders
 
 Each project has a **Stakeholders** register — a simple contact

@@ -2,6 +2,7 @@ import {
   ActionItem,
   ChecklistItem,
   CommunityEnquiry,
+  Correspondence,
   DefectItem,
   DocumentRecord,
   EotClaim,
@@ -421,4 +422,15 @@ export function describeMeetingMinutesUpdate(before: MeetingMinutes): string {
   return before.meetingType
     ? `updated meeting minutes for a ${before.meetingType}`
     : "updated meeting minutes";
+}
+
+export function describeCorrespondenceUpdate(
+  before: Correspondence,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = body.status === "CLOSED" ? "Closed" : "Open";
+    return `marked correspondence "${before.subject}" as ${label}`;
+  }
+  return `updated correspondence "${before.subject}"`;
 }

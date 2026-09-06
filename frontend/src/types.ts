@@ -723,3 +723,39 @@ export type MeetingMinutesInput = Omit<
   MeetingMinutes,
   "id" | "projectId" | "recordedById" | "recordedByName" | "createdAt" | "updatedAt"
 >;
+
+export type CorrespondenceDirection = "INCOMING" | "OUTGOING";
+
+export type CorrespondenceStatus = "OPEN" | "CLOSED";
+
+export interface Correspondence {
+  id: string;
+  projectId: string;
+  reference: string | null;
+  direction: CorrespondenceDirection;
+  correspondent: string;
+  subject: string;
+  summary: string | null;
+  dateSent: string;
+  responseDueDate: string | null;
+  status: CorrespondenceStatus;
+  dateClosed: string | null;
+  notes: string | null;
+  loggedById: string | null;
+  loggedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type CorrespondenceInput = Omit<
+  Correspondence,
+  | "id"
+  | "projectId"
+  | "dateClosed"
+  | "loggedById"
+  | "loggedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
