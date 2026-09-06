@@ -406,6 +406,33 @@ Needs Attention, Open Actions, Expiring Permits, and Open SQE Issues,
 listing every non-verified defect across the portfolio with a link back
 to its project. Open to any logged-in user to edit.
 
+## Payment Claims
+
+Each project has a **Payment Claims** register — the contract-
+administration counterpart to Cash Flow's monthly forecast/actual
+entries, which are the PM's own budget tracking rather than a formal
+claim-and-certify record. A claim has a Claim Number, an optional
+Period Ending date, a Claimed Amount (what the contractor asked for),
+a Certified Amount (what the PM actually certifies — often less, so
+it's a separate field rather than the claimed amount rewritten in
+place), a Status, the date submitted, and Notes.
+
+Status runs the normal path SUBMITTED → CERTIFIED → PAID, with a
+DISPUTED status for a claim the PM contests. Certification and payment
+are tracked as two independent auto-stamped dates rather than one:
+`dateCertified` stamps the moment status first reaches CERTIFIED *or*
+PAID (both imply certification happened, even if a claim is certified
+and paid in the same step) and clears if moved back to
+SUBMITTED/DISPUTED; `datePaid` stamps only on reaching PAID and clears
+otherwise. The panel header shows the total certified to date and a
+running "N outstanding" count (anything not yet PAID), sorted with
+disputed and submitted claims first.
+
+The Dashboard has a portfolio-wide **Payment Claims Outstanding** panel
+alongside the other exception panels, listing every claim across the
+portfolio still awaiting certification or payment with a link back to
+its project. Open to any logged-in user to edit.
+
 ## Risks & Opportunities
 
 Each project has a **Risks & Opportunities** register — one shared `Risk`

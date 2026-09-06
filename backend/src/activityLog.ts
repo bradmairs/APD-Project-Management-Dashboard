@@ -5,6 +5,7 @@ import {
   EotClaim,
   LessonLearned,
   Milestone,
+  PaymentClaim,
   Permit,
   Project,
   Risk,
@@ -309,4 +310,26 @@ export function describeDefectUpdate(
     return `marked defect "${before.title}" as ${label}`;
   }
   return `updated defect "${before.title}"`;
+}
+
+const PAYMENT_CLAIM_STATUS_LABELS: Record<string, string> = {
+  SUBMITTED: "Submitted",
+  CERTIFIED: "Certified",
+  DISPUTED: "Disputed",
+  PAID: "Paid",
+};
+
+export function describePaymentClaimUpdate(
+  before: PaymentClaim,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = PAYMENT_CLAIM_STATUS_LABELS[body.status as string] ?? String(body.status);
+    const certifiedNote =
+      body.status === "CERTIFIED" && body.certifiedAmount !== undefined
+        ? ` ($${body.certifiedAmount} certified)`
+        : "";
+    return `marked payment claim "${before.claimNumber}" as ${label}${certifiedNote}`;
+  }
+  return `updated payment claim "${before.claimNumber}"`;
 }

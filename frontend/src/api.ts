@@ -17,6 +17,8 @@ import {
   MilestoneInput,
   MonthlyReport,
   MonthlyReportInput,
+  PaymentClaim,
+  PaymentClaimInput,
   Permit,
   PermitInput,
   Project,
@@ -742,4 +744,40 @@ export function updateDefect(
 
 export function deleteDefect(id: string): Promise<void> {
   return fetch(`${API_BASE}/defects/${id}`, { method: "DELETE" }).then((res) => handle(res));
+}
+
+export function getPaymentClaims(projectId: string): Promise<PaymentClaim[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/payment-claims`).then((res) => handle(res));
+}
+
+export function getAllPaymentClaims(): Promise<PaymentClaim[]> {
+  return fetch(`${API_BASE}/payment-claims`).then((res) => handle(res));
+}
+
+export function createPaymentClaim(
+  projectId: string,
+  data: Partial<PaymentClaimInput>
+): Promise<PaymentClaim> {
+  return fetch(`${API_BASE}/projects/${projectId}/payment-claims`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updatePaymentClaim(
+  id: string,
+  data: Partial<PaymentClaimInput>
+): Promise<PaymentClaim> {
+  return fetch(`${API_BASE}/payment-claims/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deletePaymentClaim(id: string): Promise<void> {
+  return fetch(`${API_BASE}/payment-claims/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
 }

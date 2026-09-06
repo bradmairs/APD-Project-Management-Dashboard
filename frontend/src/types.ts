@@ -501,3 +501,37 @@ export type DefectItemInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export type PaymentClaimStatus = "SUBMITTED" | "CERTIFIED" | "DISPUTED" | "PAID";
+
+export interface PaymentClaim {
+  id: string;
+  projectId: string;
+  claimNumber: string;
+  periodEnding: string | null;
+  claimedAmount: number;
+  certifiedAmount: number | null;
+  status: PaymentClaimStatus;
+  dateSubmitted: string;
+  dateCertified: string | null;
+  datePaid: string | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type PaymentClaimInput = Omit<
+  PaymentClaim,
+  | "id"
+  | "projectId"
+  | "dateCertified"
+  | "datePaid"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

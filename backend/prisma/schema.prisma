@@ -142,6 +142,13 @@ enum DefectStatus {
   DISPUTED
 }
 
+enum PaymentClaimStatus {
+  SUBMITTED
+  CERTIFIED
+  DISPUTED
+  PAID
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -166,6 +173,7 @@ model User {
   eotClaims      EotClaim[]
   checklistItems ChecklistItem[]
   defectItems    DefectItem[]
+  paymentClaims  PaymentClaim[]
 }
 
 model Project {
@@ -207,6 +215,7 @@ model Project {
   eotClaims              EotClaim[]
   checklistItems         ChecklistItem[]
   defectItems            DefectItem[]
+  paymentClaims          PaymentClaim[]
 }
 
 model Task {
@@ -685,6 +694,43 @@ model DefectItem {
   notes         String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+
+  @@index([projectId])
+}
+
+// A contractor's progress claim under the contract, and the PM's
+// certification of it — the contract-administration counterpart to
+// Cash Flow's monthly forecast/actual entries, which are the PM's own
+// budget tracking rather than a formal claim-and-certify record.
+// claimedAmount is what the contractor asked for; certifiedAmount is
+// what the PM actually certifies (often less), so the two are kept
+// separate rather than a single amount rewritten in place. status runs
+// SUBMITTED -> CERTIFIED -> PAID as the normal path, with DISPUTED for
+// a claim the PM contests. dateCertified stamps the moment status
+// first reaches CERTIFIED or PAID (both imply certification happened)
+// and clears if moved back to SUBMITTED/DISPUTED; datePaid stamps only
+// on reaching PAID and clears otherwise — two independent stamps,
+// since certification and payment are distinct events that don't
+// necessarily happen together. Cascades with its project like the
+// other registers.
+model PaymentClaim {
+  id               String             @id @default(cuid())
+  project          Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  claimNumber      String
+  periodEnding     DateTime?
+  claimedAmount    Decimal            @db.Decimal(14, 2)
+  certifiedAmount  Decimal?           @db.Decimal(14, 2)
+  status           PaymentClaimStatus @default(SUBMITTED)
+  dateSubmitted    DateTime
+  dateCertified    DateTime?
+  datePaid         DateTime?
+  raisedBy         User?              @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById       String?
+  raisedByName     String
+  notes            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   @@index([projectId])
 }

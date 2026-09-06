@@ -15,6 +15,8 @@ import {
   EotClaimInput,
   LessonLearned,
   LessonLearnedInput,
+  PaymentClaim,
+  PaymentClaimInput,
   Permit,
   PermitInput,
   Stakeholder,
@@ -45,6 +47,7 @@ import {
   createLessonLearned,
   createMilestone,
   createMonthlyReport,
+  createPaymentClaim,
   createPermit,
   createRisk,
   createSiteVisit,
@@ -61,6 +64,7 @@ import {
   deleteLessonLearned,
   deleteMilestone,
   deleteMonthlyReport,
+  deletePaymentClaim,
   deletePermit,
   deleteProject,
   deleteRisk,
@@ -79,6 +83,7 @@ import {
   getLessonsLearned,
   getMilestones,
   getMonthlyReports,
+  getPaymentClaims,
   getPermits,
   getProject,
   getProjectActivity,
@@ -96,6 +101,7 @@ import {
   updateLessonLearned,
   updateMilestone,
   updateMonthlyReport,
+  updatePaymentClaim,
   updatePermit,
   updateProject,
   updateRisk,
@@ -126,6 +132,7 @@ import SqePanel from "../components/SqePanel";
 import EotPanel from "../components/EotPanel";
 import ChecklistPanel from "../components/ChecklistPanel";
 import DefectsPanel from "../components/DefectsPanel";
+import PaymentClaimsPanel from "../components/PaymentClaimsPanel";
 import HealthBadge from "../components/HealthBadge";
 import { computeProjectHealth } from "../health";
 import { revisedCompletionDate } from "../eot";
@@ -158,6 +165,7 @@ export default function ProjectDetailPage() {
   const [eotClaims, setEotClaims] = useState<EotClaim[]>([]);
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [defects, setDefects] = useState<DefectItem[]>([]);
+  const [paymentClaims, setPaymentClaims] = useState<PaymentClaim[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -186,6 +194,7 @@ export default function ProjectDetailPage() {
         eotData,
         checklistData,
         defectData,
+        paymentClaimData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -205,6 +214,7 @@ export default function ProjectDetailPage() {
         getEotClaims(id),
         getChecklistItems(id),
         getDefects(id),
+        getPaymentClaims(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -224,6 +234,7 @@ export default function ProjectDetailPage() {
       setEotClaims(eotData);
       setChecklistItems(checklistData);
       setDefects(defectData);
+      setPaymentClaims(paymentClaimData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -544,6 +555,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreatePaymentClaim(data: Partial<PaymentClaimInput>) {
+    if (!project) return;
+    await createPaymentClaim(project.id, data);
+    await load();
+  }
+
+  async function handleUpdatePaymentClaim(
+    claim: PaymentClaim,
+    data: Partial<PaymentClaimInput>
+  ) {
+    await updatePaymentClaim(claim.id, data);
+    await load();
+  }
+
+  async function handleDeletePaymentClaim(claim: PaymentClaim) {
+    await deletePaymentClaim(claim.id);
+    await load();
+  }
+
   const revisedTargetCompletion = useMemo(
     () => (project ? revisedCompletionDate(project, eotClaims) : null),
     [project, eotClaims]
@@ -705,6 +735,13 @@ export default function ProjectDetailPage() {
           variations={variations}
           onUpsert={handleUpsertCashFlowEntry}
           onDelete={handleDeleteCashFlowEntry}
+        />
+
+        <PaymentClaimsPanel
+          claims={paymentClaims}
+          onCreate={handleCreatePaymentClaim}
+          onUpdate={handleUpdatePaymentClaim}
+          onDelete={handleDeletePaymentClaim}
         />
 
         <RisksPanel
