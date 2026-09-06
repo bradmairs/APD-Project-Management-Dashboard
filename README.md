@@ -960,6 +960,29 @@ for uploading (📷 Take Photo / 🖼 Add from Gallery) and quick deletion
 scoped to that visit — the project-wide Gallery/Map views are for
 browsing and don't change how photos are added.
 
+## Training & Induction Records
+
+Each project has a **Training & Induction Records** register — site
+inductions and competency certifications held by people working for a
+consultant or contractor on the project (a site induction, a White Card,
+Working at Heights, Confined Space, First Aid), distinct from
+**Subcontractor** (a company-level engagement record) and the
+**Safety, Quality & Environment** register (a one-off incident, not an
+ongoing qualification). A record has a Person Name, Company, Training Type
+(freeform, with suggestions), a Completion Date, an optional Expiry Date, a
+Certificate Number, and Notes.
+
+`expiryDate` is optional since some records — a one-off site induction, say
+— never expire; when present it follows the same computed-not-stored
+expiry pattern as Insurance & Warranties: no status field, just the date
+compared against "now" (`frontend/src/trainingMeta.ts`'s
+`isTrainingExpired`/`isTrainingExpiringSoon`). The panel sorts expired
+records first, then expiring soon, then everything else.
+
+The Dashboard has a portfolio-wide **Training Expiring Soon** panel
+listing every expired or soon-to-expire record across every project,
+soonest first. Open to any logged-in user to edit.
+
 ## Tabbed Navigation
 
 Both the Dashboard and a project's detail page had grown into one long

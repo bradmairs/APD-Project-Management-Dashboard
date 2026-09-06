@@ -13,6 +13,8 @@ import {
   CommunityEnquiryInput,
   Correspondence,
   CorrespondenceInput,
+  TrainingRecord,
+  TrainingRecordInput,
   DefectItem,
   DefectItemInput,
   DocumentRecord,
@@ -75,6 +77,7 @@ import {
   createStakeholder,
   createSubcontractor,
   createTask,
+  createTrainingRecord,
   createVariation,
   deleteActionItem,
   deleteAttachment,
@@ -101,6 +104,7 @@ import {
   deleteStakeholder,
   deleteSubcontractor,
   deleteTask,
+  deleteTrainingRecord,
   deleteVariation,
   getActionItems,
   getAttachments,
@@ -127,6 +131,7 @@ import {
   getSqeRecords,
   getStakeholders,
   getSubcontractors,
+  getTrainingRecords,
   getVariations,
   reorderMilestone,
   updateActionItem,
@@ -151,6 +156,7 @@ import {
   updateStakeholder,
   updateSubcontractor,
   updateTask,
+  updateTrainingRecord,
   updateVariation,
   uploadAttachment,
   uploadSiteVisitPhotos,
@@ -181,6 +187,7 @@ import DefectsPanel from "../components/DefectsPanel";
 import DocumentsPanel from "../components/DocumentsPanel";
 import EnquiriesPanel from "../components/EnquiriesPanel";
 import CorrespondencePanel from "../components/CorrespondencePanel";
+import TrainingRecordsPanel from "../components/TrainingRecordsPanel";
 import Tabs from "../components/Tabs";
 import PaymentClaimsPanel from "../components/PaymentClaimsPanel";
 import HealthBadge from "../components/HealthBadge";
@@ -233,6 +240,7 @@ export default function ProjectDetailPage() {
   const [subcontractors, setSubcontractors] = useState<Subcontractor[]>([]);
   const [meetingMinutes, setMeetingMinutes] = useState<MeetingMinutes[]>([]);
   const [correspondence, setCorrespondence] = useState<Correspondence[]>([]);
+  const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -270,6 +278,7 @@ export default function ProjectDetailPage() {
         subcontractorData,
         meetingMinutesData,
         correspondenceData,
+        trainingRecordData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -297,6 +306,7 @@ export default function ProjectDetailPage() {
         getSubcontractors(id),
         getMeetingMinutes(id),
         getCorrespondence(id),
+        getTrainingRecords(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -324,6 +334,7 @@ export default function ProjectDetailPage() {
       setSubcontractors(subcontractorData);
       setMeetingMinutes(meetingMinutesData);
       setCorrespondence(correspondenceData);
+      setTrainingRecords(trainingRecordData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -714,6 +725,25 @@ export default function ProjectDetailPage() {
 
   async function handleDeleteCorrespondence(item: Correspondence) {
     await deleteCorrespondence(item.id);
+    await load();
+  }
+
+  async function handleCreateTrainingRecord(data: Partial<TrainingRecordInput>) {
+    if (!project) return;
+    await createTrainingRecord(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateTrainingRecord(
+    item: TrainingRecord,
+    data: Partial<TrainingRecordInput>
+  ) {
+    await updateTrainingRecord(item.id, data);
+    await load();
+  }
+
+  async function handleDeleteTrainingRecord(item: TrainingRecord) {
+    await deleteTrainingRecord(item.id);
     await load();
   }
 
@@ -1133,6 +1163,13 @@ export default function ProjectDetailPage() {
                 onCreate={handleCreateLesson}
                 onUpdate={handleUpdateLesson}
                 onDelete={handleDeleteLesson}
+              />
+
+              <TrainingRecordsPanel
+                items={trainingRecords}
+                onCreate={handleCreateTrainingRecord}
+                onUpdate={handleUpdateTrainingRecord}
+                onDelete={handleDeleteTrainingRecord}
               />
             </>
           )}

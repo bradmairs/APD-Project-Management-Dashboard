@@ -49,6 +49,8 @@ import {
   SubcontractorInput,
   Task,
   TaskInput,
+  TrainingRecord,
+  TrainingRecordInput,
   User,
   Variation,
   VariationInput,
@@ -1034,6 +1036,42 @@ export function updateCorrespondence(
 
 export function deleteCorrespondence(id: string): Promise<void> {
   return fetch(`${API_BASE}/correspondence/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getTrainingRecords(projectId: string): Promise<TrainingRecord[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/training-records`).then((res) => handle(res));
+}
+
+export function getAllTrainingRecords(): Promise<TrainingRecord[]> {
+  return fetch(`${API_BASE}/training-records`).then((res) => handle(res));
+}
+
+export function createTrainingRecord(
+  projectId: string,
+  data: Partial<TrainingRecordInput>
+): Promise<TrainingRecord> {
+  return fetch(`${API_BASE}/projects/${projectId}/training-records`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateTrainingRecord(
+  id: string,
+  data: Partial<TrainingRecordInput>
+): Promise<TrainingRecord> {
+  return fetch(`${API_BASE}/training-records/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteTrainingRecord(id: string): Promise<void> {
+  return fetch(`${API_BASE}/training-records/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }

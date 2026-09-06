@@ -20,6 +20,7 @@ import {
   Stakeholder,
   Subcontractor,
   Task,
+  TrainingRecord,
   Variation,
 } from "@prisma/client";
 import { prisma } from "./prisma";
@@ -433,4 +434,8 @@ export function describeCorrespondenceUpdate(
     return `marked correspondence "${before.subject}" as ${label}`;
   }
   return `updated correspondence "${before.subject}"`;
+}
+
+export function describeTrainingRecordUpdate(before: TrainingRecord): string {
+  return `updated training record "${before.trainingType}" for ${before.personName}`;
 }

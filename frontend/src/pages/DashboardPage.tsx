@@ -19,6 +19,7 @@ import {
   Risk,
   SqeRecord,
   Task,
+  TrainingRecord,
   Variation,
 } from "../types";
 import {
@@ -37,6 +38,7 @@ import {
   getAllRfis,
   getAllRisks,
   getAllSqeRecords,
+  getAllTrainingRecords,
   getAllVariations,
   getProjects,
   getRecentActivity,
@@ -59,6 +61,7 @@ import OpenRfisPanel from "../components/OpenRfisPanel";
 import OpenEnquiriesPanel from "../components/OpenEnquiriesPanel";
 import OpenCorrespondencePanel from "../components/OpenCorrespondencePanel";
 import ExpiringSubcontractorInsurancePanel from "../components/ExpiringSubcontractorInsurancePanel";
+import ExpiringTrainingPanel from "../components/ExpiringTrainingPanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -102,6 +105,7 @@ export default function DashboardPage() {
   const [communityEnquiries, setCommunityEnquiries] = useState<CommunityEnquiry[]>([]);
   const [subcontractors, setSubcontractors] = useState<Subcontractor[]>([]);
   const [correspondence, setCorrespondence] = useState<Correspondence[]>([]);
+  const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -134,6 +138,7 @@ export default function DashboardPage() {
         communityEnquiryData,
         subcontractorData,
         correspondenceData,
+        trainingRecordData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -152,6 +157,7 @@ export default function DashboardPage() {
         getAllCommunityEnquiries(),
         getAllSubcontractors(),
         getAllCorrespondence(),
+        getAllTrainingRecords(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -170,6 +176,7 @@ export default function DashboardPage() {
       setCommunityEnquiries(communityEnquiryData);
       setSubcontractors(subcontractorData);
       setCorrespondence(correspondenceData);
+      setTrainingRecords(trainingRecordData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -364,6 +371,7 @@ export default function DashboardPage() {
             <OpenEnquiriesPanel enquiries={communityEnquiries} />
             <ExpiringSubcontractorInsurancePanel subcontractors={subcontractors} />
             <OpenCorrespondencePanel items={correspondence} />
+            <ExpiringTrainingPanel records={trainingRecords} />
           </div>
         )}
 
