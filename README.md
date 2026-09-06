@@ -507,6 +507,50 @@ alongside task deadlines and expiring permits/insurance, so a late
 response shows up wherever a PM is already looking. Open to any
 logged-in user to edit.
 
+## Document Register
+
+Each project has a **Document Register** — a controlled-document list for
+drawings, specifications, reports, and other project documents subject to
+revision control, distinct from **Attachments** (arbitrary uploaded files
+with no revision or status lifecycle). A document has a Document Number,
+Title, Category (Drawing, Specification, Report, Correspondence, As-Built —
+with suggestions, freeform text), Revision, a Status of Draft/For Review/
+Approved/Superseded, an Issue Date, a Description, and Notes.
+
+The status models a standard document-control lifecycle: a document is
+drafted, put out for review, approved for use (e.g. Issued For
+Construction), and eventually superseded by a later revision — a new
+revision is added as a new record rather than overwriting the old one, so
+the register keeps a full revision history rather than deleting anything.
+The panel sorts documents awaiting action (For Review, then Draft) ahead
+of Approved (current, in-use) documents, with Superseded revisions sinking
+to the bottom (`frontend/src/documentMeta.ts`'s `documentStatusRank`,
+the same status-rank pattern every other register uses). Open to any
+logged-in user to edit.
+
+## Community Enquiries & Complaints
+
+Each project has a **Community Enquiries & Complaints** register — a log
+of public enquiries and complaints about construction activity (noise,
+traffic, dust, site access), distinct from **Stakeholders** (a contacts
+list) and **Requests for Information** (technical questions to a
+designer/consultant/client, not the public). An enquiry has an optional
+Reference, a Category (Noise/Traffic/Dust/Access/Other), how it was
+received (Source), the complainant's contact details, a Description, the
+Date Received, a Status of Open/In Progress/Resolved/Closed, who it's
+Assigned To, a Resolution, and Notes.
+
+`dateResolved` stamps automatically the moment status first reaches
+Resolved or Closed (both imply the matter is dealt with) and clears if
+moved back to Open or In Progress — the same dual-implication auto-stamp
+pattern RFIs' `dateAnswered` and Payment Claims' `dateCertified` use. The
+panel sorts open and in-progress enquiries ahead of resolved/closed ones
+(`frontend/src/enquiryMeta.ts`'s `enquiryStatusRank`).
+
+The Dashboard's Alerts tab has a portfolio-wide **Open Enquiries** panel
+listing every non-resolved, non-closed enquiry across every project.
+Open to any logged-in user to edit.
+
 ## Safety, Quality & Environment
 
 Each project has an **SQE** register for logging safety, quality, and
@@ -835,6 +879,34 @@ Leaflet `divIcon` rather than Leaflet's bundled marker images, which
 sidesteps a well-known bundler issue where `Icon.Default`'s image paths
 resolve relative to the `leaflet` package rather than the built app and
 404 in production.
+
+## Tabbed Navigation
+
+Both the Dashboard and a project's detail page had grown into one long
+scroll as registers accumulated (the project page alone stacks ~20 panels).
+Both now split their content into a horizontal tab bar
+(`components/Tabs.tsx`, a generic underline tab bar reused by both pages)
+so a screen only ever shows one section at a time:
+
+- **Dashboard** — Projects (the filterable/searchable project table),
+  Alerts (the eight portfolio-wide "needs attention" panels), Charts
+  (spend-vs-budget and projects-by-status), Activity (upcoming deadlines,
+  top risks, recent activity feed). The header and the four stat cards
+  stay above the tabs, visible on every tab.
+- **Project detail page** — Overview (Stakeholders, Actions & Decisions,
+  Activity), Schedule (Milestones, Tasks, EOT Claims, Commissioning &
+  Handover), Budget & Contract (Cash Flow, Variations, Payment Claims,
+  Insurance & Warranties, Permits & Approvals), Quality & Risk (Risks &
+  Opportunities, SQE, Defects & Punch List, RFIs, Document Register), Site
+  & Records (Site Visits, Attachments, Monthly Reports, Lessons Learned).
+  The header, description, and project info field grid stay above the
+  tabs, visible on every tab.
+
+Tab state is local to each page (`useState`, defaulting to the first tab)
+rather than reflected in the URL — switching projects or navigating away
+and back always starts from the default tab. Every panel that was already
+on these pages is still there; this only changed which section of the
+page shows it.
 
 ## Roadmap ideas (not built yet)
 

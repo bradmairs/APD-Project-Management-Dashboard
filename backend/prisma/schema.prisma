@@ -160,6 +160,32 @@ enum RfiStatus {
   CLOSED
 }
 
+// Standard document-control lifecycle: a document is drafted, put out for
+// review, approved for use (e.g. Issued For Construction), and eventually
+// superseded by a later revision — never deleted, so the register keeps a
+// full revision history.
+enum DocumentStatus {
+  DRAFT
+  FOR_REVIEW
+  APPROVED
+  SUPERSEDED
+}
+
+enum EnquiryCategory {
+  NOISE
+  TRAFFIC
+  DUST
+  ACCESS
+  OTHER
+}
+
+enum EnquiryStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -187,6 +213,8 @@ model User {
   paymentClaims  PaymentClaim[]
   insuranceWarranties InsuranceWarranty[]
   rfis           Rfi[]
+  documents      DocumentRecord[]
+  communityEnquiries CommunityEnquiry[]
 }
 
 model Project {
@@ -231,6 +259,8 @@ model Project {
   paymentClaims          PaymentClaim[]
   insuranceWarranties    InsuranceWarranty[]
   rfis                   Rfi[]
+  documents              DocumentRecord[]
+  communityEnquiries     CommunityEnquiry[]
 }
 
 model Task {
@@ -814,6 +844,58 @@ model Rfi {
   notes         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// A controlled-document register — drawings, specifications, and other
+// project documents subject to revision control, distinct from Attachment
+// (arbitrary uploaded files with no revision/status lifecycle).
+model DocumentRecord {
+  id             String         @id @default(cuid())
+  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  documentNumber String
+  title          String
+  category       String?
+  revision       String
+  status         DocumentStatus @default(DRAFT)
+  issueDate      DateTime?
+  description    String?
+  uploadedBy     User?          @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedById   String?
+  uploadedByName String
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([projectId])
+}
+
+// A public enquiry or complaint about construction activity (noise,
+// traffic, dust, site access) — distinct from Stakeholders (a contacts
+// list) and RFIs (technical questions to a designer/consultant/client).
+model CommunityEnquiry {
+  id             String          @id @default(cuid())
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  reference      String?
+  category       EnquiryCategory
+  source         String?
+  contactName    String?
+  contactDetails String?
+  description    String
+  dateReceived   DateTime
+  status         EnquiryStatus   @default(OPEN)
+  assignedTo     String?
+  resolution     String?
+  dateResolved   DateTime?
+  loggedBy       User?           @relation(fields: [loggedById], references: [id], onDelete: SetNull)
+  loggedById     String?
+  loggedByName   String
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([projectId])
 }

@@ -1,7 +1,9 @@
 import {
   ActionItem,
   ChecklistItem,
+  CommunityEnquiry,
   DefectItem,
+  DocumentRecord,
   EotClaim,
   InsuranceWarranty,
   LessonLearned,
@@ -356,4 +358,41 @@ export function describeRfiUpdate(before: Rfi, body: Record<string, unknown>): s
     return `marked RFI "${before.rfiNumber}" as ${label}`;
   }
   return `updated RFI "${before.rfiNumber}"`;
+}
+
+const DOCUMENT_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Draft",
+  FOR_REVIEW: "For Review",
+  APPROVED: "Approved",
+  SUPERSEDED: "Superseded",
+};
+
+export function describeDocumentUpdate(
+  before: DocumentRecord,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = DOCUMENT_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked document "${before.documentNumber}: ${before.title}" as ${label}`;
+  }
+  return `updated document "${before.documentNumber}: ${before.title}"`;
+}
+
+const ENQUIRY_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  IN_PROGRESS: "In Progress",
+  RESOLVED: "Resolved",
+  CLOSED: "Closed",
+};
+
+export function describeCommunityEnquiryUpdate(
+  before: CommunityEnquiry,
+  body: Record<string, unknown>
+): string {
+  const label = before.reference ? `"${before.reference}"` : `#${before.id.slice(-6)}`;
+  if ("status" in body && body.status !== before.status) {
+    const statusLabel = ENQUIRY_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked community enquiry ${label} as ${statusLabel}`;
+  }
+  return `updated community enquiry ${label}`;
 }

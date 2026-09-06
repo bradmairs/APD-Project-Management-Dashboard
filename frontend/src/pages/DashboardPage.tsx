@@ -4,6 +4,7 @@ import {
   ActionItem,
   ActivityLogEntry,
   CashFlowEntry,
+  CommunityEnquiry,
   DefectItem,
   EotClaim,
   InsuranceWarranty,
@@ -23,6 +24,7 @@ import {
   deleteProject,
   getAllActionItems,
   getAllCashFlowEntries,
+  getAllCommunityEnquiries,
   getAllDefects,
   getAllEotClaims,
   getAllInsuranceWarranties,
@@ -50,6 +52,7 @@ import OpenSqePanel from "../components/OpenSqePanel";
 import OpenDefectsPanel from "../components/OpenDefectsPanel";
 import OpenPaymentClaimsPanel from "../components/OpenPaymentClaimsPanel";
 import OpenRfisPanel from "../components/OpenRfisPanel";
+import OpenEnquiriesPanel from "../components/OpenEnquiriesPanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -59,8 +62,18 @@ import { ALL_STATUSES, STATUS_LABELS } from "../statusMeta";
 import { computeProjectHealth, ProjectHealth } from "../health";
 import NeedsAttentionPanel from "../components/NeedsAttentionPanel";
 import UserMenu from "../components/UserMenu";
+import Tabs from "../components/Tabs";
 import { useAuth } from "../auth/AuthContext";
 import gvwLogo from "../assets/gvw-logo.png";
+
+type DashboardTabId = "projects" | "alerts" | "charts" | "activity";
+
+const DASHBOARD_TABS: { id: DashboardTabId; label: string }[] = [
+  { id: "projects", label: "Projects" },
+  { id: "alerts", label: "Alerts" },
+  { id: "charts", label: "Charts" },
+  { id: "activity", label: "Activity" },
+];
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -80,6 +93,7 @@ export default function DashboardPage() {
   const [paymentClaims, setPaymentClaims] = useState<PaymentClaim[]>([]);
   const [insuranceWarranties, setInsuranceWarranties] = useState<InsuranceWarranty[]>([]);
   const [rfis, setRfis] = useState<Rfi[]>([]);
+  const [communityEnquiries, setCommunityEnquiries] = useState<CommunityEnquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -88,6 +102,7 @@ export default function DashboardPage() {
   const [search, setSearch] = useState("");
   const [modalProject, setModalProject] = useState<Project | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<DashboardTabId>("projects");
 
   async function loadData() {
     setLoading(true);
@@ -108,6 +123,7 @@ export default function DashboardPage() {
         paymentClaimData,
         insuranceWarrantyData,
         rfiData,
+        communityEnquiryData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -123,6 +139,7 @@ export default function DashboardPage() {
         getAllPaymentClaims(),
         getAllInsuranceWarranties(),
         getAllRfis(),
+        getAllCommunityEnquiries(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -138,6 +155,7 @@ export default function DashboardPage() {
       setInsuranceWarranties(insuranceWarrantyData);
       setRfis(rfiData);
       setEotClaims(eotData);
+      setCommunityEnquiries(communityEnquiryData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -264,7 +282,62 @@ export default function DashboardPage() {
 
         <StatCards projects={projects} />
 
-        {!loading && projects.length > 0 && (
+        <Tabs tabs={DASHBOARD_TABS} active={activeTab} onChange={setActiveTab} />
+
+        {activeTab === "projects" && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setStatusFilter("ALL")}
+                  className={`px-3 py-1.5 text-sm rounded-full border ${
+                    statusFilter === "ALL"
+                      ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100"
+                      : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600"
+                  }`}
+                >
+                  All
+                </button>
+                {ALL_STATUSES.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    className={`px-3 py-1.5 text-sm rounded-full border ${
+                      statusFilter === s
+                        ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100"
+                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600"
+                    }`}
+                  >
+                    {STATUS_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name, location, manager…"
+                className="w-full sm:w-72 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+              />
+            </div>
+
+            {loading ? (
+              <div className="text-center text-slate-500 dark:text-slate-400 py-12">
+                Loading…
+              </div>
+            ) : (
+              <ProjectTable
+                projects={filteredProjects}
+                currentUser={user}
+                healthByProjectId={healthByProjectId}
+                onOpen={(project) => navigate(`/projects/${project.id}`)}
+                onEdit={openEditProject}
+                onDelete={handleDelete}
+              />
+            )}
+          </div>
+        )}
+
+        {activeTab === "alerts" && !loading && projects.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
             <NeedsAttentionPanel projects={projects} healthByProjectId={healthByProjectId} />
             <OpenActionsPanel actionItems={actionItems} />
@@ -274,11 +347,12 @@ export default function DashboardPage() {
             <OpenPaymentClaimsPanel claims={paymentClaims} />
             <ExpiringInsuranceWarrantiesPanel items={insuranceWarranties} />
             <OpenRfisPanel rfis={rfis} />
+            <OpenEnquiriesPanel enquiries={communityEnquiries} />
           </div>
         )}
 
-        {!loading && projects.length > 0 && (
-          <>
+        {activeTab === "charts" && !loading && projects.length > 0 && (
+          <div className="space-y-6">
             <ChartCard title="Spend vs Budget Over Time — All Projects">
               <PortfolioCumulativeSpendChart
                 projects={projects}
@@ -294,69 +368,22 @@ export default function DashboardPage() {
                 formatValue={(v) => String(v)}
               />
             </ChartCard>
-          </>
+          </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <UpcomingDeadlines tasks={upcomingTasks} />
-          <TopRisksPanel risks={risks} />
-          {recentActivity.length > 0 && (
-            <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
-                Recent Activity
-              </h2>
-              <ActivityFeed entries={recentActivity} showProjectLink />
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setStatusFilter("ALL")}
-              className={`px-3 py-1.5 text-sm rounded-full border ${
-                statusFilter === "ALL"
-                  ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600"
-              }`}
-            >
-              All
-            </button>
-            {ALL_STATUSES.map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`px-3 py-1.5 text-sm rounded-full border ${
-                  statusFilter === s
-                    ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100"
-                    : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600"
-                }`}
-              >
-                {STATUS_LABELS[s]}
-              </button>
-            ))}
+        {activeTab === "activity" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <UpcomingDeadlines tasks={upcomingTasks} />
+            <TopRisksPanel risks={risks} />
+            {recentActivity.length > 0 && (
+              <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
+                  Recent Activity
+                </h2>
+                <ActivityFeed entries={recentActivity} showProjectLink />
+              </div>
+            )}
           </div>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, location, manager…"
-            className="w-full sm:w-72 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
-          />
-        </div>
-
-        {loading ? (
-          <div className="text-center text-slate-500 dark:text-slate-400 py-12">
-            Loading…
-          </div>
-        ) : (
-          <ProjectTable
-            projects={filteredProjects}
-            currentUser={user}
-            healthByProjectId={healthByProjectId}
-            onOpen={(project) => navigate(`/projects/${project.id}`)}
-            onEdit={openEditProject}
-            onDelete={handleDelete}
-          />
         )}
       </main>
 
