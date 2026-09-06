@@ -669,3 +669,93 @@ export type CommunityEnquiryInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export type SubcontractorStatus = "ENGAGED" | "ACTIVE" | "COMPLETED" | "TERMINATED";
+
+export interface Subcontractor {
+  id: string;
+  projectId: string;
+  companyName: string;
+  trade: string | null;
+  contactName: string | null;
+  contactDetails: string | null;
+  contractValue: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  status: SubcontractorStatus;
+  insuranceExpiry: string | null;
+  notes: string | null;
+  addedById: string | null;
+  addedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type SubcontractorInput = Omit<
+  Subcontractor,
+  | "id"
+  | "projectId"
+  | "addedById"
+  | "addedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
+
+export interface MeetingMinutes {
+  id: string;
+  projectId: string;
+  meetingDate: string;
+  meetingType: string | null;
+  location: string | null;
+  attendees: string | null;
+  summary: string | null;
+  nextMeetingDate: string | null;
+  notes: string | null;
+  recordedById: string | null;
+  recordedByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type MeetingMinutesInput = Omit<
+  MeetingMinutes,
+  "id" | "projectId" | "recordedById" | "recordedByName" | "createdAt" | "updatedAt"
+>;
+
+export type CorrespondenceDirection = "INCOMING" | "OUTGOING";
+
+export type CorrespondenceStatus = "OPEN" | "CLOSED";
+
+export interface Correspondence {
+  id: string;
+  projectId: string;
+  reference: string | null;
+  direction: CorrespondenceDirection;
+  correspondent: string;
+  subject: string;
+  summary: string | null;
+  dateSent: string;
+  responseDueDate: string | null;
+  status: CorrespondenceStatus;
+  dateClosed: string | null;
+  notes: string | null;
+  loggedById: string | null;
+  loggedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type CorrespondenceInput = Omit<
+  Correspondence,
+  | "id"
+  | "projectId"
+  | "dateClosed"
+  | "loggedById"
+  | "loggedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

@@ -2,11 +2,13 @@ import {
   ActionItem,
   ChecklistItem,
   CommunityEnquiry,
+  Correspondence,
   DefectItem,
   DocumentRecord,
   EotClaim,
   InsuranceWarranty,
   LessonLearned,
+  MeetingMinutes,
   Milestone,
   PaymentClaim,
   Permit,
@@ -16,6 +18,7 @@ import {
   SiteVisit,
   SqeRecord,
   Stakeholder,
+  Subcontractor,
   Task,
   Variation,
 } from "@prisma/client";
@@ -395,4 +398,39 @@ export function describeCommunityEnquiryUpdate(
     return `marked community enquiry ${label} as ${statusLabel}`;
   }
   return `updated community enquiry ${label}`;
+}
+
+const SUBCONTRACTOR_STATUS_LABELS: Record<string, string> = {
+  ENGAGED: "Engaged",
+  ACTIVE: "Active",
+  COMPLETED: "Completed",
+  TERMINATED: "Terminated",
+};
+
+export function describeSubcontractorUpdate(
+  before: Subcontractor,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = SUBCONTRACTOR_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked subcontractor "${before.companyName}" as ${label}`;
+  }
+  return `updated subcontractor "${before.companyName}"`;
+}
+
+export function describeMeetingMinutesUpdate(before: MeetingMinutes): string {
+  return before.meetingType
+    ? `updated meeting minutes for a ${before.meetingType}`
+    : "updated meeting minutes";
+}
+
+export function describeCorrespondenceUpdate(
+  before: Correspondence,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = body.status === "CLOSED" ? "Closed" : "Open";
+    return `marked correspondence "${before.subject}" as ${label}`;
+  }
+  return `updated correspondence "${before.subject}"`;
 }

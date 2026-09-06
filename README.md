@@ -606,6 +606,45 @@ Like Risks and Variations, an action item is live data with no per-month
 snapshot. Open to any logged-in user to edit, matching Tasks,
 Attachments, Milestones, Variations, and Risks.
 
+## Meeting Minutes
+
+Each project has a **Meeting Minutes** register — a simple log of project
+meetings (progress meetings, design reviews, site meetings), distinct
+from **Actions & Decisions** (a single decision or action, not a full
+meeting record). A meeting has a Meeting Date, Type (free text, with
+suggestions like "Progress Meeting" or "Design Review"), Location,
+Attendees (freeform), a Summary, an optional Next Meeting Date, and
+Notes.
+
+Like Site Visits, this is a plain log with no status workflow — nothing
+to mark open or closed, just a record of what happened. The panel sorts
+by meeting date, most recent first. Open to any logged-in user to edit.
+
+## Correspondence
+
+Each project has a **Correspondence Register** — a log of formal letters
+and notices exchanged with consultants and contractors (a notice of
+delay, a show-cause notice, a formal direction, a contractual notice),
+distinct from **RFIs** (a technical question needing an answer to
+proceed with works) and **Community Enquiries** (correspondence with the
+public, not a project party). An entry has a Reference, a Direction of
+Incoming/Outgoing, the Correspondent, a Subject, a Summary, the Date
+Sent, an optional Response Due date, a Status of Open/Closed, and Notes.
+
+`responseDueDate` is the contractually meaningful deadline, the same role
+`Rfi.dateRequired` plays for RFIs: only an Open item can be overdue or
+due soon (`frontend/src/correspondenceMeta.ts`'s
+`isCorrespondenceOverdue`/`isCorrespondenceDueSoon`). `dateClosed` stamps
+automatically the moment status reaches Closed and clears if moved back
+to Open — a single-implication version of the dual-implication pattern
+`Rfi.dateAnswered` uses, since Correspondence has only one closing status.
+The panel sorts open correspondence ahead of closed and flags overdue
+items in red.
+
+The Dashboard has a portfolio-wide **Open Correspondence** panel listing
+every non-closed entry across every project, overdue ones first, then
+soonest due. Open to any logged-in user to edit.
+
 ## Stakeholders
 
 Each project has a **Stakeholders** register — a simple contact
@@ -640,6 +679,28 @@ panel lists every flagged permit across every project, soonest first,
 linking back to its project — sitting alongside Needs Attention and Open
 Actions as a third view into what needs a PM's attention today. Open to
 any logged-in user to edit.
+
+## Subcontractors
+
+Each project has a **Subcontractors** register — the trade contractors
+engaged on the project, distinct from `Project.contractor` (a single
+freeform field naming just the head contractor). A subcontractor has a
+Company Name, Trade (free text, with suggestions like "Electrical" or
+"Concreting"), contact details, an optional Contract Value, Start/End
+Dates, a Status of Engaged/Active/Completed/Terminated (changeable
+inline), an Insurance Expiry date, and Notes.
+
+Whether a subcontractor's insurance is **Expiring Soon** (within 60 days)
+or **Expired** is computed from that date against the current time rather
+than stored — the same computed-not-stored pattern Permits' expiry state
+uses (`frontend/src/subcontractorMeta.ts`). Only an Engaged or Active
+subcontractor's insurance still matters; a Completed or Terminated one is
+no longer on site. The panel sorts currently-on-site subcontractors first
+(Active, then Engaged but not yet started), with Completed/Terminated
+sinking to the bottom. The Dashboard's Alerts tab has a portfolio-wide
+**Subcontractor Insurance Expiring Soon** panel listing every flagged
+subcontractor across every project, soonest first. Open to any logged-in
+user to edit.
 
 ## Insurance & Warranties
 
@@ -868,17 +929,36 @@ without a GPS tag (location services were off, or it came from a gallery
 rather than the camera) still uploads and shows in the thumbnail grid,
 just tagged "no GPS" and left off the map.
 
-Above the site visit list, a **Site Photos** map plots every geotagged
-photo across the project's site visits, with a pin per photo — clicking
-one opens a popup with that photo's thumbnail, the visit's location, and
-its date. This is the one component in the app that reaches for a mapping
-library: unlike the hand-rolled SVG/HTML charts everywhere else, real map
-tiles can't be drawn by hand, so it uses **Leaflet** with **OpenStreetMap**
-tiles (no API key required). The marker is a small inline-SVG pin via a
-Leaflet `divIcon` rather than Leaflet's bundled marker images, which
-sidesteps a well-known bundler issue where `Icon.Default`'s image paths
-resolve relative to the `leaflet` package rather than the built app and
-404 in production.
+Above the site visit list, a **Site Photos** section shows every photo
+across the project's site visits (not just the one being edited), with a
+**Gallery / Map** toggle between two views of the same photo set
+(`SitePhotosGallery.tsx` / `SitePhotosMap.tsx`, switched by local state in
+`SiteVisitsPanel.tsx` — Gallery is the default, since it works with or
+without GPS data):
+
+- **Gallery** is a responsive grid of larger thumbnails, most recent
+  first, each flagged with a 📍 badge if geotagged. Clicking one opens a
+  full-size lightbox with Previous/Next navigation (buttons, on-screen
+  arrows, or the ← → and Esc keys), a caption showing the visit's
+  location and date, file size, uploader, and GPS coordinates if present,
+  and a Delete action — so browsing and deleting photos no longer
+  requires opening each site visit's own small thumbnail row.
+- **Map** plots every geotagged photo across the project's site visits,
+  with a pin per photo — clicking one opens a popup with that photo's
+  thumbnail, the visit's location, and its date. This is the one
+  component in the app that reaches for a mapping library: unlike the
+  hand-rolled SVG/HTML charts everywhere else, real map tiles can't be
+  drawn by hand, so it uses **Leaflet** with **OpenStreetMap** tiles (no
+  API key required). The marker is a small inline-SVG pin via a Leaflet
+  `divIcon` rather than Leaflet's bundled marker images, which sidesteps
+  a well-known bundler issue where `Icon.Default`'s image paths resolve
+  relative to the `leaflet` package rather than the built app and 404 in
+  production.
+
+Each site visit's own expanded card still has its small **Photos** grid
+for uploading (📷 Take Photo / 🖼 Add from Gallery) and quick deletion
+scoped to that visit — the project-wide Gallery/Map views are for
+browsing and don't change how photos are added.
 
 ## Tabbed Navigation
 

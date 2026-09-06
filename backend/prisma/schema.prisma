@@ -186,6 +186,23 @@ enum EnquiryStatus {
   CLOSED
 }
 
+enum SubcontractorStatus {
+  ENGAGED
+  ACTIVE
+  COMPLETED
+  TERMINATED
+}
+
+enum CorrespondenceDirection {
+  INCOMING
+  OUTGOING
+}
+
+enum CorrespondenceStatus {
+  OPEN
+  CLOSED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -215,6 +232,9 @@ model User {
   rfis           Rfi[]
   documents      DocumentRecord[]
   communityEnquiries CommunityEnquiry[]
+  subcontractors Subcontractor[]
+  meetingMinutes MeetingMinutes[]
+  correspondence Correspondence[]
 }
 
 model Project {
@@ -261,6 +281,9 @@ model Project {
   rfis                   Rfi[]
   documents              DocumentRecord[]
   communityEnquiries     CommunityEnquiry[]
+  subcontractors         Subcontractor[]
+  meetingMinutes         MeetingMinutes[]
+  correspondence         Correspondence[]
 }
 
 model Task {
@@ -896,6 +919,89 @@ model CommunityEnquiry {
   notes          String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
+  @@index([projectId])
+}
+
+// A trade contractor engaged on a project — distinct from Project.contractor
+// (a single freeform field naming the head contractor). insuranceExpiry
+// mirrors Permit's computed-not-stored expiry pattern: never a stored
+// "expiring soon"/"expired" flag, just a date the frontend compares against
+// the current time.
+model Subcontractor {
+  id              String              @id @default(cuid())
+  project         Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  companyName     String
+  trade           String?
+  contactName     String?
+  contactDetails  String?
+  contractValue   Decimal?            @db.Decimal(14, 2)
+  startDate       DateTime?
+  endDate         DateTime?
+  status          SubcontractorStatus @default(ENGAGED)
+  insuranceExpiry DateTime?
+  notes           String?
+  addedBy         User?               @relation(fields: [addedById], references: [id], onDelete: SetNull)
+  addedById       String?
+  addedByName     String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([projectId])
+}
+
+// A record of a project meeting — progress meeting, design review, site
+// meeting, etc. A simple log, not a status workflow, like SiteVisit;
+// distinct from ActionItem (a single decision/action, not a full meeting
+// record with attendees and a summary).
+model MeetingMinutes {
+  id              String    @id @default(cuid())
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  meetingDate     DateTime
+  meetingType     String?
+  location        String?
+  attendees       String?
+  summary         String?
+  nextMeetingDate DateTime?
+  notes           String?
+  recordedBy      User?     @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  recordedById    String?
+  recordedByName  String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// A formal letter or notice to/from a consultant or contractor — a delay
+// notice, a notice to show cause, a formal direction — distinct from Rfi
+// (a technical question needing an answer to proceed with works) and
+// CommunityEnquiry (the public, not a project party). dateClosed stamps
+// automatically the moment status becomes Closed, and clears if it moves
+// back to Open — the single-implication version of the dual-implication
+// pattern Rfi's dateAnswered uses, since Correspondence has only one
+// closing state.
+model Correspondence {
+  id               String                  @id @default(cuid())
+  project          Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  reference        String?
+  direction        CorrespondenceDirection
+  correspondent    String
+  subject          String
+  summary          String?
+  dateSent         DateTime
+  responseDueDate  DateTime?
+  status           CorrespondenceStatus    @default(OPEN)
+  dateClosed       DateTime?
+  notes            String?
+  loggedBy         User?                   @relation(fields: [loggedById], references: [id], onDelete: SetNull)
+  loggedById       String?
+  loggedByName     String
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
 
   @@index([projectId])
 }

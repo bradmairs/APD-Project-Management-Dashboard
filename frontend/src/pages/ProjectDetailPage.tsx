@@ -11,6 +11,8 @@ import {
   ChecklistItemInput,
   CommunityEnquiry,
   CommunityEnquiryInput,
+  Correspondence,
+  CorrespondenceInput,
   DefectItem,
   DefectItemInput,
   DocumentRecord,
@@ -21,6 +23,8 @@ import {
   InsuranceWarrantyInput,
   LessonLearned,
   LessonLearnedInput,
+  MeetingMinutes,
+  MeetingMinutesInput,
   PaymentClaim,
   PaymentClaimInput,
   Permit,
@@ -42,6 +46,8 @@ import {
   SiteVisitPhoto,
   SqeRecord,
   SqeRecordInput,
+  Subcontractor,
+  SubcontractorInput,
   Task,
   TaskStatus,
   Variation,
@@ -51,11 +57,13 @@ import {
   createActionItem,
   createChecklistItem,
   createCommunityEnquiry,
+  createCorrespondence,
   createDefect,
   createDocument,
   createEotClaim,
   createInsuranceWarranty,
   createLessonLearned,
+  createMeetingMinutes,
   createMilestone,
   createMonthlyReport,
   createPaymentClaim,
@@ -65,6 +73,7 @@ import {
   createSiteVisit,
   createSqeRecord,
   createStakeholder,
+  createSubcontractor,
   createTask,
   createVariation,
   deleteActionItem,
@@ -72,11 +81,13 @@ import {
   deleteCashFlowEntry,
   deleteChecklistItem,
   deleteCommunityEnquiry,
+  deleteCorrespondence,
   deleteDefect,
   deleteDocument,
   deleteEotClaim,
   deleteInsuranceWarranty,
   deleteLessonLearned,
+  deleteMeetingMinutes,
   deleteMilestone,
   deleteMonthlyReport,
   deletePaymentClaim,
@@ -88,6 +99,7 @@ import {
   deleteSiteVisitPhoto,
   deleteSqeRecord,
   deleteStakeholder,
+  deleteSubcontractor,
   deleteTask,
   deleteVariation,
   getActionItems,
@@ -95,11 +107,13 @@ import {
   getCashFlowEntries,
   getChecklistItems,
   getCommunityEnquiries,
+  getCorrespondence,
   getDefects,
   getDocuments,
   getEotClaims,
   getInsuranceWarranties,
   getLessonsLearned,
+  getMeetingMinutes,
   getMilestones,
   getMonthlyReports,
   getPaymentClaims,
@@ -112,16 +126,19 @@ import {
   getSiteVisits,
   getSqeRecords,
   getStakeholders,
+  getSubcontractors,
   getVariations,
   reorderMilestone,
   updateActionItem,
   updateChecklistItem,
   updateCommunityEnquiry,
+  updateCorrespondence,
   updateDefect,
   updateDocument,
   updateEotClaim,
   updateInsuranceWarranty,
   updateLessonLearned,
+  updateMeetingMinutes,
   updateMilestone,
   updateMonthlyReport,
   updatePaymentClaim,
@@ -132,6 +149,7 @@ import {
   updateSiteVisit,
   updateSqeRecord,
   updateStakeholder,
+  updateSubcontractor,
   updateTask,
   updateVariation,
   uploadAttachment,
@@ -151,15 +169,18 @@ import RisksPanel from "../components/RisksPanel";
 import RfisPanel from "../components/RfisPanel";
 import ActionsPanel from "../components/ActionsPanel";
 import StakeholdersPanel from "../components/StakeholdersPanel";
+import SubcontractorsPanel from "../components/SubcontractorsPanel";
 import PermitsPanel from "../components/PermitsPanel";
 import InsuranceWarrantiesPanel from "../components/InsuranceWarrantiesPanel";
 import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
+import MeetingMinutesPanel from "../components/MeetingMinutesPanel";
 import SqePanel from "../components/SqePanel";
 import EotPanel from "../components/EotPanel";
 import ChecklistPanel from "../components/ChecklistPanel";
 import DefectsPanel from "../components/DefectsPanel";
 import DocumentsPanel from "../components/DocumentsPanel";
 import EnquiriesPanel from "../components/EnquiriesPanel";
+import CorrespondencePanel from "../components/CorrespondencePanel";
 import Tabs from "../components/Tabs";
 import PaymentClaimsPanel from "../components/PaymentClaimsPanel";
 import HealthBadge from "../components/HealthBadge";
@@ -209,6 +230,9 @@ export default function ProjectDetailPage() {
   const [paymentClaims, setPaymentClaims] = useState<PaymentClaim[]>([]);
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [communityEnquiries, setCommunityEnquiries] = useState<CommunityEnquiry[]>([]);
+  const [subcontractors, setSubcontractors] = useState<Subcontractor[]>([]);
+  const [meetingMinutes, setMeetingMinutes] = useState<MeetingMinutes[]>([]);
+  const [correspondence, setCorrespondence] = useState<Correspondence[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -243,6 +267,9 @@ export default function ProjectDetailPage() {
         rfiData,
         documentData,
         communityEnquiryData,
+        subcontractorData,
+        meetingMinutesData,
+        correspondenceData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -267,6 +294,9 @@ export default function ProjectDetailPage() {
         getRfis(id),
         getDocuments(id),
         getCommunityEnquiries(id),
+        getSubcontractors(id),
+        getMeetingMinutes(id),
+        getCorrespondence(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -291,6 +321,9 @@ export default function ProjectDetailPage() {
       setRfis(rfiData);
       setDocuments(documentData);
       setCommunityEnquiries(communityEnquiryData);
+      setSubcontractors(subcontractorData);
+      setMeetingMinutes(meetingMinutesData);
+      setCorrespondence(correspondenceData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -665,6 +698,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateCorrespondence(data: Partial<CorrespondenceInput>) {
+    if (!project) return;
+    await createCorrespondence(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateCorrespondence(
+    item: Correspondence,
+    data: Partial<CorrespondenceInput>
+  ) {
+    await updateCorrespondence(item.id, data);
+    await load();
+  }
+
+  async function handleDeleteCorrespondence(item: Correspondence) {
+    await deleteCorrespondence(item.id);
+    await load();
+  }
+
   async function handleCreateDocument(data: Partial<DocumentRecordInput>) {
     if (!project) return;
     await createDocument(project.id, data);
@@ -700,6 +752,44 @@ export default function ProjectDetailPage() {
 
   async function handleDeleteCommunityEnquiry(enquiry: CommunityEnquiry) {
     await deleteCommunityEnquiry(enquiry.id);
+    await load();
+  }
+
+  async function handleCreateSubcontractor(data: Partial<SubcontractorInput>) {
+    if (!project) return;
+    await createSubcontractor(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateSubcontractor(
+    subcontractor: Subcontractor,
+    data: Partial<SubcontractorInput>
+  ) {
+    await updateSubcontractor(subcontractor.id, data);
+    await load();
+  }
+
+  async function handleDeleteSubcontractor(subcontractor: Subcontractor) {
+    await deleteSubcontractor(subcontractor.id);
+    await load();
+  }
+
+  async function handleCreateMeetingMinutes(data: Partial<MeetingMinutesInput>) {
+    if (!project) return;
+    await createMeetingMinutes(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateMeetingMinutes(
+    meeting: MeetingMinutes,
+    data: Partial<MeetingMinutesInput>
+  ) {
+    await updateMeetingMinutes(meeting.id, data);
+    await load();
+  }
+
+  async function handleDeleteMeetingMinutes(meeting: MeetingMinutes) {
+    await deleteMeetingMinutes(meeting.id);
     await load();
   }
 
@@ -862,6 +952,13 @@ export default function ProjectDetailPage() {
                 onDelete={handleDeleteActionItem}
               />
 
+              <MeetingMinutesPanel
+                meetings={meetingMinutes}
+                onCreate={handleCreateMeetingMinutes}
+                onUpdate={handleUpdateMeetingMinutes}
+                onDelete={handleDeleteMeetingMinutes}
+              />
+
               <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
                   Activity
@@ -941,6 +1038,13 @@ export default function ProjectDetailPage() {
                 onUpdate={handleUpdatePermit}
                 onDelete={handleDeletePermit}
               />
+
+              <SubcontractorsPanel
+                subcontractors={subcontractors}
+                onCreate={handleCreateSubcontractor}
+                onUpdate={handleUpdateSubcontractor}
+                onDelete={handleDeleteSubcontractor}
+              />
             </>
           )}
 
@@ -979,6 +1083,13 @@ export default function ProjectDetailPage() {
                 onCreate={handleCreateDocument}
                 onUpdate={handleUpdateDocument}
                 onDelete={handleDeleteDocument}
+              />
+
+              <CorrespondencePanel
+                items={correspondence}
+                onCreate={handleCreateCorrespondence}
+                onUpdate={handleUpdateCorrespondence}
+                onDelete={handleDeleteCorrespondence}
               />
             </>
           )}

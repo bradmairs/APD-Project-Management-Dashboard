@@ -19,6 +19,10 @@ import {
   InsuranceWarrantyInput,
   LessonLearned,
   LessonLearnedInput,
+  MeetingMinutes,
+  MeetingMinutesInput,
+  Correspondence,
+  CorrespondenceInput,
   Milestone,
   MilestoneInput,
   MonthlyReport,
@@ -41,6 +45,8 @@ import {
   SqeRecordInput,
   Stakeholder,
   StakeholderInput,
+  Subcontractor,
+  SubcontractorInput,
   Task,
   TaskInput,
   User,
@@ -924,6 +930,110 @@ export function updateCommunityEnquiry(
 
 export function deleteCommunityEnquiry(id: string): Promise<void> {
   return fetch(`${API_BASE}/community-enquiries/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getSubcontractors(projectId: string): Promise<Subcontractor[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/subcontractors`).then((res) => handle(res));
+}
+
+export function getAllSubcontractors(): Promise<Subcontractor[]> {
+  return fetch(`${API_BASE}/subcontractors`).then((res) => handle(res));
+}
+
+export function createSubcontractor(
+  projectId: string,
+  data: Partial<SubcontractorInput>
+): Promise<Subcontractor> {
+  return fetch(`${API_BASE}/projects/${projectId}/subcontractors`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateSubcontractor(
+  id: string,
+  data: Partial<SubcontractorInput>
+): Promise<Subcontractor> {
+  return fetch(`${API_BASE}/subcontractors/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteSubcontractor(id: string): Promise<void> {
+  return fetch(`${API_BASE}/subcontractors/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getMeetingMinutes(projectId: string): Promise<MeetingMinutes[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/meeting-minutes`).then((res) => handle(res));
+}
+
+export function createMeetingMinutes(
+  projectId: string,
+  data: Partial<MeetingMinutesInput>
+): Promise<MeetingMinutes> {
+  return fetch(`${API_BASE}/projects/${projectId}/meeting-minutes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateMeetingMinutes(
+  id: string,
+  data: Partial<MeetingMinutesInput>
+): Promise<MeetingMinutes> {
+  return fetch(`${API_BASE}/meeting-minutes/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteMeetingMinutes(id: string): Promise<void> {
+  return fetch(`${API_BASE}/meeting-minutes/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getCorrespondence(projectId: string): Promise<Correspondence[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/correspondence`).then((res) => handle(res));
+}
+
+export function getAllCorrespondence(): Promise<Correspondence[]> {
+  return fetch(`${API_BASE}/correspondence`).then((res) => handle(res));
+}
+
+export function createCorrespondence(
+  projectId: string,
+  data: Partial<CorrespondenceInput>
+): Promise<Correspondence> {
+  return fetch(`${API_BASE}/projects/${projectId}/correspondence`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateCorrespondence(
+  id: string,
+  data: Partial<CorrespondenceInput>
+): Promise<Correspondence> {
+  return fetch(`${API_BASE}/correspondence/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteCorrespondence(id: string): Promise<void> {
+  return fetch(`${API_BASE}/correspondence/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }
