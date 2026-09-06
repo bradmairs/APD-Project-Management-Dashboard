@@ -4,6 +4,7 @@ import { formatDateTime } from "../format";
 import SiteVisitFormModal from "./SiteVisitFormModal";
 import SiteVisitPhotoGrid from "./SiteVisitPhotoGrid";
 import SitePhotosMap from "./SitePhotosMap";
+import SitePhotosGallery from "./SitePhotosGallery";
 
 interface Props {
   siteVisits: SiteVisit[];
@@ -29,6 +30,7 @@ export default function SiteVisitsPanel({
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<SiteVisit | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [photosView, setPhotosView] = useState<"map" | "gallery">("gallery");
 
   function openCreate() {
     setEditing(null);
@@ -74,10 +76,40 @@ export default function SiteVisitsPanel({
 
       {allPhotos.length > 0 && (
         <div className="mb-4">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
-            Site Photos
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Site Photos
+            </div>
+            <div className="inline-flex rounded border border-slate-300 dark:border-slate-600 overflow-hidden text-xs">
+              <button
+                type="button"
+                onClick={() => setPhotosView("gallery")}
+                className={`px-2.5 py-1 ${
+                  photosView === "gallery"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"
+                }`}
+              >
+                Gallery
+              </button>
+              <button
+                type="button"
+                onClick={() => setPhotosView("map")}
+                className={`px-2.5 py-1 border-l border-slate-300 dark:border-slate-600 ${
+                  photosView === "map"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600"
+                }`}
+              >
+                Map
+              </button>
+            </div>
           </div>
-          <SitePhotosMap photos={allPhotos} />
+          {photosView === "gallery" ? (
+            <SitePhotosGallery photos={allPhotos} onDelete={onDeletePhoto} />
+          ) : (
+            <SitePhotosMap photos={allPhotos} />
+          )}
         </div>
       )}
 

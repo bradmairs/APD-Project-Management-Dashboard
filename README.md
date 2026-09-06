@@ -929,17 +929,36 @@ without a GPS tag (location services were off, or it came from a gallery
 rather than the camera) still uploads and shows in the thumbnail grid,
 just tagged "no GPS" and left off the map.
 
-Above the site visit list, a **Site Photos** map plots every geotagged
-photo across the project's site visits, with a pin per photo — clicking
-one opens a popup with that photo's thumbnail, the visit's location, and
-its date. This is the one component in the app that reaches for a mapping
-library: unlike the hand-rolled SVG/HTML charts everywhere else, real map
-tiles can't be drawn by hand, so it uses **Leaflet** with **OpenStreetMap**
-tiles (no API key required). The marker is a small inline-SVG pin via a
-Leaflet `divIcon` rather than Leaflet's bundled marker images, which
-sidesteps a well-known bundler issue where `Icon.Default`'s image paths
-resolve relative to the `leaflet` package rather than the built app and
-404 in production.
+Above the site visit list, a **Site Photos** section shows every photo
+across the project's site visits (not just the one being edited), with a
+**Gallery / Map** toggle between two views of the same photo set
+(`SitePhotosGallery.tsx` / `SitePhotosMap.tsx`, switched by local state in
+`SiteVisitsPanel.tsx` — Gallery is the default, since it works with or
+without GPS data):
+
+- **Gallery** is a responsive grid of larger thumbnails, most recent
+  first, each flagged with a 📍 badge if geotagged. Clicking one opens a
+  full-size lightbox with Previous/Next navigation (buttons, on-screen
+  arrows, or the ← → and Esc keys), a caption showing the visit's
+  location and date, file size, uploader, and GPS coordinates if present,
+  and a Delete action — so browsing and deleting photos no longer
+  requires opening each site visit's own small thumbnail row.
+- **Map** plots every geotagged photo across the project's site visits,
+  with a pin per photo — clicking one opens a popup with that photo's
+  thumbnail, the visit's location, and its date. This is the one
+  component in the app that reaches for a mapping library: unlike the
+  hand-rolled SVG/HTML charts everywhere else, real map tiles can't be
+  drawn by hand, so it uses **Leaflet** with **OpenStreetMap** tiles (no
+  API key required). The marker is a small inline-SVG pin via a Leaflet
+  `divIcon` rather than Leaflet's bundled marker images, which sidesteps
+  a well-known bundler issue where `Icon.Default`'s image paths resolve
+  relative to the `leaflet` package rather than the built app and 404 in
+  production.
+
+Each site visit's own expanded card still has its small **Photos** grid
+for uploading (📷 Take Photo / 🖼 Add from Gallery) and quick deletion
+scoped to that visit — the project-wide Gallery/Map views are for
+browsing and don't change how photos are added.
 
 ## Tabbed Navigation
 
