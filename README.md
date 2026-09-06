@@ -726,6 +726,40 @@ generally used for (the current state of schedule and spend), and it's
 the only way this view can exist without also snapshotting those tables
 monthly, which no one asked for.
 
+## Project Closeout Report
+
+Every project detail page has a **Closeout Report** button in its header,
+opening a printable summary at `/projects/:id/closeout-report` — the
+counterpart to the Monthly Report view above, but a single point-in-time
+rollup of a project's *final* outcomes rather than one month's status.
+It pulls together, into the same blue-headed section layout with a
+"Print / Save as PDF" button:
+
+- **Final Budget Outcome** — original approved budget, approved variations
+  total, the resulting final budget (via the same `revisedBudget()` helper
+  the Variations panel uses), final expenditure (the sum of `ACTUAL` cash
+  flow entries), the variance between them, contract value, and the full
+  variations table.
+- **Final Schedule Outcome** — original target completion, approved EOT
+  days, the resulting revised completion date (via `revisedCompletionDate()`),
+  actual completion date, overall milestone completion, and the full EOT
+  claims table.
+- **Commissioning & Handover** — checklist completion percentage and a list
+  of any items not yet Complete or Not Applicable.
+- **Defects & Punch List** — a list of any defects still Open or Disputed.
+- **Outstanding RFIs** — a list of any RFIs not yet Closed.
+- **Lessons Learned** — the project's full list, with description and
+  recommendation for each.
+
+Like the Monthly Report view, this reads **live** data — milestones,
+variations, EOT claims, checklist items, defects, RFIs, and lessons
+learned as they stand today — rather than a locked snapshot, since a
+closeout report is generated once, at (or after) project completion, not
+monthly. The shared print-page chrome (`ReportSection`, `ReportField`,
+`NarrativeBlock`, `HealthRow`) was factored out of the Monthly Report view
+into `components/ReportPrimitives.tsx` so both report pages share the same
+layout building blocks.
+
 ## Dark Mode
 
 A sun/moon toggle — in the header next to the notification bell on every

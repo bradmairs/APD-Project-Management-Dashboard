@@ -1,9 +1,9 @@
-import { ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { CashFlowEntry, Milestone, MonthlyReport, Project, RagStatus } from "../types";
+import { CashFlowEntry, Milestone, MonthlyReport, Project } from "../types";
 import { getCashFlowEntries, getMilestones, getMonthlyReport, getProject } from "../api";
 import { formatCurrency, formatDate, formatReportMonth } from "../format";
-import { RAG_COLORS, RAG_LABELS } from "../ragMeta";
+import { HealthRow, NarrativeBlock, ReportField, ReportSection } from "../components/ReportPrimitives";
 import gvwLogo from "../assets/gvw-logo.png";
 
 export default function MonthlyReportViewPage() {
@@ -248,84 +248,6 @@ export default function MonthlyReportViewPage() {
           </ReportSection>
         </div>
       </div>
-    </div>
-  );
-}
-
-function ReportSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="mb-6 print:break-inside-avoid">
-      <div className="bg-blue-600 text-white text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-t">
-        {title}
-      </div>
-      <div className="border border-t-0 border-slate-200 rounded-b p-4">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function ReportField({
-  label,
-  value,
-  negative,
-}: {
-  label: string;
-  value: string;
-  negative?: boolean;
-}) {
-  return (
-    <div>
-      <div className="text-xs text-slate-500">{label}</div>
-      <div
-        className={`text-sm font-medium mt-0.5 ${
-          negative ? "text-red-600" : "text-slate-900"
-        }`}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function NarrativeBlock({ title, text }: { title: string; text: string }) {
-  return (
-    <div className="mb-3 last:mb-0">
-      <div className="text-xs font-medium text-slate-500 mb-1">{title}</div>
-      <p className="text-sm text-slate-700 whitespace-pre-line">{text}</p>
-    </div>
-  );
-}
-
-function HealthRow({
-  label,
-  health,
-  comments,
-}: {
-  label: string;
-  health: RagStatus;
-  comments: string | null;
-}) {
-  return (
-    <div className="flex items-start gap-3 text-sm">
-      <div className="shrink-0">
-        <div className="text-xs text-slate-500 mb-1">{label}</div>
-        <span className={`text-xs px-2 py-0.5 rounded-full ${RAG_COLORS[health]}`}>
-          {RAG_LABELS[health]}
-        </span>
-      </div>
-      {comments && (
-        <div className="flex-1">
-          <div className="text-xs text-slate-500 mb-1">Comments</div>
-          <p className="text-slate-700">{comments}</p>
-        </div>
-      )}
     </div>
   );
 }
