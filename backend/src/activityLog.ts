@@ -1,6 +1,7 @@
 import {
   ActionItem,
   ChecklistItem,
+  CommunityEnquiry,
   DefectItem,
   DocumentRecord,
   EotClaim,
@@ -375,4 +376,23 @@ export function describeDocumentUpdate(
     return `marked document "${before.documentNumber}: ${before.title}" as ${label}`;
   }
   return `updated document "${before.documentNumber}: ${before.title}"`;
+}
+
+const ENQUIRY_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  IN_PROGRESS: "In Progress",
+  RESOLVED: "Resolved",
+  CLOSED: "Closed",
+};
+
+export function describeCommunityEnquiryUpdate(
+  before: CommunityEnquiry,
+  body: Record<string, unknown>
+): string {
+  const label = before.reference ? `"${before.reference}"` : `#${before.id.slice(-6)}`;
+  if ("status" in body && body.status !== before.status) {
+    const statusLabel = ENQUIRY_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked community enquiry ${label} as ${statusLabel}`;
+  }
+  return `updated community enquiry ${label}`;
 }

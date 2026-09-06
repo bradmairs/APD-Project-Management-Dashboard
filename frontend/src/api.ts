@@ -7,6 +7,8 @@ import {
   CashFlowEntryInput,
   ChecklistItem,
   ChecklistItemInput,
+  CommunityEnquiry,
+  CommunityEnquiryInput,
   DefectItem,
   DefectItemInput,
   DocumentRecord,
@@ -886,4 +888,42 @@ export function updateDocument(
 
 export function deleteDocument(id: string): Promise<void> {
   return fetch(`${API_BASE}/documents/${id}`, { method: "DELETE" }).then((res) => handle(res));
+}
+
+export function getCommunityEnquiries(projectId: string): Promise<CommunityEnquiry[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/community-enquiries`).then((res) =>
+    handle(res)
+  );
+}
+
+export function getAllCommunityEnquiries(): Promise<CommunityEnquiry[]> {
+  return fetch(`${API_BASE}/community-enquiries`).then((res) => handle(res));
+}
+
+export function createCommunityEnquiry(
+  projectId: string,
+  data: Partial<CommunityEnquiryInput>
+): Promise<CommunityEnquiry> {
+  return fetch(`${API_BASE}/projects/${projectId}/community-enquiries`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateCommunityEnquiry(
+  id: string,
+  data: Partial<CommunityEnquiryInput>
+): Promise<CommunityEnquiry> {
+  return fetch(`${API_BASE}/community-enquiries/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteCommunityEnquiry(id: string): Promise<void> {
+  return fetch(`${API_BASE}/community-enquiries/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
 }

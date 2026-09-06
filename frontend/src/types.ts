@@ -631,3 +631,41 @@ export type DocumentRecordInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export type EnquiryCategory = "NOISE" | "TRAFFIC" | "DUST" | "ACCESS" | "OTHER";
+
+export type EnquiryStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
+
+export interface CommunityEnquiry {
+  id: string;
+  projectId: string;
+  reference: string | null;
+  category: EnquiryCategory;
+  source: string | null;
+  contactName: string | null;
+  contactDetails: string | null;
+  description: string;
+  dateReceived: string;
+  status: EnquiryStatus;
+  assignedTo: string | null;
+  resolution: string | null;
+  dateResolved: string | null;
+  loggedById: string | null;
+  loggedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type CommunityEnquiryInput = Omit<
+  CommunityEnquiry,
+  | "id"
+  | "projectId"
+  | "dateResolved"
+  | "loggedById"
+  | "loggedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

@@ -528,6 +528,29 @@ to the bottom (`frontend/src/documentMeta.ts`'s `documentStatusRank`,
 the same status-rank pattern every other register uses). Open to any
 logged-in user to edit.
 
+## Community Enquiries & Complaints
+
+Each project has a **Community Enquiries & Complaints** register — a log
+of public enquiries and complaints about construction activity (noise,
+traffic, dust, site access), distinct from **Stakeholders** (a contacts
+list) and **Requests for Information** (technical questions to a
+designer/consultant/client, not the public). An enquiry has an optional
+Reference, a Category (Noise/Traffic/Dust/Access/Other), how it was
+received (Source), the complainant's contact details, a Description, the
+Date Received, a Status of Open/In Progress/Resolved/Closed, who it's
+Assigned To, a Resolution, and Notes.
+
+`dateResolved` stamps automatically the moment status first reaches
+Resolved or Closed (both imply the matter is dealt with) and clears if
+moved back to Open or In Progress — the same dual-implication auto-stamp
+pattern RFIs' `dateAnswered` and Payment Claims' `dateCertified` use. The
+panel sorts open and in-progress enquiries ahead of resolved/closed ones
+(`frontend/src/enquiryMeta.ts`'s `enquiryStatusRank`).
+
+The Dashboard's Alerts tab has a portfolio-wide **Open Enquiries** panel
+listing every non-resolved, non-closed enquiry across every project.
+Open to any logged-in user to edit.
+
 ## Safety, Quality & Environment
 
 Each project has an **SQE** register for logging safety, quality, and

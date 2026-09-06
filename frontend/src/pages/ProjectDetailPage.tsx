@@ -9,6 +9,8 @@ import {
   CashFlowEntryInput,
   ChecklistItem,
   ChecklistItemInput,
+  CommunityEnquiry,
+  CommunityEnquiryInput,
   DefectItem,
   DefectItemInput,
   DocumentRecord,
@@ -48,6 +50,7 @@ import {
 import {
   createActionItem,
   createChecklistItem,
+  createCommunityEnquiry,
   createDefect,
   createDocument,
   createEotClaim,
@@ -68,6 +71,7 @@ import {
   deleteAttachment,
   deleteCashFlowEntry,
   deleteChecklistItem,
+  deleteCommunityEnquiry,
   deleteDefect,
   deleteDocument,
   deleteEotClaim,
@@ -90,6 +94,7 @@ import {
   getAttachments,
   getCashFlowEntries,
   getChecklistItems,
+  getCommunityEnquiries,
   getDefects,
   getDocuments,
   getEotClaims,
@@ -111,6 +116,7 @@ import {
   reorderMilestone,
   updateActionItem,
   updateChecklistItem,
+  updateCommunityEnquiry,
   updateDefect,
   updateDocument,
   updateEotClaim,
@@ -153,6 +159,7 @@ import EotPanel from "../components/EotPanel";
 import ChecklistPanel from "../components/ChecklistPanel";
 import DefectsPanel from "../components/DefectsPanel";
 import DocumentsPanel from "../components/DocumentsPanel";
+import EnquiriesPanel from "../components/EnquiriesPanel";
 import Tabs from "../components/Tabs";
 import PaymentClaimsPanel from "../components/PaymentClaimsPanel";
 import HealthBadge from "../components/HealthBadge";
@@ -201,6 +208,7 @@ export default function ProjectDetailPage() {
   const [defects, setDefects] = useState<DefectItem[]>([]);
   const [paymentClaims, setPaymentClaims] = useState<PaymentClaim[]>([]);
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
+  const [communityEnquiries, setCommunityEnquiries] = useState<CommunityEnquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -234,6 +242,7 @@ export default function ProjectDetailPage() {
         insuranceWarrantyData,
         rfiData,
         documentData,
+        communityEnquiryData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -257,6 +266,7 @@ export default function ProjectDetailPage() {
         getInsuranceWarranties(id),
         getRfis(id),
         getDocuments(id),
+        getCommunityEnquiries(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -280,6 +290,7 @@ export default function ProjectDetailPage() {
       setInsuranceWarranties(insuranceWarrantyData);
       setRfis(rfiData);
       setDocuments(documentData);
+      setCommunityEnquiries(communityEnquiryData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -673,6 +684,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateCommunityEnquiry(data: Partial<CommunityEnquiryInput>) {
+    if (!project) return;
+    await createCommunityEnquiry(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateCommunityEnquiry(
+    enquiry: CommunityEnquiry,
+    data: Partial<CommunityEnquiryInput>
+  ) {
+    await updateCommunityEnquiry(enquiry.id, data);
+    await load();
+  }
+
+  async function handleDeleteCommunityEnquiry(enquiry: CommunityEnquiry) {
+    await deleteCommunityEnquiry(enquiry.id);
+    await load();
+  }
+
   const revisedTargetCompletion = useMemo(
     () => (project ? revisedCompletionDate(project, eotClaims) : null),
     [project, eotClaims]
@@ -964,6 +994,13 @@ export default function ProjectDetailPage() {
                 onDelete={handleDeleteSiteVisit}
                 onUploadPhotos={handleUploadSiteVisitPhotos}
                 onDeletePhoto={handleDeleteSiteVisitPhoto}
+              />
+
+              <EnquiriesPanel
+                enquiries={communityEnquiries}
+                onCreate={handleCreateCommunityEnquiry}
+                onUpdate={handleUpdateCommunityEnquiry}
+                onDelete={handleDeleteCommunityEnquiry}
               />
 
               <AttachmentsPanel

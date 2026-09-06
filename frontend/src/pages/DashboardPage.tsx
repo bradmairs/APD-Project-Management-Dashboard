@@ -4,6 +4,7 @@ import {
   ActionItem,
   ActivityLogEntry,
   CashFlowEntry,
+  CommunityEnquiry,
   DefectItem,
   EotClaim,
   InsuranceWarranty,
@@ -23,6 +24,7 @@ import {
   deleteProject,
   getAllActionItems,
   getAllCashFlowEntries,
+  getAllCommunityEnquiries,
   getAllDefects,
   getAllEotClaims,
   getAllInsuranceWarranties,
@@ -50,6 +52,7 @@ import OpenSqePanel from "../components/OpenSqePanel";
 import OpenDefectsPanel from "../components/OpenDefectsPanel";
 import OpenPaymentClaimsPanel from "../components/OpenPaymentClaimsPanel";
 import OpenRfisPanel from "../components/OpenRfisPanel";
+import OpenEnquiriesPanel from "../components/OpenEnquiriesPanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -90,6 +93,7 @@ export default function DashboardPage() {
   const [paymentClaims, setPaymentClaims] = useState<PaymentClaim[]>([]);
   const [insuranceWarranties, setInsuranceWarranties] = useState<InsuranceWarranty[]>([]);
   const [rfis, setRfis] = useState<Rfi[]>([]);
+  const [communityEnquiries, setCommunityEnquiries] = useState<CommunityEnquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -119,6 +123,7 @@ export default function DashboardPage() {
         paymentClaimData,
         insuranceWarrantyData,
         rfiData,
+        communityEnquiryData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -134,6 +139,7 @@ export default function DashboardPage() {
         getAllPaymentClaims(),
         getAllInsuranceWarranties(),
         getAllRfis(),
+        getAllCommunityEnquiries(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -149,6 +155,7 @@ export default function DashboardPage() {
       setInsuranceWarranties(insuranceWarrantyData);
       setRfis(rfiData);
       setEotClaims(eotData);
+      setCommunityEnquiries(communityEnquiryData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -340,6 +347,7 @@ export default function DashboardPage() {
             <OpenPaymentClaimsPanel claims={paymentClaims} />
             <ExpiringInsuranceWarrantiesPanel items={insuranceWarranties} />
             <OpenRfisPanel rfis={rfis} />
+            <OpenEnquiriesPanel enquiries={communityEnquiries} />
           </div>
         )}
 

@@ -171,6 +171,21 @@ enum DocumentStatus {
   SUPERSEDED
 }
 
+enum EnquiryCategory {
+  NOISE
+  TRAFFIC
+  DUST
+  ACCESS
+  OTHER
+}
+
+enum EnquiryStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -199,6 +214,7 @@ model User {
   insuranceWarranties InsuranceWarranty[]
   rfis           Rfi[]
   documents      DocumentRecord[]
+  communityEnquiries CommunityEnquiry[]
 }
 
 model Project {
@@ -244,6 +260,7 @@ model Project {
   insuranceWarranties    InsuranceWarranty[]
   rfis                   Rfi[]
   documents              DocumentRecord[]
+  communityEnquiries     CommunityEnquiry[]
 }
 
 model Task {
@@ -851,6 +868,34 @@ model DocumentRecord {
   notes          String?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+
+  @@index([projectId])
+}
+
+// A public enquiry or complaint about construction activity (noise,
+// traffic, dust, site access) — distinct from Stakeholders (a contacts
+// list) and RFIs (technical questions to a designer/consultant/client).
+model CommunityEnquiry {
+  id             String          @id @default(cuid())
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  reference      String?
+  category       EnquiryCategory
+  source         String?
+  contactName    String?
+  contactDetails String?
+  description    String
+  dateReceived   DateTime
+  status         EnquiryStatus   @default(OPEN)
+  assignedTo     String?
+  resolution     String?
+  dateResolved   DateTime?
+  loggedBy       User?           @relation(fields: [loggedById], references: [id], onDelete: SetNull)
+  loggedById     String?
+  loggedByName   String
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([projectId])
 }
