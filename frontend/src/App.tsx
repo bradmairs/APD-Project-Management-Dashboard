@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import MonthlyReportViewPage from "./pages/MonthlyReportViewPage";
+import ProjectCloseoutReportPage from "./pages/ProjectCloseoutReportPage";
 import ReportsPage from "./pages/ReportsPage";
 import LessonsLearnedPage from "./pages/LessonsLearnedPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
@@ -38,6 +39,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <MonthlyReportViewPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:id/closeout-report"
+            element={
+              <ProtectedRoute>
+                <ProjectCloseoutReportPage />
               </ProtectedRoute>
             }
           />
