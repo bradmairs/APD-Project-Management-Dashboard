@@ -235,6 +235,7 @@ model User {
   subcontractors Subcontractor[]
   meetingMinutes MeetingMinutes[]
   correspondence Correspondence[]
+  trainingRecords TrainingRecord[]
 }
 
 model Project {
@@ -284,6 +285,7 @@ model Project {
   subcontractors         Subcontractor[]
   meetingMinutes         MeetingMinutes[]
   correspondence         Correspondence[]
+  trainingRecords        TrainingRecord[]
 }
 
 model Task {
@@ -1002,6 +1004,35 @@ model Correspondence {
   loggedByName     String
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
+
+  @@index([projectId])
+}
+
+// A site induction or competency certification held by a person working for
+// a consultant or contractor on the project — a site induction, a White
+// Card, Working at Heights, Confined Space, First Aid, etc. Distinct from
+// Subcontractor (a company-level engagement record) and SqeRecord (a
+// one-off safety/quality/environment incident, not an ongoing
+// qualification). expiryDate is optional since some records (e.g. a
+// one-off site induction) never expire; when present it follows the same
+// computed-not-stored expiry pattern as InsuranceWarranty — no status
+// field, the frontend just compares the date against "now".
+model TrainingRecord {
+  id               String    @id @default(cuid())
+  project          Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  personName       String
+  company          String?
+  trainingType     String
+  completionDate   DateTime
+  expiryDate       DateTime?
+  certificateNumber String?
+  notes            String?
+  recordedBy       User?     @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  recordedById     String?
+  recordedByName   String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@index([projectId])
 }

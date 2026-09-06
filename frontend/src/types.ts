@@ -759,3 +759,31 @@ export type CorrespondenceInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export interface TrainingRecord {
+  id: string;
+  projectId: string;
+  personName: string;
+  company: string | null;
+  trainingType: string;
+  completionDate: string;
+  expiryDate: string | null;
+  certificateNumber: string | null;
+  notes: string | null;
+  recordedById: string | null;
+  recordedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type TrainingRecordInput = Omit<
+  TrainingRecord,
+  | "id"
+  | "projectId"
+  | "recordedById"
+  | "recordedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
