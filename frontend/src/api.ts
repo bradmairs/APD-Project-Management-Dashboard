@@ -29,6 +29,8 @@ import {
   MonthlyReportInput,
   PaymentClaim,
   PaymentClaimInput,
+  PerformanceReview,
+  PerformanceReviewInput,
   Permit,
   PermitInput,
   Project,
@@ -1072,6 +1074,44 @@ export function updateTrainingRecord(
 
 export function deleteTrainingRecord(id: string): Promise<void> {
   return fetch(`${API_BASE}/training-records/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getPerformanceReviews(projectId: string): Promise<PerformanceReview[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/performance-reviews`).then((res) =>
+    handle(res)
+  );
+}
+
+export function getAllPerformanceReviews(): Promise<PerformanceReview[]> {
+  return fetch(`${API_BASE}/performance-reviews`).then((res) => handle(res));
+}
+
+export function createPerformanceReview(
+  projectId: string,
+  data: Partial<PerformanceReviewInput>
+): Promise<PerformanceReview> {
+  return fetch(`${API_BASE}/projects/${projectId}/performance-reviews`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updatePerformanceReview(
+  id: string,
+  data: Partial<PerformanceReviewInput>
+): Promise<PerformanceReview> {
+  return fetch(`${API_BASE}/performance-reviews/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deletePerformanceReview(id: string): Promise<void> {
+  return fetch(`${API_BASE}/performance-reviews/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }

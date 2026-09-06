@@ -18,6 +18,7 @@ import {
   SiteVisit,
   SqeRecord,
   Stakeholder,
+  PerformanceReview,
   Subcontractor,
   Task,
   TrainingRecord,
@@ -438,4 +439,8 @@ export function describeCorrespondenceUpdate(
 
 export function describeTrainingRecordUpdate(before: TrainingRecord): string {
   return `updated training record "${before.trainingType}" for ${before.personName}`;
+}
+
+export function describePerformanceReviewUpdate(before: PerformanceReview): string {
+  return `updated the performance review for "${before.revieweeName}"`;
 }
