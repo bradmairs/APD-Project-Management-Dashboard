@@ -13,6 +13,13 @@ import projectActionItemsRouter from "./actionItems";
 import projectStakeholdersRouter from "./stakeholders";
 import projectPermitsRouter from "./permits";
 import projectLessonsLearnedRouter from "./lessonsLearned";
+import projectSqeRouter from "./sqe";
+import projectEotClaimsRouter from "./eotClaims";
+import projectChecklistItemsRouter from "./checklistItems";
+import projectDefectsRouter from "./defects";
+import projectPaymentClaimsRouter from "./paymentClaims";
+import projectInsuranceWarrantiesRouter from "./insuranceWarranties";
+import projectRfisRouter from "./rfis";
 import { describeProjectChanges, logActivity } from "../activityLog";
 import { projectUploadDir, upload } from "../upload";
 import { canModifyProject } from "../permissions";
@@ -31,6 +38,13 @@ router.use("/:id/action-items", projectActionItemsRouter);
 router.use("/:id/stakeholders", projectStakeholdersRouter);
 router.use("/:id/permits", projectPermitsRouter);
 router.use("/:id/lessons-learned", projectLessonsLearnedRouter);
+router.use("/:id/sqe", projectSqeRouter);
+router.use("/:id/eot-claims", projectEotClaimsRouter);
+router.use("/:id/checklist-items", projectChecklistItemsRouter);
+router.use("/:id/defects", projectDefectsRouter);
+router.use("/:id/payment-claims", projectPaymentClaimsRouter);
+router.use("/:id/insurance-warranties", projectInsuranceWarrantiesRouter);
+router.use("/:id/rfis", projectRfisRouter);
 
 router.get("/", async (_req, res) => {
   const projects = await prisma.project.findMany({

@@ -98,6 +98,68 @@ enum LessonType {
   NEGATIVE
 }
 
+enum SqeCategory {
+  SAFETY
+  QUALITY
+  ENVIRONMENT
+}
+
+enum SqeSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SqeStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum EotStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum ChecklistPhase {
+  COMMISSIONING
+  HANDOVER
+}
+
+enum ChecklistItemStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+  NOT_APPLICABLE
+}
+
+enum DefectStatus {
+  OPEN
+  RECTIFIED
+  VERIFIED
+  DISPUTED
+}
+
+enum PaymentClaimStatus {
+  SUBMITTED
+  CERTIFIED
+  DISPUTED
+  PAID
+}
+
+enum InsuranceWarrantyType {
+  INSURANCE
+  WARRANTY
+}
+
+enum RfiStatus {
+  OPEN
+  ANSWERED
+  CLOSED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -118,6 +180,13 @@ model User {
   actionItems    ActionItem[]
   permits        Permit[]
   lessonsLearned LessonLearned[]
+  sqeRecords     SqeRecord[]
+  eotClaims      EotClaim[]
+  checklistItems ChecklistItem[]
+  defectItems    DefectItem[]
+  paymentClaims  PaymentClaim[]
+  insuranceWarranties InsuranceWarranty[]
+  rfis           Rfi[]
 }
 
 model Project {
@@ -155,6 +224,13 @@ model Project {
   stakeholders           Stakeholder[]
   permits                Permit[]
   lessonsLearned         LessonLearned[]
+  sqeRecords             SqeRecord[]
+  eotClaims              EotClaim[]
+  checklistItems         ChecklistItem[]
+  defectItems            DefectItem[]
+  paymentClaims          PaymentClaim[]
+  insuranceWarranties    InsuranceWarranty[]
+  rfis                   Rfi[]
 }
 
 model Task {
@@ -499,6 +575,245 @@ model LessonLearned {
   createdByName  String
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
+
+  @@index([projectId])
+}
+
+// A safety, quality, or environmental incident/observation logged against
+// a project — an SQE register entry. severity follows a standard 4-band
+// scale (Low/Medium/High/Critical) rather than the 5x5 likelihood x
+// consequence matrix Risk uses, since an SQE record documents something
+// that already happened rather than an uncertain future event — there's
+// no "likelihood" left to assess once it's occurred. dateClosed stamps
+// automatically the moment status becomes Closed, the same pattern
+// ActionItem.dateClosed and Variation.dateDecided use. Cascades with its
+// project like the other registers.
+model SqeRecord {
+  id               String      @id @default(cuid())
+  project          Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  category         SqeCategory
+  severity         SqeSeverity
+  title            String
+  description      String?
+  correctiveAction String?
+  dateOccurred     DateTime
+  status           SqeStatus   @default(OPEN)
+  dateClosed       DateTime?
+  reportedBy       User?       @relation(fields: [reportedById], references: [id], onDelete: SetNull)
+  reportedById     String?
+  reportedByName   String
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([projectId])
+}
+
+// An Extension of Time claim — distinct from Variation even though both
+// are raised against a contract: a Variation is a scope/cost/time change
+// the parties agree to, while an EOT claim argues the existing schedule
+// itself was disrupted (weather, latent conditions, a client-caused
+// delay) and should be pushed out, independent of any scope change.
+// daysGranted is set once a decision is made and can be less than
+// daysClaimed (a partial grant), so it's a separate field rather than a
+// third status. dateDecided stamps automatically on leaving SUBMITTED,
+// the same pattern Variation.dateDecided uses. Only an APPROVED claim's
+// daysGranted extends a project's expected completion date — see
+// frontend/src/eot.ts's revisedCompletionDate, which plays the same role
+// for schedule that frontend/src/variations.ts's revisedBudget plays for
+// cost. Cascades with its project like the other registers.
+model EotClaim {
+  id           String    @id @default(cuid())
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+  reference    String?
+  title        String
+  cause        String?
+  description  String?
+  daysClaimed  Int
+  daysGranted  Int?
+  status       EotStatus @default(SUBMITTED)
+  dateSubmitted DateTime
+  dateDecided  DateTime?
+  raisedBy     User?     @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById   String?
+  raisedByName String
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// A commissioning or handover checklist line item — the granular,
+// checkable counterpart to Milestone's high-level WBS phases. Both
+// phases share one shape (title/responsible/dueDate/status/notes), the
+// same discriminator pattern as Risk/Opportunity and Lesson Learned's
+// POSITIVE/NEGATIVE, since a handover item and a commissioning item
+// track identically shaped work at different points in the same
+// closeout process. completedDate stamps automatically the moment
+// status becomes COMPLETE, the same pattern SqeRecord.dateClosed uses.
+// Cascades with its project like the other registers.
+model ChecklistItem {
+  id            String              @id @default(cuid())
+  project       Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  phase         ChecklistPhase
+  title         String
+  description   String?
+  responsible   String?
+  dueDate       DateTime?
+  completedDate DateTime?
+  status        ChecklistItemStatus @default(NOT_STARTED)
+  notes         String?
+  createdBy     User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById   String?
+  createdByName String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([projectId])
+}
+
+// A defect or punch-list item raised during commissioning or the
+// Defects Liability Period — physically distinct from an SQE record
+// (which documents a safety/quality/environment event) and from an
+// ActionItem (a general open item or decision): a defect names a
+// specific piece of work that needs rectifying, tracks who it's
+// assigned to for fixing, and optionally how much retention money is
+// held against it until it's verified fixed. status runs OPEN ->
+// RECTIFIED (the contractor says it's done) -> VERIFIED (the PM has
+// confirmed it) as the normal path, with DISPUTED for a defect whose
+// existence or cause is contested — common during a DLP. dateClosed
+// stamps automatically the moment status becomes VERIFIED, the same
+// auto-stamp pattern used by SqeRecord.dateClosed and
+// ChecklistItem.completedDate. Cascades with its project like the
+// other registers.
+model DefectItem {
+  id            String       @id @default(cuid())
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  title         String
+  description   String?
+  location      String?
+  category      String?
+  assignedTo    String?
+  dueDate       DateTime?
+  status        DefectStatus @default(OPEN)
+  dateRaised    DateTime
+  dateClosed    DateTime?
+  retentionHeld Decimal?     @db.Decimal(14, 2)
+  raisedBy      User?        @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById    String?
+  raisedByName  String
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([projectId])
+}
+
+// A contractor's progress claim under the contract, and the PM's
+// certification of it — the contract-administration counterpart to
+// Cash Flow's monthly forecast/actual entries, which are the PM's own
+// budget tracking rather than a formal claim-and-certify record.
+// claimedAmount is what the contractor asked for; certifiedAmount is
+// what the PM actually certifies (often less), so the two are kept
+// separate rather than a single amount rewritten in place. status runs
+// SUBMITTED -> CERTIFIED -> PAID as the normal path, with DISPUTED for
+// a claim the PM contests. dateCertified stamps the moment status
+// first reaches CERTIFIED or PAID (both imply certification happened)
+// and clears if moved back to SUBMITTED/DISPUTED; datePaid stamps only
+// on reaching PAID and clears otherwise — two independent stamps,
+// since certification and payment are distinct events that don't
+// necessarily happen together. Cascades with its project like the
+// other registers.
+model PaymentClaim {
+  id               String             @id @default(cuid())
+  project          Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  claimNumber      String
+  periodEnding     DateTime?
+  claimedAmount    Decimal            @db.Decimal(14, 2)
+  certifiedAmount  Decimal?           @db.Decimal(14, 2)
+  status           PaymentClaimStatus @default(SUBMITTED)
+  dateSubmitted    DateTime
+  dateCertified    DateTime?
+  datePaid         DateTime?
+  raisedBy         User?              @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById       String?
+  raisedByName     String
+  notes            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([projectId])
+}
+
+// An insurance policy or product/workmanship warranty held against the
+// project — a `type` discriminator (INSURANCE/WARRANTY) rather than two
+// near-identical models, the same pattern as Risk/Opportunity, Lesson
+// Learned, and ChecklistItem, since both track the same shape (who
+// provides the cover, a reference number, what's covered, and when it
+// lapses). Unlike Permit there's no application workflow — a policy or
+// warranty exists in force from the moment it's entered — so there's no
+// status field; whether it's expiring soon or already expired is
+// computed from expiryDate against the current time
+// (frontend/src/insuranceWarrantyMeta.ts), the same reasoning as
+// Permit's isPermitExpired/isPermitExpiringSoon. Cascades with its
+// project like the other registers.
+model InsuranceWarranty {
+  id               String                @id @default(cuid())
+  project          Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  type             InsuranceWarrantyType
+  title            String
+  provider         String?
+  referenceNumber  String?
+  coverageDetails  String?
+  startDate        DateTime?
+  expiryDate       DateTime?
+  notes            String?
+  createdBy        User?                 @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById      String?
+  createdByName    String
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@index([projectId])
+}
+
+// A Request for Information — a formal question raised to a designer,
+// consultant, or client that needs an answer before work can proceed
+// (a specification ambiguity, a missing detail, a site condition
+// needing direction). dateRequired is the contractually meaningful
+// date — the response deadline — distinct from dateRaised; it's what
+// the portfolio-wide Open RFIs panel and the notification bell sort
+// and flag by, the same role Task.dueDate plays for tasks. status runs
+// OPEN -> ANSWERED -> CLOSED; dateAnswered stamps the moment status
+// first reaches ANSWERED or CLOSED (both imply a response exists,
+// mirroring PaymentClaim.dateCertified's dual-implication stamp) and
+// clears if moved back to OPEN. Cascades with its project like the
+// other registers.
+model Rfi {
+  id            String    @id @default(cuid())
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  rfiNumber     String
+  subject       String
+  question      String
+  response      String?
+  raisedTo      String?
+  status        RfiStatus @default(OPEN)
+  dateRaised    DateTime
+  dateRequired  DateTime?
+  dateAnswered  DateTime?
+  raisedBy      User?     @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById    String?
+  raisedByName  String
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([projectId])
 }

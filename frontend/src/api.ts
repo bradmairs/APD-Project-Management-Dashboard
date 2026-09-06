@@ -5,22 +5,36 @@ import {
   Attachment,
   CashFlowEntry,
   CashFlowEntryInput,
+  ChecklistItem,
+  ChecklistItemInput,
+  DefectItem,
+  DefectItemInput,
+  EotClaim,
+  EotClaimInput,
+  InsuranceWarranty,
+  InsuranceWarrantyInput,
   LessonLearned,
   LessonLearnedInput,
   Milestone,
   MilestoneInput,
   MonthlyReport,
   MonthlyReportInput,
+  PaymentClaim,
+  PaymentClaimInput,
   Permit,
   PermitInput,
   Project,
   ProjectInput,
+  Rfi,
+  RfiInput,
   Risk,
   RiskInput,
   Role,
   SiteVisit,
   SiteVisitInput,
   SiteVisitPhoto,
+  SqeRecord,
+  SqeRecordInput,
   Stakeholder,
   StakeholderInput,
   Task,
@@ -596,4 +610,244 @@ export function deleteLessonLearned(id: string): Promise<void> {
   return fetch(`${API_BASE}/lessons-learned/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
+}
+
+export function getSqeRecords(projectId: string): Promise<SqeRecord[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/sqe`).then((res) => handle(res));
+}
+
+export function getAllSqeRecords(): Promise<SqeRecord[]> {
+  return fetch(`${API_BASE}/sqe`).then((res) => handle(res));
+}
+
+export function createSqeRecord(
+  projectId: string,
+  data: Partial<SqeRecordInput>
+): Promise<SqeRecord> {
+  return fetch(`${API_BASE}/projects/${projectId}/sqe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateSqeRecord(
+  id: string,
+  data: Partial<SqeRecordInput>
+): Promise<SqeRecord> {
+  return fetch(`${API_BASE}/sqe/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteSqeRecord(id: string): Promise<void> {
+  return fetch(`${API_BASE}/sqe/${id}`, { method: "DELETE" }).then((res) => handle(res));
+}
+
+export function getEotClaims(projectId: string): Promise<EotClaim[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/eot-claims`).then((res) => handle(res));
+}
+
+export function getAllEotClaims(): Promise<EotClaim[]> {
+  return fetch(`${API_BASE}/eot-claims`).then((res) => handle(res));
+}
+
+export function createEotClaim(
+  projectId: string,
+  data: Partial<EotClaimInput>
+): Promise<EotClaim> {
+  return fetch(`${API_BASE}/projects/${projectId}/eot-claims`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateEotClaim(
+  id: string,
+  data: Partial<EotClaimInput>
+): Promise<EotClaim> {
+  return fetch(`${API_BASE}/eot-claims/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteEotClaim(id: string): Promise<void> {
+  return fetch(`${API_BASE}/eot-claims/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getChecklistItems(projectId: string): Promise<ChecklistItem[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/checklist-items`).then((res) =>
+    handle(res)
+  );
+}
+
+export function createChecklistItem(
+  projectId: string,
+  data: Partial<ChecklistItemInput>
+): Promise<ChecklistItem> {
+  return fetch(`${API_BASE}/projects/${projectId}/checklist-items`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateChecklistItem(
+  id: string,
+  data: Partial<ChecklistItemInput>
+): Promise<ChecklistItem> {
+  return fetch(`${API_BASE}/checklist-items/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteChecklistItem(id: string): Promise<void> {
+  return fetch(`${API_BASE}/checklist-items/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getDefects(projectId: string): Promise<DefectItem[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/defects`).then((res) => handle(res));
+}
+
+export function getAllDefects(): Promise<DefectItem[]> {
+  return fetch(`${API_BASE}/defects`).then((res) => handle(res));
+}
+
+export function createDefect(
+  projectId: string,
+  data: Partial<DefectItemInput>
+): Promise<DefectItem> {
+  return fetch(`${API_BASE}/projects/${projectId}/defects`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateDefect(
+  id: string,
+  data: Partial<DefectItemInput>
+): Promise<DefectItem> {
+  return fetch(`${API_BASE}/defects/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteDefect(id: string): Promise<void> {
+  return fetch(`${API_BASE}/defects/${id}`, { method: "DELETE" }).then((res) => handle(res));
+}
+
+export function getPaymentClaims(projectId: string): Promise<PaymentClaim[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/payment-claims`).then((res) => handle(res));
+}
+
+export function getAllPaymentClaims(): Promise<PaymentClaim[]> {
+  return fetch(`${API_BASE}/payment-claims`).then((res) => handle(res));
+}
+
+export function createPaymentClaim(
+  projectId: string,
+  data: Partial<PaymentClaimInput>
+): Promise<PaymentClaim> {
+  return fetch(`${API_BASE}/projects/${projectId}/payment-claims`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updatePaymentClaim(
+  id: string,
+  data: Partial<PaymentClaimInput>
+): Promise<PaymentClaim> {
+  return fetch(`${API_BASE}/payment-claims/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deletePaymentClaim(id: string): Promise<void> {
+  return fetch(`${API_BASE}/payment-claims/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getInsuranceWarranties(projectId: string): Promise<InsuranceWarranty[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/insurance-warranties`).then((res) =>
+    handle(res)
+  );
+}
+
+export function getAllInsuranceWarranties(): Promise<InsuranceWarranty[]> {
+  return fetch(`${API_BASE}/insurance-warranties`).then((res) => handle(res));
+}
+
+export function createInsuranceWarranty(
+  projectId: string,
+  data: Partial<InsuranceWarrantyInput>
+): Promise<InsuranceWarranty> {
+  return fetch(`${API_BASE}/projects/${projectId}/insurance-warranties`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateInsuranceWarranty(
+  id: string,
+  data: Partial<InsuranceWarrantyInput>
+): Promise<InsuranceWarranty> {
+  return fetch(`${API_BASE}/insurance-warranties/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteInsuranceWarranty(id: string): Promise<void> {
+  return fetch(`${API_BASE}/insurance-warranties/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getRfis(projectId: string): Promise<Rfi[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/rfis`).then((res) => handle(res));
+}
+
+export function getAllRfis(): Promise<Rfi[]> {
+  return fetch(`${API_BASE}/rfis`).then((res) => handle(res));
+}
+
+export function createRfi(projectId: string, data: Partial<RfiInput>): Promise<Rfi> {
+  return fetch(`${API_BASE}/projects/${projectId}/rfis`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateRfi(id: string, data: Partial<RfiInput>): Promise<Rfi> {
+  return fetch(`${API_BASE}/rfis/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteRfi(id: string): Promise<void> {
+  return fetch(`${API_BASE}/rfis/${id}`, { method: "DELETE" }).then((res) => handle(res));
 }

@@ -4,11 +4,17 @@ import {
   ActionItem,
   ActivityLogEntry,
   CashFlowEntry,
+  DefectItem,
+  EotClaim,
+  InsuranceWarranty,
+  PaymentClaim,
   Permit,
   Project,
   ProjectInput,
   ProjectStatus,
+  Rfi,
   Risk,
+  SqeRecord,
   Task,
   Variation,
 } from "../types";
@@ -17,8 +23,14 @@ import {
   deleteProject,
   getAllActionItems,
   getAllCashFlowEntries,
+  getAllDefects,
+  getAllEotClaims,
+  getAllInsuranceWarranties,
+  getAllPaymentClaims,
   getAllPermits,
+  getAllRfis,
   getAllRisks,
+  getAllSqeRecords,
   getAllVariations,
   getProjects,
   getRecentActivity,
@@ -33,6 +45,11 @@ import ActivityFeed from "../components/ActivityFeed";
 import TopRisksPanel from "../components/TopRisksPanel";
 import OpenActionsPanel from "../components/OpenActionsPanel";
 import ExpiringPermitsPanel from "../components/ExpiringPermitsPanel";
+import ExpiringInsuranceWarrantiesPanel from "../components/ExpiringInsuranceWarrantiesPanel";
+import OpenSqePanel from "../components/OpenSqePanel";
+import OpenDefectsPanel from "../components/OpenDefectsPanel";
+import OpenPaymentClaimsPanel from "../components/OpenPaymentClaimsPanel";
+import OpenRfisPanel from "../components/OpenRfisPanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -57,6 +74,12 @@ export default function DashboardPage() {
   const [risks, setRisks] = useState<Risk[]>([]);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [permits, setPermits] = useState<Permit[]>([]);
+  const [sqeRecords, setSqeRecords] = useState<SqeRecord[]>([]);
+  const [eotClaims, setEotClaims] = useState<EotClaim[]>([]);
+  const [defects, setDefects] = useState<DefectItem[]>([]);
+  const [paymentClaims, setPaymentClaims] = useState<PaymentClaim[]>([]);
+  const [insuranceWarranties, setInsuranceWarranties] = useState<InsuranceWarranty[]>([]);
+  const [rfis, setRfis] = useState<Rfi[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -79,6 +102,12 @@ export default function DashboardPage() {
         riskData,
         actionItemData,
         permitData,
+        sqeData,
+        eotData,
+        defectData,
+        paymentClaimData,
+        insuranceWarrantyData,
+        rfiData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -88,6 +117,12 @@ export default function DashboardPage() {
         getAllRisks(),
         getAllActionItems(),
         getAllPermits(),
+        getAllSqeRecords(),
+        getAllEotClaims(),
+        getAllDefects(),
+        getAllPaymentClaims(),
+        getAllInsuranceWarranties(),
+        getAllRfis(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -97,6 +132,12 @@ export default function DashboardPage() {
       setRisks(riskData);
       setActionItems(actionItemData);
       setPermits(permitData);
+      setSqeRecords(sqeData);
+      setDefects(defectData);
+      setPaymentClaims(paymentClaimData);
+      setInsuranceWarranties(insuranceWarrantyData);
+      setRfis(rfiData);
+      setEotClaims(eotData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -123,15 +164,17 @@ export default function DashboardPage() {
       const projectEntries = cashFlowEntries.filter((e) => e.projectId === project.id);
       const projectVariations = variations.filter((v) => v.projectId === project.id);
       const projectRisks = risks.filter((r) => r.projectId === project.id);
+      const projectEotClaims = eotClaims.filter((c) => c.projectId === project.id);
       result[project.id] = computeProjectHealth(
         project,
         projectEntries,
         projectVariations,
-        projectRisks
+        projectRisks,
+        projectEotClaims
       );
     }
     return result;
-  }, [projects, cashFlowEntries, variations, risks]);
+  }, [projects, cashFlowEntries, variations, risks, eotClaims]);
 
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
@@ -222,10 +265,15 @@ export default function DashboardPage() {
         <StatCards projects={projects} />
 
         {!loading && projects.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
             <NeedsAttentionPanel projects={projects} healthByProjectId={healthByProjectId} />
             <OpenActionsPanel actionItems={actionItems} />
             <ExpiringPermitsPanel permits={permits} />
+            <OpenSqePanel records={sqeRecords} />
+            <OpenDefectsPanel defects={defects} />
+            <OpenPaymentClaimsPanel claims={paymentClaims} />
+            <ExpiringInsuranceWarrantiesPanel items={insuranceWarranties} />
+            <OpenRfisPanel rfis={rfis} />
           </div>
         )}
 

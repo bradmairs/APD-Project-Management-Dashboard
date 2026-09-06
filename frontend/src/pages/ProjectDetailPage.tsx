@@ -7,8 +7,18 @@ import {
   Attachment,
   CashFlowEntry,
   CashFlowEntryInput,
+  ChecklistItem,
+  ChecklistItemInput,
+  DefectItem,
+  DefectItemInput,
+  EotClaim,
+  EotClaimInput,
+  InsuranceWarranty,
+  InsuranceWarrantyInput,
   LessonLearned,
   LessonLearnedInput,
+  PaymentClaim,
+  PaymentClaimInput,
   Permit,
   PermitInput,
   Stakeholder,
@@ -19,11 +29,15 @@ import {
   MonthlyReportInput,
   Project,
   ProjectInput,
+  Rfi,
+  RfiInput,
   Risk,
   RiskInput,
   SiteVisit,
   SiteVisitInput,
   SiteVisitPhoto,
+  SqeRecord,
+  SqeRecordInput,
   Task,
   TaskStatus,
   Variation,
@@ -31,52 +45,80 @@ import {
 } from "../types";
 import {
   createActionItem,
+  createChecklistItem,
+  createDefect,
+  createEotClaim,
+  createInsuranceWarranty,
   createLessonLearned,
   createMilestone,
   createMonthlyReport,
+  createPaymentClaim,
   createPermit,
+  createRfi,
   createRisk,
   createSiteVisit,
+  createSqeRecord,
   createStakeholder,
   createTask,
   createVariation,
   deleteActionItem,
   deleteAttachment,
   deleteCashFlowEntry,
+  deleteChecklistItem,
+  deleteDefect,
+  deleteEotClaim,
+  deleteInsuranceWarranty,
   deleteLessonLearned,
   deleteMilestone,
   deleteMonthlyReport,
+  deletePaymentClaim,
   deletePermit,
   deleteProject,
+  deleteRfi,
   deleteRisk,
   deleteSiteVisit,
   deleteSiteVisitPhoto,
+  deleteSqeRecord,
   deleteStakeholder,
   deleteTask,
   deleteVariation,
   getActionItems,
   getAttachments,
   getCashFlowEntries,
+  getChecklistItems,
+  getDefects,
+  getEotClaims,
+  getInsuranceWarranties,
   getLessonsLearned,
   getMilestones,
   getMonthlyReports,
+  getPaymentClaims,
   getPermits,
   getProject,
   getProjectActivity,
   getProjectSitePhotos,
+  getRfis,
   getRisks,
   getSiteVisits,
+  getSqeRecords,
   getStakeholders,
   getVariations,
   reorderMilestone,
   updateActionItem,
+  updateChecklistItem,
+  updateDefect,
+  updateEotClaim,
+  updateInsuranceWarranty,
   updateLessonLearned,
   updateMilestone,
   updateMonthlyReport,
+  updatePaymentClaim,
   updatePermit,
   updateProject,
+  updateRfi,
   updateRisk,
   updateSiteVisit,
+  updateSqeRecord,
   updateStakeholder,
   updateTask,
   updateVariation,
@@ -94,12 +136,20 @@ import CashFlowPanel from "../components/CashFlowPanel";
 import SiteVisitsPanel from "../components/SiteVisitsPanel";
 import VariationsPanel from "../components/VariationsPanel";
 import RisksPanel from "../components/RisksPanel";
+import RfisPanel from "../components/RfisPanel";
 import ActionsPanel from "../components/ActionsPanel";
 import StakeholdersPanel from "../components/StakeholdersPanel";
 import PermitsPanel from "../components/PermitsPanel";
+import InsuranceWarrantiesPanel from "../components/InsuranceWarrantiesPanel";
 import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
+import SqePanel from "../components/SqePanel";
+import EotPanel from "../components/EotPanel";
+import ChecklistPanel from "../components/ChecklistPanel";
+import DefectsPanel from "../components/DefectsPanel";
+import PaymentClaimsPanel from "../components/PaymentClaimsPanel";
 import HealthBadge from "../components/HealthBadge";
 import { computeProjectHealth } from "../health";
+import { revisedCompletionDate } from "../eot";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
 import { formatCurrency, formatDate } from "../format";
 import { canModifyProject } from "../permissions";
@@ -124,7 +174,14 @@ export default function ProjectDetailPage() {
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   const [permits, setPermits] = useState<Permit[]>([]);
+  const [insuranceWarranties, setInsuranceWarranties] = useState<InsuranceWarranty[]>([]);
+  const [rfis, setRfis] = useState<Rfi[]>([]);
   const [lessons, setLessons] = useState<LessonLearned[]>([]);
+  const [sqeRecords, setSqeRecords] = useState<SqeRecord[]>([]);
+  const [eotClaims, setEotClaims] = useState<EotClaim[]>([]);
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
+  const [defects, setDefects] = useState<DefectItem[]>([]);
+  const [paymentClaims, setPaymentClaims] = useState<PaymentClaim[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -149,6 +206,13 @@ export default function ProjectDetailPage() {
         stakeholderData,
         permitData,
         lessonData,
+        sqeData,
+        eotData,
+        checklistData,
+        defectData,
+        paymentClaimData,
+        insuranceWarrantyData,
+        rfiData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -164,6 +228,13 @@ export default function ProjectDetailPage() {
         getStakeholders(id),
         getPermits(id),
         getLessonsLearned(id),
+        getSqeRecords(id),
+        getEotClaims(id),
+        getChecklistItems(id),
+        getDefects(id),
+        getPaymentClaims(id),
+        getInsuranceWarranties(id),
+        getRfis(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -179,6 +250,13 @@ export default function ProjectDetailPage() {
       setStakeholders(stakeholderData);
       setPermits(permitData);
       setLessons(lessonData);
+      setSqeRecords(sqeData);
+      setEotClaims(eotData);
+      setChecklistItems(checklistData);
+      setDefects(defectData);
+      setPaymentClaims(paymentClaimData);
+      setInsuranceWarranties(insuranceWarrantyData);
+      setRfis(rfiData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -432,10 +510,138 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateSqeRecord(data: Partial<SqeRecordInput>) {
+    if (!project) return;
+    await createSqeRecord(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateSqeRecord(
+    record: SqeRecord,
+    data: Partial<SqeRecordInput>
+  ) {
+    await updateSqeRecord(record.id, data);
+    await load();
+  }
+
+  async function handleDeleteSqeRecord(record: SqeRecord) {
+    await deleteSqeRecord(record.id);
+    await load();
+  }
+
+  async function handleCreateEotClaim(data: Partial<EotClaimInput>) {
+    if (!project) return;
+    await createEotClaim(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateEotClaim(claim: EotClaim, data: Partial<EotClaimInput>) {
+    await updateEotClaim(claim.id, data);
+    await load();
+  }
+
+  async function handleDeleteEotClaim(claim: EotClaim) {
+    await deleteEotClaim(claim.id);
+    await load();
+  }
+
+  async function handleCreateChecklistItem(data: Partial<ChecklistItemInput>) {
+    if (!project) return;
+    await createChecklistItem(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateChecklistItem(item: ChecklistItem, data: Partial<ChecklistItemInput>) {
+    await updateChecklistItem(item.id, data);
+    await load();
+  }
+
+  async function handleDeleteChecklistItem(item: ChecklistItem) {
+    await deleteChecklistItem(item.id);
+    await load();
+  }
+
+  async function handleCreateDefect(data: Partial<DefectItemInput>) {
+    if (!project) return;
+    await createDefect(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateDefect(defect: DefectItem, data: Partial<DefectItemInput>) {
+    await updateDefect(defect.id, data);
+    await load();
+  }
+
+  async function handleDeleteDefect(defect: DefectItem) {
+    await deleteDefect(defect.id);
+    await load();
+  }
+
+  async function handleCreatePaymentClaim(data: Partial<PaymentClaimInput>) {
+    if (!project) return;
+    await createPaymentClaim(project.id, data);
+    await load();
+  }
+
+  async function handleUpdatePaymentClaim(
+    claim: PaymentClaim,
+    data: Partial<PaymentClaimInput>
+  ) {
+    await updatePaymentClaim(claim.id, data);
+    await load();
+  }
+
+  async function handleDeletePaymentClaim(claim: PaymentClaim) {
+    await deletePaymentClaim(claim.id);
+    await load();
+  }
+
+  async function handleCreateInsuranceWarranty(data: Partial<InsuranceWarrantyInput>) {
+    if (!project) return;
+    await createInsuranceWarranty(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateInsuranceWarranty(
+    item: InsuranceWarranty,
+    data: Partial<InsuranceWarrantyInput>
+  ) {
+    await updateInsuranceWarranty(item.id, data);
+    await load();
+  }
+
+  async function handleDeleteInsuranceWarranty(item: InsuranceWarranty) {
+    await deleteInsuranceWarranty(item.id);
+    await load();
+  }
+
+  async function handleCreateRfi(data: Partial<RfiInput>) {
+    if (!project) return;
+    await createRfi(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateRfi(rfi: Rfi, data: Partial<RfiInput>) {
+    await updateRfi(rfi.id, data);
+    await load();
+  }
+
+  async function handleDeleteRfi(rfi: Rfi) {
+    await deleteRfi(rfi.id);
+    await load();
+  }
+
+  const revisedTargetCompletion = useMemo(
+    () => (project ? revisedCompletionDate(project, eotClaims) : null),
+    [project, eotClaims]
+  );
+
   const health = useMemo(
     () =>
-      project ? computeProjectHealth(project, cashFlowEntries, variations, risks) : null,
-    [project, cashFlowEntries, variations, risks]
+      project
+        ? computeProjectHealth(project, cashFlowEntries, variations, risks, eotClaims)
+        : null,
+    [project, cashFlowEntries, variations, risks, eotClaims]
   );
 
   if (loading) {
@@ -545,6 +751,13 @@ export default function ProjectDetailPage() {
             label="Target Completion"
             value={formatDate(project.targetCompletionDate)}
           />
+          {revisedTargetCompletion &&
+            revisedTargetCompletion !== project.targetCompletionDate && (
+              <Field
+                label="Revised Completion"
+                value={formatDate(revisedTargetCompletion)}
+              />
+            )}
           <Field
             label="Actual Completion"
             value={formatDate(project.actualCompletionDate)}
@@ -566,6 +779,13 @@ export default function ProjectDetailPage() {
           onDelete={handleDeletePermit}
         />
 
+        <InsuranceWarrantiesPanel
+          items={insuranceWarranties}
+          onCreate={handleCreateInsuranceWarranty}
+          onUpdate={handleUpdateInsuranceWarranty}
+          onDelete={handleDeleteInsuranceWarranty}
+        />
+
         <VariationsPanel
           variations={variations}
           onCreate={handleCreateVariation}
@@ -581,11 +801,32 @@ export default function ProjectDetailPage() {
           onDelete={handleDeleteCashFlowEntry}
         />
 
+        <PaymentClaimsPanel
+          claims={paymentClaims}
+          onCreate={handleCreatePaymentClaim}
+          onUpdate={handleUpdatePaymentClaim}
+          onDelete={handleDeletePaymentClaim}
+        />
+
         <RisksPanel
           risks={risks}
           onCreate={handleCreateRisk}
           onUpdate={handleUpdateRisk}
           onDelete={handleDeleteRisk}
+        />
+
+        <RfisPanel
+          rfis={rfis}
+          onCreate={handleCreateRfi}
+          onUpdate={handleUpdateRfi}
+          onDelete={handleDeleteRfi}
+        />
+
+        <SqePanel
+          records={sqeRecords}
+          onCreate={handleCreateSqeRecord}
+          onUpdate={handleUpdateSqeRecord}
+          onDelete={handleDeleteSqeRecord}
         />
 
         <ActionsPanel
@@ -608,6 +849,27 @@ export default function ProjectDetailPage() {
           onUpdate={handleUpdateMilestone}
           onDelete={handleDeleteMilestone}
           onReorder={handleReorderMilestone}
+        />
+
+        <EotPanel
+          claims={eotClaims}
+          onCreate={handleCreateEotClaim}
+          onUpdate={handleUpdateEotClaim}
+          onDelete={handleDeleteEotClaim}
+        />
+
+        <ChecklistPanel
+          items={checklistItems}
+          onCreate={handleCreateChecklistItem}
+          onUpdate={handleUpdateChecklistItem}
+          onDelete={handleDeleteChecklistItem}
+        />
+
+        <DefectsPanel
+          defects={defects}
+          onCreate={handleCreateDefect}
+          onUpdate={handleUpdateDefect}
+          onDelete={handleDeleteDefect}
         />
 
         <SiteVisitsPanel

@@ -1,11 +1,18 @@
 import {
   ActionItem,
+  ChecklistItem,
+  DefectItem,
+  EotClaim,
+  InsuranceWarranty,
   LessonLearned,
   Milestone,
+  PaymentClaim,
   Permit,
   Project,
+  Rfi,
   Risk,
   SiteVisit,
+  SqeRecord,
   Stakeholder,
   Task,
   Variation,
@@ -229,4 +236,124 @@ export function describeLessonLearnedUpdate(
   body: Record<string, unknown>
 ): string {
   return `updated lesson learned "${before.title}"`;
+}
+
+const SQE_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  IN_PROGRESS: "In Progress",
+  CLOSED: "Closed",
+};
+
+export function describeSqeUpdate(
+  before: SqeRecord,
+  body: Record<string, unknown>
+): string {
+  const noun = `${before.category.toLowerCase()} issue`;
+  if ("status" in body && body.status !== before.status) {
+    const label = SQE_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked ${noun} "${before.title}" as ${label}`;
+  }
+  return `updated ${noun} "${before.title}"`;
+}
+
+const EOT_STATUS_LABELS: Record<string, string> = {
+  SUBMITTED: "Submitted",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+};
+
+export function describeEotClaimUpdate(
+  before: EotClaim,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = EOT_STATUS_LABELS[body.status as string] ?? String(body.status);
+    const grantedNote =
+      body.status === "APPROVED" && body.daysGranted !== undefined
+        ? ` (${body.daysGranted} days granted)`
+        : "";
+    return `marked EOT claim "${before.title}" as ${label}${grantedNote}`;
+  }
+  return `updated EOT claim "${before.title}"`;
+}
+
+const CHECKLIST_STATUS_LABELS: Record<string, string> = {
+  NOT_STARTED: "Not Started",
+  IN_PROGRESS: "In Progress",
+  COMPLETE: "Complete",
+  NOT_APPLICABLE: "Not Applicable",
+};
+
+export function describeChecklistItemUpdate(
+  before: ChecklistItem,
+  body: Record<string, unknown>
+): string {
+  const noun = before.phase === "HANDOVER" ? "handover item" : "commissioning item";
+  if ("status" in body && body.status !== before.status) {
+    const label = CHECKLIST_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked ${noun} "${before.title}" as ${label}`;
+  }
+  return `updated ${noun} "${before.title}"`;
+}
+
+const DEFECT_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  RECTIFIED: "Rectified",
+  VERIFIED: "Verified",
+  DISPUTED: "Disputed",
+};
+
+export function describeDefectUpdate(
+  before: DefectItem,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = DEFECT_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked defect "${before.title}" as ${label}`;
+  }
+  return `updated defect "${before.title}"`;
+}
+
+const PAYMENT_CLAIM_STATUS_LABELS: Record<string, string> = {
+  SUBMITTED: "Submitted",
+  CERTIFIED: "Certified",
+  DISPUTED: "Disputed",
+  PAID: "Paid",
+};
+
+export function describePaymentClaimUpdate(
+  before: PaymentClaim,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = PAYMENT_CLAIM_STATUS_LABELS[body.status as string] ?? String(body.status);
+    const certifiedNote =
+      body.status === "CERTIFIED" && body.certifiedAmount !== undefined
+        ? ` ($${body.certifiedAmount} certified)`
+        : "";
+    return `marked payment claim "${before.claimNumber}" as ${label}${certifiedNote}`;
+  }
+  return `updated payment claim "${before.claimNumber}"`;
+}
+
+export function describeInsuranceWarrantyUpdate(
+  before: InsuranceWarranty,
+  body: Record<string, unknown>
+): string {
+  const noun = before.type === "WARRANTY" ? "warranty" : "insurance policy";
+  return `updated ${noun} "${before.title}"`;
+}
+
+const RFI_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  ANSWERED: "Answered",
+  CLOSED: "Closed",
+};
+
+export function describeRfiUpdate(before: Rfi, body: Record<string, unknown>): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = RFI_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked RFI "${before.rfiNumber}" as ${label}`;
+  }
+  return `updated RFI "${before.rfiNumber}"`;
 }

@@ -362,3 +362,241 @@ export type LessonLearnedInput = Omit<
   LessonLearned,
   "id" | "projectId" | "createdById" | "createdByName" | "createdAt" | "updatedAt" | "project"
 >;
+
+export type SqeCategory = "SAFETY" | "QUALITY" | "ENVIRONMENT";
+
+export type SqeSeverity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+
+export type SqeStatus = "OPEN" | "IN_PROGRESS" | "CLOSED";
+
+export interface SqeRecord {
+  id: string;
+  projectId: string;
+  category: SqeCategory;
+  severity: SqeSeverity;
+  title: string;
+  description: string | null;
+  correctiveAction: string | null;
+  dateOccurred: string;
+  status: SqeStatus;
+  dateClosed: string | null;
+  reportedById: string | null;
+  reportedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type SqeRecordInput = Omit<
+  SqeRecord,
+  | "id"
+  | "projectId"
+  | "dateClosed"
+  | "reportedById"
+  | "reportedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
+
+export type EotStatus = "SUBMITTED" | "APPROVED" | "REJECTED";
+
+export interface EotClaim {
+  id: string;
+  projectId: string;
+  reference: string | null;
+  title: string;
+  cause: string | null;
+  description: string | null;
+  daysClaimed: number;
+  daysGranted: number | null;
+  status: EotStatus;
+  dateSubmitted: string;
+  dateDecided: string | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type EotClaimInput = Omit<
+  EotClaim,
+  | "id"
+  | "projectId"
+  | "dateDecided"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+>;
+
+export type ChecklistPhase = "COMMISSIONING" | "HANDOVER";
+
+export type ChecklistItemStatus =
+  | "NOT_STARTED"
+  | "IN_PROGRESS"
+  | "COMPLETE"
+  | "NOT_APPLICABLE";
+
+export interface ChecklistItem {
+  id: string;
+  projectId: string;
+  phase: ChecklistPhase;
+  title: string;
+  description: string | null;
+  responsible: string | null;
+  dueDate: string | null;
+  completedDate: string | null;
+  status: ChecklistItemStatus;
+  notes: string | null;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ChecklistItemInput = Omit<
+  ChecklistItem,
+  | "id"
+  | "projectId"
+  | "completedDate"
+  | "createdById"
+  | "createdByName"
+  | "createdAt"
+  | "updatedAt"
+>;
+
+export type DefectStatus = "OPEN" | "RECTIFIED" | "VERIFIED" | "DISPUTED";
+
+export interface DefectItem {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  category: string | null;
+  assignedTo: string | null;
+  dueDate: string | null;
+  status: DefectStatus;
+  dateRaised: string;
+  dateClosed: string | null;
+  retentionHeld: number | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type DefectItemInput = Omit<
+  DefectItem,
+  | "id"
+  | "projectId"
+  | "dateClosed"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
+
+export type PaymentClaimStatus = "SUBMITTED" | "CERTIFIED" | "DISPUTED" | "PAID";
+
+export interface PaymentClaim {
+  id: string;
+  projectId: string;
+  claimNumber: string;
+  periodEnding: string | null;
+  claimedAmount: number;
+  certifiedAmount: number | null;
+  status: PaymentClaimStatus;
+  dateSubmitted: string;
+  dateCertified: string | null;
+  datePaid: string | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type PaymentClaimInput = Omit<
+  PaymentClaim,
+  | "id"
+  | "projectId"
+  | "dateCertified"
+  | "datePaid"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
+
+export type InsuranceWarrantyType = "INSURANCE" | "WARRANTY";
+
+export interface InsuranceWarranty {
+  id: string;
+  projectId: string;
+  type: InsuranceWarrantyType;
+  title: string;
+  provider: string | null;
+  referenceNumber: string | null;
+  coverageDetails: string | null;
+  startDate: string | null;
+  expiryDate: string | null;
+  notes: string | null;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type InsuranceWarrantyInput = Omit<
+  InsuranceWarranty,
+  | "id"
+  | "projectId"
+  | "createdById"
+  | "createdByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
+
+export type RfiStatus = "OPEN" | "ANSWERED" | "CLOSED";
+
+export interface Rfi {
+  id: string;
+  projectId: string;
+  rfiNumber: string;
+  subject: string;
+  question: string;
+  response: string | null;
+  raisedTo: string | null;
+  status: RfiStatus;
+  dateRaised: string;
+  dateRequired: string | null;
+  dateAnswered: string | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type RfiInput = Omit<
+  Rfi,
+  | "id"
+  | "projectId"
+  | "dateAnswered"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

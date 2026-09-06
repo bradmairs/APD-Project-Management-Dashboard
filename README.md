@@ -74,17 +74,32 @@ notification bell described below.
 
 See `backend/prisma/schema.prisma` for the source of truth.
 
-## Deadline notifications
+## Notifications
 
 A bell icon next to the account menu — present on every page, not just the
-dashboard — shows a badge with the count of tasks that are overdue or due
-within the next 7 days (across all projects, not just your own). The badge
-is red if anything is overdue, amber if only "due soon" items remain.
-Clicking it opens a list of those tasks, each linking to its project.
+dashboard — shows a badge with the count of items that are overdue/expired
+or due/expiring within their respective windows (across all projects, not
+just your own): tasks and open RFIs due within 7 days, and permits or
+insurance/warranties expiring within 60 days. The badge is red if anything
+is overdue or expired, amber if only "due soon"/"expiring soon" items
+remain. Clicking it opens one merged list — tasks, permits, insurance/
+warranties, and RFIs together, sorted soonest first, each tagged with its
+type and linking to its project.
 
-There's no email/SMS delivery — this is in-app only, reusing the same
-`/api/tasks/upcoming` data as the dashboard's "Upcoming Deadlines" panel, so
-the two always agree. Nothing to configure (no SMTP credentials needed).
+`frontend/src/components/NotificationBell.tsx` composes this from four
+existing portfolio-wide endpoints and their existing expiry/overdue
+helpers rather than adding new backend logic: `getUpcomingTasks()` (all
+fetched tasks are listed, but only overdue/due-soon ones count toward the
+badge, via `taskMeta.ts`'s `isTaskOverdue`/`isTaskDueSoon`),
+`getAllPermits()` / `getAllInsuranceWarranties()` filtered to flagged
+items only via `permitMeta.ts`'s and `insuranceWarrantyMeta.ts`'s expiry
+helpers, and `getAllRfis()` filtered via `rfiMeta.ts`'s
+`isRfiOverdue`/`isRfiDueSoon` — the same helpers the dashboard's
+"Permits Expiring Soon", "Insurance & Warranties Expiring Soon", and
+"Open RFIs" panels use, so all four stay in agreement.
+
+There's no email/SMS delivery — this is in-app only. Nothing to configure
+(no SMTP credentials needed).
 
 ## Activity history
 
@@ -322,6 +337,117 @@ via the Activity panel) is what matters, not what it looked like on some
 past reporting date. Open to any logged-in user to edit, matching Tasks,
 Attachments, and Milestones.
 
+## Extension of Time (EOT) Claims
+
+Each project has an **Extension of Time Claims** panel — distinct from
+Variations even though both are raised against a contract. A Variation
+is a scope/cost/time change the parties agree to; an EOT claim argues
+the existing schedule itself was disrupted (weather, latent conditions,
+a client-caused delay) and should be pushed out, independent of any
+scope change. A claim records a Reference, Title, Cause (free text, with
+suggestions like "Weather" or "Latent Conditions"), Description, Days
+Claimed, Days Granted (once decided — can be less than Days Claimed for
+a partial grant, which is why it's a separate field rather than a fourth
+status), a Status of Submitted/Approved/Rejected, the date submitted,
+and notes. `dateDecided` stamps automatically on leaving Submitted, the
+same pattern Variations use.
+
+Only an **Approved** claim's granted days extend a project's expected
+completion date. `frontend/src/eot.ts` computes each project's *revised
+completion date* (its Target Completion plus the sum of its approved
+claims' granted days) — the schedule equivalent of Variations' revised
+budget — and the project overview shows it alongside Target Completion
+once it differs. Project Health's Schedule dimension (below) uses this
+revised date too, so an approved EOT claim pushes back the
+overdue/approaching-due threshold the same way an approved Variation
+revises the budget threshold — deliberately different from the
+dashboard's "Overdue" stat and project table, which always reflect the
+literal contractual date.
+
+Like Variations, an EOT claim is live data with no per-month snapshot.
+Open to any logged-in user to edit.
+
+## Commissioning & Handover
+
+Each project has a **Commissioning & Handover** checklist — one shared
+`ChecklistItem` model with a `phase` discriminator (Commissioning or
+Handover), the same discriminator pattern used by Risks/Opportunities and
+Lessons Learned, since both phases track the same shape of item (a
+Title, Description, Responsible party, Due Date, Status, and Notes) and
+only which stage of project closeout they belong to differs. Milestones
+already track high-level WBS-phase dates, but commissioning and handover
+each involve many small, checkable steps (functional tests, O&M manual
+handover, training, defects sign-off) that don't warrant their own
+milestone rows — this checklist gives them a home.
+
+Status is Not Started, In Progress, Complete, or Not Applicable,
+changeable inline from the panel. `completedDate` stamps automatically
+the moment status changes to Complete, and clears if it's moved back off
+Complete — the same auto-stamp pattern used by Variations'
+`dateDecided`, Actions' `dateClosed`, SQE's `dateClosed`, and EOT's
+`dateDecided`. The panel header shows a running count per phase (e.g.
+"Commissioning 2/5 complete · Handover 0/3 complete"), excluding
+Not Applicable items from the denominator so they don't dilute the
+completion picture.
+
+Like Stakeholders, this register has no portfolio-wide view — a
+project's commissioning checklist doesn't aggregate meaningfully across
+the portfolio the way an open risk or an expiring permit does. Open to
+any logged-in user to edit.
+
+## Defects & Punch List
+
+Each project has a **Defects & Punch List** register for physical work
+that needs rectifying — distinct from an SQE record (which documents a
+safety/quality/environment event) and from an Actions & Decisions entry
+(a general open item): a defect names a specific piece of work, tracks
+who it's assigned to for fixing (a contractor or subcontractor), and
+optionally how much retention money is held against it until it's
+verified fixed. Fields are Title, Location, Category (free text, with
+suggestions like "Civil" or "Electrical"), Description, Assigned To,
+Due Date, Status, Retention Held ($), and Notes.
+
+Status runs the normal path OPEN → RECTIFIED (the contractor says it's
+done) → VERIFIED (the PM has confirmed it), with a DISPUTED status for a
+defect whose existence or cause is contested — common during a Defects
+Liability Period. `dateClosed` stamps automatically the moment status
+becomes VERIFIED, the same auto-stamp pattern used elsewhere in the app.
+The panel sorts the most outstanding defects first (open and disputed
+ahead of rectified-but-unverified, verified ones last) and its header
+shows a running "N outstanding of total" count.
+
+The Dashboard has a portfolio-wide **Open Defects** panel alongside
+Needs Attention, Open Actions, Expiring Permits, and Open SQE Issues,
+listing every non-verified defect across the portfolio with a link back
+to its project. Open to any logged-in user to edit.
+
+## Payment Claims
+
+Each project has a **Payment Claims** register — the contract-
+administration counterpart to Cash Flow's monthly forecast/actual
+entries, which are the PM's own budget tracking rather than a formal
+claim-and-certify record. A claim has a Claim Number, an optional
+Period Ending date, a Claimed Amount (what the contractor asked for),
+a Certified Amount (what the PM actually certifies — often less, so
+it's a separate field rather than the claimed amount rewritten in
+place), a Status, the date submitted, and Notes.
+
+Status runs the normal path SUBMITTED → CERTIFIED → PAID, with a
+DISPUTED status for a claim the PM contests. Certification and payment
+are tracked as two independent auto-stamped dates rather than one:
+`dateCertified` stamps the moment status first reaches CERTIFIED *or*
+PAID (both imply certification happened, even if a claim is certified
+and paid in the same step) and clears if moved back to
+SUBMITTED/DISPUTED; `datePaid` stamps only on reaching PAID and clears
+otherwise. The panel header shows the total certified to date and a
+running "N outstanding" count (anything not yet PAID), sorted with
+disputed and submitted claims first.
+
+The Dashboard has a portfolio-wide **Payment Claims Outstanding** panel
+alongside the other exception panels, listing every claim across the
+portfolio still awaiting certification or payment with a link back to
+its project. Open to any logged-in user to edit.
+
 ## Risks & Opportunities
 
 Each project has a **Risks & Opportunities** register — one shared `Risk`
@@ -354,6 +480,56 @@ Like Variations, a risk is live data with no per-month snapshot — its
 current state and status history (via the Activity panel) are what
 matter. Open to any logged-in user to edit, matching Tasks, Attachments,
 Milestones, and Variations.
+
+## Requests for Information
+
+Each project has a **Requests for Information (RFIs)** register — a
+formal question raised to a designer, consultant, or client that needs
+an answer before work can proceed (a specification ambiguity, a missing
+detail, a site condition needing direction). A request has an RFI
+Number, Subject, Question, who it was raised to, a Status of Open/
+Answered/Closed, the date raised, a Response, and Notes.
+
+`dateRequired` — the date a response is due — is the contractually
+meaningful deadline, distinct from `dateRaised`, the same role
+`Task.dueDate` plays for tasks: only an Open RFI can be overdue or due
+soon (`frontend/src/rfiMeta.ts`'s `isRfiOverdue`/`isRfiDueSoon`, mirroring
+`taskMeta.ts`). `dateAnswered` stamps automatically the moment status
+first reaches Answered or Closed (both imply a response exists, the same
+dual-implication pattern Payment Claims' `dateCertified` uses) and clears
+if moved back to Open. The panel sorts open and answered RFIs ahead of
+closed ones and flags overdue items in red.
+
+The Dashboard has a portfolio-wide **Open RFIs** panel listing every
+non-closed RFI across every project, overdue ones first, then soonest
+due — and the notification bell now folds in overdue/due-soon RFIs
+alongside task deadlines and expiring permits/insurance, so a late
+response shows up wherever a PM is already looking. Open to any
+logged-in user to edit.
+
+## Safety, Quality & Environment
+
+Each project has an **SQE** register for logging safety, quality, and
+environmental issues: a Category (Safety/Quality/Environment), a
+Severity (Low/Medium/High/Critical), Title, Description, Corrective
+Action, the date it occurred, and a status of Open/In Progress/Closed
+(changeable inline, like Actions & Decisions).
+
+Severity here is rated directly on a 4-band scale rather than through
+Risk's likelihood × consequence matrix — an SQE record documents
+something that already happened, so there's no "likelihood" left to
+assess once it's occurred, only how severe it turned out to be.
+`dateClosed` stamps automatically the moment status becomes Closed, the
+same pattern Actions & Decisions and Variations use for their own
+closing dates.
+
+The dashboard's portfolio-wide **Open SQE Issues** panel lists every
+open issue across every project, most severe first, linking back to its
+project — sitting alongside Needs Attention, Open Actions, and Permits
+Expiring Soon as a fourth view into what needs a PM's attention today.
+
+Like the other registers, an SQE record is live data with no per-month
+snapshot. Open to any logged-in user to edit.
 
 ## Actions & Decisions
 
@@ -421,6 +597,29 @@ linking back to its project — sitting alongside Needs Attention and Open
 Actions as a third view into what needs a PM's attention today. Open to
 any logged-in user to edit.
 
+## Insurance & Warranties
+
+Each project has an **Insurance & Warranties** register — one shared
+`InsuranceWarranty` model with a `type` discriminator (Insurance or
+Warranty), the same discriminator pattern used elsewhere (Risk/
+Opportunity, Lesson Learned, ChecklistItem), since both track the same
+shape: who provides the cover, a reference number, what's covered, and
+when it lapses. Fields are Title, Type, Provider (the insurer, or the
+manufacturer/contractor for a warranty), Reference Number, Coverage
+Details (free text — what's covered and for how much), Start Date,
+Expiry Date, and Notes.
+
+Unlike Permits & Approvals there's no application workflow — a policy
+or warranty is in force from the moment it's entered — so there's no
+status field. Whether an item is **Expiring Soon** (within 60 days) or
+**Expired** is computed from its expiry date against the current time,
+the same reasoning as `permitMeta.ts`'s expiry logic but without the
+Approved-status gate (`frontend/src/insuranceWarrantyMeta.ts`). The
+dashboard's portfolio-wide **Insurance & Warranties Expiring Soon**
+panel lists every flagged item across every project, soonest first,
+linking back to its project — alongside the other exception panels.
+Open to any logged-in user to edit.
+
 ## Lessons Learned
 
 Each project has a **Lessons Learned** register — one shared
@@ -452,10 +651,13 @@ off track shows up immediately rather than waiting for the next report.
 `frontend/src/health.ts` rates three dimensions independently, then takes
 the worst of the three as the overall rating:
 
-- **Schedule** — Red if the project is overdue (its target completion
-  date has passed and it isn't Defects Liability/Complete/Cancelled, the
-  same rule the dashboard's Overdue stat uses); Amber if that date is
-  within the next 30 days; Green otherwise
+- **Schedule** — Red if the project is past its *revised* completion
+  date (Target Completion plus any approved EOT claims' granted days —
+  see Extension of Time Claims above) and it isn't Defects
+  Liability/Complete/Cancelled; Amber if that revised date is within the
+  next 30 days; Green otherwise. This is deliberately different from the
+  dashboard's "Overdue" stat and the project table, which always reflect
+  the literal contractual date rather than the revised one
 - **Budget** — Red if the Forecast Total (from Cash Flow) exceeds the
   project's current budget (revised by any approved Variations); Amber
   once it passes 90% of that budget; Green otherwise, and Green when
