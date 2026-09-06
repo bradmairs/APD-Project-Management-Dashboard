@@ -857,6 +857,34 @@ sidesteps a well-known bundler issue where `Icon.Default`'s image paths
 resolve relative to the `leaflet` package rather than the built app and
 404 in production.
 
+## Tabbed Navigation
+
+Both the Dashboard and a project's detail page had grown into one long
+scroll as registers accumulated (the project page alone stacks ~20 panels).
+Both now split their content into a horizontal tab bar
+(`components/Tabs.tsx`, a generic underline tab bar reused by both pages)
+so a screen only ever shows one section at a time:
+
+- **Dashboard** — Projects (the filterable/searchable project table),
+  Alerts (the eight portfolio-wide "needs attention" panels), Charts
+  (spend-vs-budget and projects-by-status), Activity (upcoming deadlines,
+  top risks, recent activity feed). The header and the four stat cards
+  stay above the tabs, visible on every tab.
+- **Project detail page** — Overview (Stakeholders, Actions & Decisions,
+  Activity), Schedule (Milestones, Tasks, EOT Claims, Commissioning &
+  Handover), Budget & Contract (Cash Flow, Variations, Payment Claims,
+  Insurance & Warranties, Permits & Approvals), Quality & Risk (Risks &
+  Opportunities, SQE, Defects & Punch List, RFIs, Document Register), Site
+  & Records (Site Visits, Attachments, Monthly Reports, Lessons Learned).
+  The header, description, and project info field grid stay above the
+  tabs, visible on every tab.
+
+Tab state is local to each page (`useState`, defaulting to the first tab)
+rather than reflected in the URL — switching projects or navigating away
+and back always starts from the default tab. Every panel that was already
+on these pages is still there; this only changed which section of the
+page shows it.
+
 ## Roadmap ideas (not built yet)
 
 This is intentionally a starting point. Natural next steps to discuss:

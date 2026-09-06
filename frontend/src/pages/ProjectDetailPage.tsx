@@ -153,6 +153,7 @@ import EotPanel from "../components/EotPanel";
 import ChecklistPanel from "../components/ChecklistPanel";
 import DefectsPanel from "../components/DefectsPanel";
 import DocumentsPanel from "../components/DocumentsPanel";
+import Tabs from "../components/Tabs";
 import PaymentClaimsPanel from "../components/PaymentClaimsPanel";
 import HealthBadge from "../components/HealthBadge";
 import { computeProjectHealth } from "../health";
@@ -163,6 +164,16 @@ import { canModifyProject } from "../permissions";
 import UserMenu from "../components/UserMenu";
 import { useAuth } from "../auth/AuthContext";
 import gvwLogo from "../assets/gvw-logo.png";
+
+type ProjectTabId = "overview" | "schedule" | "budget" | "quality" | "site";
+
+const PROJECT_TABS: { id: ProjectTabId; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "schedule", label: "Schedule" },
+  { id: "budget", label: "Budget & Contract" },
+  { id: "quality", label: "Quality & Risk" },
+  { id: "site", label: "Site & Records" },
+];
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -193,6 +204,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<ProjectTabId>("overview");
 
   async function load() {
     if (!id) return;
@@ -801,157 +813,181 @@ export default function ProjectDetailPage() {
           <Field label="Created By" value={project.createdBy?.name || "—"} />
         </div>
 
-        <StakeholdersPanel
-          stakeholders={stakeholders}
-          onCreate={handleCreateStakeholder}
-          onUpdate={handleUpdateStakeholder}
-          onDelete={handleDeleteStakeholder}
-        />
+        <Tabs tabs={PROJECT_TABS} active={activeTab} onChange={setActiveTab} />
 
-        <PermitsPanel
-          permits={permits}
-          onCreate={handleCreatePermit}
-          onUpdate={handleUpdatePermit}
-          onDelete={handleDeletePermit}
-        />
+        <div className="space-y-6">
+          {activeTab === "overview" && (
+            <>
+              <StakeholdersPanel
+                stakeholders={stakeholders}
+                onCreate={handleCreateStakeholder}
+                onUpdate={handleUpdateStakeholder}
+                onDelete={handleDeleteStakeholder}
+              />
 
-        <InsuranceWarrantiesPanel
-          items={insuranceWarranties}
-          onCreate={handleCreateInsuranceWarranty}
-          onUpdate={handleUpdateInsuranceWarranty}
-          onDelete={handleDeleteInsuranceWarranty}
-        />
+              <ActionsPanel
+                actionItems={actionItems}
+                onCreate={handleCreateActionItem}
+                onUpdate={handleUpdateActionItem}
+                onDelete={handleDeleteActionItem}
+              />
 
-        <VariationsPanel
-          variations={variations}
-          onCreate={handleCreateVariation}
-          onUpdate={handleUpdateVariation}
-          onDelete={handleDeleteVariation}
-        />
+              <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
+                  Activity
+                </h2>
+                <ActivityFeed entries={activity} emptyMessage="No activity recorded yet." />
+              </div>
+            </>
+          )}
 
-        <CashFlowPanel
-          project={project}
-          entries={cashFlowEntries}
-          variations={variations}
-          onUpsert={handleUpsertCashFlowEntry}
-          onDelete={handleDeleteCashFlowEntry}
-        />
+          {activeTab === "schedule" && (
+            <>
+              <MilestonesPanel
+                milestones={milestones}
+                onCreate={handleCreateMilestone}
+                onUpdate={handleUpdateMilestone}
+                onDelete={handleDeleteMilestone}
+                onReorder={handleReorderMilestone}
+              />
 
-        <PaymentClaimsPanel
-          claims={paymentClaims}
-          onCreate={handleCreatePaymentClaim}
-          onUpdate={handleUpdatePaymentClaim}
-          onDelete={handleDeletePaymentClaim}
-        />
+              <TaskList
+                tasks={project.tasks ?? []}
+                onAdd={handleAddTask}
+                onUpdate={handleUpdateTask}
+                onDelete={handleDeleteTask}
+              />
 
-        <RisksPanel
-          risks={risks}
-          onCreate={handleCreateRisk}
-          onUpdate={handleUpdateRisk}
-          onDelete={handleDeleteRisk}
-        />
+              <EotPanel
+                claims={eotClaims}
+                onCreate={handleCreateEotClaim}
+                onUpdate={handleUpdateEotClaim}
+                onDelete={handleDeleteEotClaim}
+              />
 
-        <RfisPanel
-          rfis={rfis}
-          onCreate={handleCreateRfi}
-          onUpdate={handleUpdateRfi}
-          onDelete={handleDeleteRfi}
-        />
+              <ChecklistPanel
+                items={checklistItems}
+                onCreate={handleCreateChecklistItem}
+                onUpdate={handleUpdateChecklistItem}
+                onDelete={handleDeleteChecklistItem}
+              />
+            </>
+          )}
 
-        <DocumentsPanel
-          documents={documents}
-          onCreate={handleCreateDocument}
-          onUpdate={handleUpdateDocument}
-          onDelete={handleDeleteDocument}
-        />
+          {activeTab === "budget" && (
+            <>
+              <CashFlowPanel
+                project={project}
+                entries={cashFlowEntries}
+                variations={variations}
+                onUpsert={handleUpsertCashFlowEntry}
+                onDelete={handleDeleteCashFlowEntry}
+              />
 
-        <SqePanel
-          records={sqeRecords}
-          onCreate={handleCreateSqeRecord}
-          onUpdate={handleUpdateSqeRecord}
-          onDelete={handleDeleteSqeRecord}
-        />
+              <VariationsPanel
+                variations={variations}
+                onCreate={handleCreateVariation}
+                onUpdate={handleUpdateVariation}
+                onDelete={handleDeleteVariation}
+              />
 
-        <ActionsPanel
-          actionItems={actionItems}
-          onCreate={handleCreateActionItem}
-          onUpdate={handleUpdateActionItem}
-          onDelete={handleDeleteActionItem}
-        />
+              <PaymentClaimsPanel
+                claims={paymentClaims}
+                onCreate={handleCreatePaymentClaim}
+                onUpdate={handleUpdatePaymentClaim}
+                onDelete={handleDeletePaymentClaim}
+              />
 
-        <TaskList
-          tasks={project.tasks ?? []}
-          onAdd={handleAddTask}
-          onUpdate={handleUpdateTask}
-          onDelete={handleDeleteTask}
-        />
+              <InsuranceWarrantiesPanel
+                items={insuranceWarranties}
+                onCreate={handleCreateInsuranceWarranty}
+                onUpdate={handleUpdateInsuranceWarranty}
+                onDelete={handleDeleteInsuranceWarranty}
+              />
 
-        <MilestonesPanel
-          milestones={milestones}
-          onCreate={handleCreateMilestone}
-          onUpdate={handleUpdateMilestone}
-          onDelete={handleDeleteMilestone}
-          onReorder={handleReorderMilestone}
-        />
+              <PermitsPanel
+                permits={permits}
+                onCreate={handleCreatePermit}
+                onUpdate={handleUpdatePermit}
+                onDelete={handleDeletePermit}
+              />
+            </>
+          )}
 
-        <EotPanel
-          claims={eotClaims}
-          onCreate={handleCreateEotClaim}
-          onUpdate={handleUpdateEotClaim}
-          onDelete={handleDeleteEotClaim}
-        />
+          {activeTab === "quality" && (
+            <>
+              <RisksPanel
+                risks={risks}
+                onCreate={handleCreateRisk}
+                onUpdate={handleUpdateRisk}
+                onDelete={handleDeleteRisk}
+              />
 
-        <ChecklistPanel
-          items={checklistItems}
-          onCreate={handleCreateChecklistItem}
-          onUpdate={handleUpdateChecklistItem}
-          onDelete={handleDeleteChecklistItem}
-        />
+              <SqePanel
+                records={sqeRecords}
+                onCreate={handleCreateSqeRecord}
+                onUpdate={handleUpdateSqeRecord}
+                onDelete={handleDeleteSqeRecord}
+              />
 
-        <DefectsPanel
-          defects={defects}
-          onCreate={handleCreateDefect}
-          onUpdate={handleUpdateDefect}
-          onDelete={handleDeleteDefect}
-        />
+              <DefectsPanel
+                defects={defects}
+                onCreate={handleCreateDefect}
+                onUpdate={handleUpdateDefect}
+                onDelete={handleDeleteDefect}
+              />
 
-        <SiteVisitsPanel
-          siteVisits={siteVisits}
-          photosByVisit={groupPhotosByVisit(sitePhotos)}
-          allPhotos={sitePhotos}
-          onCreate={handleCreateSiteVisit}
-          onUpdate={handleUpdateSiteVisit}
-          onDelete={handleDeleteSiteVisit}
-          onUploadPhotos={handleUploadSiteVisitPhotos}
-          onDeletePhoto={handleDeleteSiteVisitPhoto}
-        />
+              <RfisPanel
+                rfis={rfis}
+                onCreate={handleCreateRfi}
+                onUpdate={handleUpdateRfi}
+                onDelete={handleDeleteRfi}
+              />
 
-        <AttachmentsPanel
-          attachments={attachments}
-          onUpload={handleUploadAttachment}
-          onDelete={handleDeleteAttachment}
-        />
+              <DocumentsPanel
+                documents={documents}
+                onCreate={handleCreateDocument}
+                onUpdate={handleUpdateDocument}
+                onDelete={handleDeleteDocument}
+              />
+            </>
+          )}
 
-        <MonthlyReportsPanel
-          reports={reports}
-          currentUser={user}
-          onCreate={handleCreateReport}
-          onUpdate={handleUpdateReport}
-          onDelete={handleDeleteReport}
-        />
+          {activeTab === "site" && (
+            <>
+              <SiteVisitsPanel
+                siteVisits={siteVisits}
+                photosByVisit={groupPhotosByVisit(sitePhotos)}
+                allPhotos={sitePhotos}
+                onCreate={handleCreateSiteVisit}
+                onUpdate={handleUpdateSiteVisit}
+                onDelete={handleDeleteSiteVisit}
+                onUploadPhotos={handleUploadSiteVisitPhotos}
+                onDeletePhoto={handleDeleteSiteVisitPhoto}
+              />
 
-        <LessonsLearnedPanel
-          lessons={lessons}
-          onCreate={handleCreateLesson}
-          onUpdate={handleUpdateLesson}
-          onDelete={handleDeleteLesson}
-        />
+              <AttachmentsPanel
+                attachments={attachments}
+                onUpload={handleUploadAttachment}
+                onDelete={handleDeleteAttachment}
+              />
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
-            Activity
-          </h2>
-          <ActivityFeed entries={activity} emptyMessage="No activity recorded yet." />
+              <MonthlyReportsPanel
+                reports={reports}
+                currentUser={user}
+                onCreate={handleCreateReport}
+                onUpdate={handleUpdateReport}
+                onDelete={handleDeleteReport}
+              />
+
+              <LessonsLearnedPanel
+                lessons={lessons}
+                onCreate={handleCreateLesson}
+                onUpdate={handleUpdateLesson}
+                onDelete={handleDeleteLesson}
+              />
+            </>
+          )}
         </div>
       </main>
 
