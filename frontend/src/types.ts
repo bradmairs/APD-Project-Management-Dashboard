@@ -787,3 +787,32 @@ export type TrainingRecordInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export interface PerformanceReview {
+  id: string;
+  projectId: string;
+  revieweeName: string;
+  reviewPeriod: string | null;
+  reviewDate: string;
+  qualityRating: number;
+  safetyRating: number;
+  timelinessRating: number;
+  communicationRating: number;
+  comments: string | null;
+  reviewedById: string | null;
+  reviewedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type PerformanceReviewInput = Omit<
+  PerformanceReview,
+  | "id"
+  | "projectId"
+  | "reviewedById"
+  | "reviewedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

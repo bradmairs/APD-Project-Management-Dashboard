@@ -13,6 +13,8 @@ import {
   CommunityEnquiryInput,
   Correspondence,
   CorrespondenceInput,
+  PerformanceReview,
+  PerformanceReviewInput,
   TrainingRecord,
   TrainingRecordInput,
   DefectItem,
@@ -77,6 +79,7 @@ import {
   createStakeholder,
   createSubcontractor,
   createTask,
+  createPerformanceReview,
   createTrainingRecord,
   createVariation,
   deleteActionItem,
@@ -104,6 +107,7 @@ import {
   deleteStakeholder,
   deleteSubcontractor,
   deleteTask,
+  deletePerformanceReview,
   deleteTrainingRecord,
   deleteVariation,
   getActionItems,
@@ -131,6 +135,7 @@ import {
   getSqeRecords,
   getStakeholders,
   getSubcontractors,
+  getPerformanceReviews,
   getTrainingRecords,
   getVariations,
   reorderMilestone,
@@ -156,6 +161,7 @@ import {
   updateStakeholder,
   updateSubcontractor,
   updateTask,
+  updatePerformanceReview,
   updateTrainingRecord,
   updateVariation,
   uploadAttachment,
@@ -188,6 +194,7 @@ import DocumentsPanel from "../components/DocumentsPanel";
 import EnquiriesPanel from "../components/EnquiriesPanel";
 import CorrespondencePanel from "../components/CorrespondencePanel";
 import TrainingRecordsPanel from "../components/TrainingRecordsPanel";
+import PerformanceReviewsPanel from "../components/PerformanceReviewsPanel";
 import Tabs from "../components/Tabs";
 import PaymentClaimsPanel from "../components/PaymentClaimsPanel";
 import HealthBadge from "../components/HealthBadge";
@@ -241,6 +248,7 @@ export default function ProjectDetailPage() {
   const [meetingMinutes, setMeetingMinutes] = useState<MeetingMinutes[]>([]);
   const [correspondence, setCorrespondence] = useState<Correspondence[]>([]);
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
+  const [performanceReviews, setPerformanceReviews] = useState<PerformanceReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -279,6 +287,7 @@ export default function ProjectDetailPage() {
         meetingMinutesData,
         correspondenceData,
         trainingRecordData,
+        performanceReviewData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -307,6 +316,7 @@ export default function ProjectDetailPage() {
         getMeetingMinutes(id),
         getCorrespondence(id),
         getTrainingRecords(id),
+        getPerformanceReviews(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -335,6 +345,7 @@ export default function ProjectDetailPage() {
       setMeetingMinutes(meetingMinutesData);
       setCorrespondence(correspondenceData);
       setTrainingRecords(trainingRecordData);
+      setPerformanceReviews(performanceReviewData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -747,6 +758,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreatePerformanceReview(data: Partial<PerformanceReviewInput>) {
+    if (!project) return;
+    await createPerformanceReview(project.id, data);
+    await load();
+  }
+
+  async function handleUpdatePerformanceReview(
+    item: PerformanceReview,
+    data: Partial<PerformanceReviewInput>
+  ) {
+    await updatePerformanceReview(item.id, data);
+    await load();
+  }
+
+  async function handleDeletePerformanceReview(item: PerformanceReview) {
+    await deletePerformanceReview(item.id);
+    await load();
+  }
+
   async function handleCreateDocument(data: Partial<DocumentRecordInput>) {
     if (!project) return;
     await createDocument(project.id, data);
@@ -1074,6 +1104,13 @@ export default function ProjectDetailPage() {
                 onCreate={handleCreateSubcontractor}
                 onUpdate={handleUpdateSubcontractor}
                 onDelete={handleDeleteSubcontractor}
+              />
+
+              <PerformanceReviewsPanel
+                items={performanceReviews}
+                onCreate={handleCreatePerformanceReview}
+                onUpdate={handleUpdatePerformanceReview}
+                onDelete={handleDeletePerformanceReview}
               />
             </>
           )}

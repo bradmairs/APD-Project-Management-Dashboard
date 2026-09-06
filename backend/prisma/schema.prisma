@@ -236,6 +236,7 @@ model User {
   meetingMinutes MeetingMinutes[]
   correspondence Correspondence[]
   trainingRecords TrainingRecord[]
+  performanceReviews PerformanceReview[]
 }
 
 model Project {
@@ -286,6 +287,7 @@ model Project {
   meetingMinutes         MeetingMinutes[]
   correspondence         Correspondence[]
   trainingRecords        TrainingRecord[]
+  performanceReviews     PerformanceReview[]
 }
 
 model Task {
@@ -1033,6 +1035,37 @@ model TrainingRecord {
   recordedByName   String
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// A periodic performance scorecard for a consultant or contractor engaged
+// on the project — distinct from Subcontractor (a static engagement
+// record with no ongoing assessment) and SqeRecord (a one-off incident,
+// not a scheduled review). revieweeName is freeform, matching the same
+// pattern as Subcontractor.companyName and Project.contractor rather than
+// a foreign key, since a review may cover the head contractor, a named
+// subcontractor, or a design consultant. The four 1-5 ratings are stored
+// as entered; the overall score is computed client-side as their average
+// (never stored), the same computed-not-stored pattern Risk's
+// likelihood x consequence score uses.
+model PerformanceReview {
+  id                  String   @id @default(cuid())
+  project             Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId           String
+  revieweeName        String
+  reviewPeriod        String?
+  reviewDate          DateTime
+  qualityRating       Int
+  safetyRating        Int
+  timelinessRating    Int
+  communicationRating Int
+  comments            String?
+  reviewedBy          User?    @relation(fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedById        String?
+  reviewedByName      String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([projectId])
 }

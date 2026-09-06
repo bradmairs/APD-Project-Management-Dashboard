@@ -19,6 +19,7 @@ import {
   Risk,
   SqeRecord,
   Task,
+  PerformanceReview,
   TrainingRecord,
   Variation,
 } from "../types";
@@ -38,6 +39,7 @@ import {
   getAllRfis,
   getAllRisks,
   getAllSqeRecords,
+  getAllPerformanceReviews,
   getAllTrainingRecords,
   getAllVariations,
   getProjects,
@@ -62,6 +64,7 @@ import OpenEnquiriesPanel from "../components/OpenEnquiriesPanel";
 import OpenCorrespondencePanel from "../components/OpenCorrespondencePanel";
 import ExpiringSubcontractorInsurancePanel from "../components/ExpiringSubcontractorInsurancePanel";
 import ExpiringTrainingPanel from "../components/ExpiringTrainingPanel";
+import LowPerformingContractorsPanel from "../components/LowPerformingContractorsPanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -106,6 +109,7 @@ export default function DashboardPage() {
   const [subcontractors, setSubcontractors] = useState<Subcontractor[]>([]);
   const [correspondence, setCorrespondence] = useState<Correspondence[]>([]);
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
+  const [performanceReviews, setPerformanceReviews] = useState<PerformanceReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -139,6 +143,7 @@ export default function DashboardPage() {
         subcontractorData,
         correspondenceData,
         trainingRecordData,
+        performanceReviewData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -158,6 +163,7 @@ export default function DashboardPage() {
         getAllSubcontractors(),
         getAllCorrespondence(),
         getAllTrainingRecords(),
+        getAllPerformanceReviews(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -177,6 +183,7 @@ export default function DashboardPage() {
       setSubcontractors(subcontractorData);
       setCorrespondence(correspondenceData);
       setTrainingRecords(trainingRecordData);
+      setPerformanceReviews(performanceReviewData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -372,6 +379,7 @@ export default function DashboardPage() {
             <ExpiringSubcontractorInsurancePanel subcontractors={subcontractors} />
             <OpenCorrespondencePanel items={correspondence} />
             <ExpiringTrainingPanel records={trainingRecords} />
+            <LowPerformingContractorsPanel reviews={performanceReviews} />
           </div>
         )}
 

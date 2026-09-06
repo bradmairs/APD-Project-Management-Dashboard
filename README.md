@@ -702,6 +702,29 @@ sinking to the bottom. The Dashboard's Alerts tab has a portfolio-wide
 subcontractor across every project, soonest first. Open to any logged-in
 user to edit.
 
+## Performance Reviews
+
+Each project has a **Performance Reviews** register — periodic scorecards
+for the consultants and contractors engaged on the project, distinct from
+**Subcontractors** (a static engagement record with no ongoing
+assessment) and **Safety, Quality & Environment** (a one-off incident,
+not a scheduled review). A review has the Consultant/Contractor being
+reviewed (freeform, matching the same pattern as `Subcontractor
+.companyName` and `Project.contractor` rather than a foreign key, since a
+review may cover the head contractor, a named subcontractor, or a design
+consultant), an optional Review Period label (e.g. "Q3 2026"), a Review
+Date, four 1-5 ratings — Quality, Safety, Timeliness, Communication — and
+Comments.
+
+The overall score is computed client-side as the average of the four
+ratings and is never stored, the same computed-not-stored pattern Risk's
+likelihood x consequence score uses (`frontend/src/performanceMeta.ts`).
+A score below 2.5 is banded "Needs Improvement" and flags the review on
+the Dashboard's portfolio-wide **Low Performing Contractors** panel,
+worst-scoring first; "Satisfactory" (2.5-3.5), "Good" (3.5-4.5), and
+"Excellent" (4.5+) round out the bands. The project panel sorts
+lowest-scoring reviews first. Open to any logged-in user to edit.
+
 ## Insurance & Warranties
 
 Each project has an **Insurance & Warranties** register — one shared
