@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAllInsuranceWarranties, getAllPermits, getUpcomingTasks } from "../api";
-import { InsuranceWarranty, Permit, Task } from "../types";
+import { getAllInsuranceWarranties, getAllPermits, getAllRfis, getUpcomingTasks } from "../api";
+import { InsuranceWarranty, Permit, Rfi, Task } from "../types";
 import { formatDate } from "../format";
 import { isTaskDueSoon, isTaskOverdue } from "../taskMeta";
 import { isPermitExpired, isPermitExpiringSoon } from "../permitMeta";
@@ -9,10 +9,11 @@ import {
   isInsuranceWarrantyExpired,
   isInsuranceWarrantyExpiringSoon,
 } from "../insuranceWarrantyMeta";
+import { isRfiDueSoon, isRfiOverdue } from "../rfiMeta";
 
 interface NotificationItem {
   key: string;
-  kind: "Task" | "Permit" | "Insurance" | "Warranty";
+  kind: "Task" | "Permit" | "Insurance" | "Warranty" | "RFI";
   title: string;
   date: string;
   overdue: boolean;
@@ -23,6 +24,7 @@ export default function NotificationBell() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [permits, setPermits] = useState<Permit[]>([]);
   const [insuranceWarranties, setInsuranceWarranties] = useState<InsuranceWarranty[]>([]);
+  const [rfis, setRfis] = useState<Rfi[]>([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -35,6 +37,9 @@ export default function NotificationBell() {
     getAllInsuranceWarranties()
       .then(setInsuranceWarranties)
       .catch(() => setInsuranceWarranties([]));
+    getAllRfis()
+      .then(setRfis)
+      .catch(() => setRfis([]));
   }, []);
 
   const overdueTasks = tasks.filter(isTaskOverdue);
@@ -44,14 +49,18 @@ export default function NotificationBell() {
   const flaggedInsuranceWarranties = insuranceWarranties.filter(
     (i) => isInsuranceWarrantyExpired(i) || isInsuranceWarrantyExpiringSoon(i)
   );
+  const flaggedRfis = rfis.filter((r) => isRfiOverdue(r) || isRfiDueSoon(r));
 
   const overdueCount =
-    overdueTasks.length + flaggedPermits.filter(isPermitExpired).length +
-    flaggedInsuranceWarranties.filter(isInsuranceWarrantyExpired).length;
+    overdueTasks.length +
+    flaggedPermits.filter(isPermitExpired).length +
+    flaggedInsuranceWarranties.filter(isInsuranceWarrantyExpired).length +
+    flaggedRfis.filter(isRfiOverdue).length;
   const dueSoonCount =
     dueSoonTasks.length +
     flaggedPermits.filter((p) => !isPermitExpired(p)).length +
-    flaggedInsuranceWarranties.filter((i) => !isInsuranceWarrantyExpired(i)).length;
+    flaggedInsuranceWarranties.filter((i) => !isInsuranceWarrantyExpired(i)).length +
+    flaggedRfis.filter((r) => !isRfiOverdue(r)).length;
   const notifyCount = overdueCount + dueSoonCount;
 
   const badgeColor = overdueCount > 0 ? "bg-red-600" : dueSoonCount > 0 ? "bg-amber-500" : null;
@@ -80,6 +89,14 @@ export default function NotificationBell() {
       date: i.expiryDate!,
       overdue: isInsuranceWarrantyExpired(i),
       project: i.project,
+    })),
+    ...flaggedRfis.map((r) => ({
+      key: `rfi-${r.id}`,
+      kind: "RFI" as const,
+      title: `${r.rfiNumber}: ${r.subject}`,
+      date: r.dateRequired!,
+      overdue: isRfiOverdue(r),
+      project: r.project,
     })),
   ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 

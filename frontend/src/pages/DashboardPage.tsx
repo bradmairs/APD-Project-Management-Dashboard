@@ -12,6 +12,7 @@ import {
   Project,
   ProjectInput,
   ProjectStatus,
+  Rfi,
   Risk,
   SqeRecord,
   Task,
@@ -27,6 +28,7 @@ import {
   getAllInsuranceWarranties,
   getAllPaymentClaims,
   getAllPermits,
+  getAllRfis,
   getAllRisks,
   getAllSqeRecords,
   getAllVariations,
@@ -47,6 +49,7 @@ import ExpiringInsuranceWarrantiesPanel from "../components/ExpiringInsuranceWar
 import OpenSqePanel from "../components/OpenSqePanel";
 import OpenDefectsPanel from "../components/OpenDefectsPanel";
 import OpenPaymentClaimsPanel from "../components/OpenPaymentClaimsPanel";
+import OpenRfisPanel from "../components/OpenRfisPanel";
 import ChartCard from "../components/ChartCard";
 import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
 import PortfolioCumulativeSpendChart from "../charts/PortfolioCumulativeSpendChart";
@@ -76,6 +79,7 @@ export default function DashboardPage() {
   const [defects, setDefects] = useState<DefectItem[]>([]);
   const [paymentClaims, setPaymentClaims] = useState<PaymentClaim[]>([]);
   const [insuranceWarranties, setInsuranceWarranties] = useState<InsuranceWarranty[]>([]);
+  const [rfis, setRfis] = useState<Rfi[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -103,6 +107,7 @@ export default function DashboardPage() {
         defectData,
         paymentClaimData,
         insuranceWarrantyData,
+        rfiData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -117,6 +122,7 @@ export default function DashboardPage() {
         getAllDefects(),
         getAllPaymentClaims(),
         getAllInsuranceWarranties(),
+        getAllRfis(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -130,6 +136,7 @@ export default function DashboardPage() {
       setDefects(defectData);
       setPaymentClaims(paymentClaimData);
       setInsuranceWarranties(insuranceWarrantyData);
+      setRfis(rfiData);
       setEotClaims(eotData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
@@ -258,7 +265,7 @@ export default function DashboardPage() {
         <StatCards projects={projects} />
 
         {!loading && projects.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
             <NeedsAttentionPanel projects={projects} healthByProjectId={healthByProjectId} />
             <OpenActionsPanel actionItems={actionItems} />
             <ExpiringPermitsPanel permits={permits} />
@@ -266,6 +273,7 @@ export default function DashboardPage() {
             <OpenDefectsPanel defects={defects} />
             <OpenPaymentClaimsPanel claims={paymentClaims} />
             <ExpiringInsuranceWarrantiesPanel items={insuranceWarranties} />
+            <OpenRfisPanel rfis={rfis} />
           </div>
         )}
 

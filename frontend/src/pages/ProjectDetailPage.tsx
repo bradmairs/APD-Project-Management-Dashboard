@@ -29,6 +29,8 @@ import {
   MonthlyReportInput,
   Project,
   ProjectInput,
+  Rfi,
+  RfiInput,
   Risk,
   RiskInput,
   SiteVisit,
@@ -52,6 +54,7 @@ import {
   createMonthlyReport,
   createPaymentClaim,
   createPermit,
+  createRfi,
   createRisk,
   createSiteVisit,
   createSqeRecord,
@@ -71,6 +74,7 @@ import {
   deletePaymentClaim,
   deletePermit,
   deleteProject,
+  deleteRfi,
   deleteRisk,
   deleteSiteVisit,
   deleteSiteVisitPhoto,
@@ -93,6 +97,7 @@ import {
   getProject,
   getProjectActivity,
   getProjectSitePhotos,
+  getRfis,
   getRisks,
   getSiteVisits,
   getSqeRecords,
@@ -110,6 +115,7 @@ import {
   updatePaymentClaim,
   updatePermit,
   updateProject,
+  updateRfi,
   updateRisk,
   updateSiteVisit,
   updateSqeRecord,
@@ -130,6 +136,7 @@ import CashFlowPanel from "../components/CashFlowPanel";
 import SiteVisitsPanel from "../components/SiteVisitsPanel";
 import VariationsPanel from "../components/VariationsPanel";
 import RisksPanel from "../components/RisksPanel";
+import RfisPanel from "../components/RfisPanel";
 import ActionsPanel from "../components/ActionsPanel";
 import StakeholdersPanel from "../components/StakeholdersPanel";
 import PermitsPanel from "../components/PermitsPanel";
@@ -168,6 +175,7 @@ export default function ProjectDetailPage() {
   const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   const [permits, setPermits] = useState<Permit[]>([]);
   const [insuranceWarranties, setInsuranceWarranties] = useState<InsuranceWarranty[]>([]);
+  const [rfis, setRfis] = useState<Rfi[]>([]);
   const [lessons, setLessons] = useState<LessonLearned[]>([]);
   const [sqeRecords, setSqeRecords] = useState<SqeRecord[]>([]);
   const [eotClaims, setEotClaims] = useState<EotClaim[]>([]);
@@ -204,6 +212,7 @@ export default function ProjectDetailPage() {
         defectData,
         paymentClaimData,
         insuranceWarrantyData,
+        rfiData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -225,6 +234,7 @@ export default function ProjectDetailPage() {
         getDefects(id),
         getPaymentClaims(id),
         getInsuranceWarranties(id),
+        getRfis(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -246,6 +256,7 @@ export default function ProjectDetailPage() {
       setDefects(defectData);
       setPaymentClaims(paymentClaimData);
       setInsuranceWarranties(insuranceWarrantyData);
+      setRfis(rfiData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -604,6 +615,22 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateRfi(data: Partial<RfiInput>) {
+    if (!project) return;
+    await createRfi(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateRfi(rfi: Rfi, data: Partial<RfiInput>) {
+    await updateRfi(rfi.id, data);
+    await load();
+  }
+
+  async function handleDeleteRfi(rfi: Rfi) {
+    await deleteRfi(rfi.id);
+    await load();
+  }
+
   const revisedTargetCompletion = useMemo(
     () => (project ? revisedCompletionDate(project, eotClaims) : null),
     [project, eotClaims]
@@ -786,6 +813,13 @@ export default function ProjectDetailPage() {
           onCreate={handleCreateRisk}
           onUpdate={handleUpdateRisk}
           onDelete={handleDeleteRisk}
+        />
+
+        <RfisPanel
+          rfis={rfis}
+          onCreate={handleCreateRfi}
+          onUpdate={handleUpdateRfi}
+          onDelete={handleDeleteRfi}
         />
 
         <SqePanel

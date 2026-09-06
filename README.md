@@ -79,22 +79,24 @@ See `backend/prisma/schema.prisma` for the source of truth.
 A bell icon next to the account menu — present on every page, not just the
 dashboard — shows a badge with the count of items that are overdue/expired
 or due/expiring within their respective windows (across all projects, not
-just your own): tasks due within 7 days, and permits or insurance/
-warranties expiring within 60 days. The badge is red if anything is
-overdue or expired, amber if only "due soon"/"expiring soon" items remain.
-Clicking it opens one merged list — tasks, permits, and insurance/
-warranties together, sorted soonest first, each tagged with its type and
-linking to its project.
+just your own): tasks and open RFIs due within 7 days, and permits or
+insurance/warranties expiring within 60 days. The badge is red if anything
+is overdue or expired, amber if only "due soon"/"expiring soon" items
+remain. Clicking it opens one merged list — tasks, permits, insurance/
+warranties, and RFIs together, sorted soonest first, each tagged with its
+type and linking to its project.
 
-`frontend/src/components/NotificationBell.tsx` composes this from three
-existing portfolio-wide endpoints and their existing expiry helpers rather
-than adding new backend logic: `getUpcomingTasks()` (all fetched tasks are
-listed, but only overdue/due-soon ones count toward the badge, via
-`taskMeta.ts`'s `isTaskOverdue`/`isTaskDueSoon`), and `getAllPermits()` /
-`getAllInsuranceWarranties()` filtered to flagged items only via
-`permitMeta.ts`'s and `insuranceWarrantyMeta.ts`'s expiry helpers — the
-same ones the dashboard's "Permits Expiring Soon" and "Insurance &
-Warranties Expiring Soon" panels use, so all three stay in agreement.
+`frontend/src/components/NotificationBell.tsx` composes this from four
+existing portfolio-wide endpoints and their existing expiry/overdue
+helpers rather than adding new backend logic: `getUpcomingTasks()` (all
+fetched tasks are listed, but only overdue/due-soon ones count toward the
+badge, via `taskMeta.ts`'s `isTaskOverdue`/`isTaskDueSoon`),
+`getAllPermits()` / `getAllInsuranceWarranties()` filtered to flagged
+items only via `permitMeta.ts`'s and `insuranceWarrantyMeta.ts`'s expiry
+helpers, and `getAllRfis()` filtered via `rfiMeta.ts`'s
+`isRfiOverdue`/`isRfiDueSoon` — the same helpers the dashboard's
+"Permits Expiring Soon", "Insurance & Warranties Expiring Soon", and
+"Open RFIs" panels use, so all four stay in agreement.
 
 There's no email/SMS delivery — this is in-app only. Nothing to configure
 (no SMTP credentials needed).
@@ -478,6 +480,32 @@ Like Variations, a risk is live data with no per-month snapshot — its
 current state and status history (via the Activity panel) are what
 matter. Open to any logged-in user to edit, matching Tasks, Attachments,
 Milestones, and Variations.
+
+## Requests for Information
+
+Each project has a **Requests for Information (RFIs)** register — a
+formal question raised to a designer, consultant, or client that needs
+an answer before work can proceed (a specification ambiguity, a missing
+detail, a site condition needing direction). A request has an RFI
+Number, Subject, Question, who it was raised to, a Status of Open/
+Answered/Closed, the date raised, a Response, and Notes.
+
+`dateRequired` — the date a response is due — is the contractually
+meaningful deadline, distinct from `dateRaised`, the same role
+`Task.dueDate` plays for tasks: only an Open RFI can be overdue or due
+soon (`frontend/src/rfiMeta.ts`'s `isRfiOverdue`/`isRfiDueSoon`, mirroring
+`taskMeta.ts`). `dateAnswered` stamps automatically the moment status
+first reaches Answered or Closed (both imply a response exists, the same
+dual-implication pattern Payment Claims' `dateCertified` uses) and clears
+if moved back to Open. The panel sorts open and answered RFIs ahead of
+closed ones and flags overdue items in red.
+
+The Dashboard has a portfolio-wide **Open RFIs** panel listing every
+non-closed RFI across every project, overdue ones first, then soonest
+due — and the notification bell now folds in overdue/due-soon RFIs
+alongside task deadlines and expiring permits/insurance, so a late
+response shows up wherever a PM is already looking. Open to any
+logged-in user to edit.
 
 ## Safety, Quality & Environment
 

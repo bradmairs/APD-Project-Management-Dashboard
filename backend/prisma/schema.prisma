@@ -154,6 +154,12 @@ enum InsuranceWarrantyType {
   WARRANTY
 }
 
+enum RfiStatus {
+  OPEN
+  ANSWERED
+  CLOSED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -180,6 +186,7 @@ model User {
   defectItems    DefectItem[]
   paymentClaims  PaymentClaim[]
   insuranceWarranties InsuranceWarranty[]
+  rfis           Rfi[]
 }
 
 model Project {
@@ -223,6 +230,7 @@ model Project {
   defectItems            DefectItem[]
   paymentClaims          PaymentClaim[]
   insuranceWarranties    InsuranceWarranty[]
+  rfis                   Rfi[]
 }
 
 model Task {
@@ -771,6 +779,41 @@ model InsuranceWarranty {
   createdByName    String
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+
+  @@index([projectId])
+}
+
+// A Request for Information — a formal question raised to a designer,
+// consultant, or client that needs an answer before work can proceed
+// (a specification ambiguity, a missing detail, a site condition
+// needing direction). dateRequired is the contractually meaningful
+// date — the response deadline — distinct from dateRaised; it's what
+// the portfolio-wide Open RFIs panel and the notification bell sort
+// and flag by, the same role Task.dueDate plays for tasks. status runs
+// OPEN -> ANSWERED -> CLOSED; dateAnswered stamps the moment status
+// first reaches ANSWERED or CLOSED (both imply a response exists,
+// mirroring PaymentClaim.dateCertified's dual-implication stamp) and
+// clears if moved back to OPEN. Cascades with its project like the
+// other registers.
+model Rfi {
+  id            String    @id @default(cuid())
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  rfiNumber     String
+  subject       String
+  question      String
+  response      String?
+  raisedTo      String?
+  status        RfiStatus @default(OPEN)
+  dateRaised    DateTime
+  dateRequired  DateTime?
+  dateAnswered  DateTime?
+  raisedBy      User?     @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById    String?
+  raisedByName  String
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([projectId])
 }

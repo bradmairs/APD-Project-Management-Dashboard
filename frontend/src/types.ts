@@ -566,3 +566,37 @@ export type InsuranceWarrantyInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export type RfiStatus = "OPEN" | "ANSWERED" | "CLOSED";
+
+export interface Rfi {
+  id: string;
+  projectId: string;
+  rfiNumber: string;
+  subject: string;
+  question: string;
+  response: string | null;
+  raisedTo: string | null;
+  status: RfiStatus;
+  dateRaised: string;
+  dateRequired: string | null;
+  dateAnswered: string | null;
+  raisedById: string | null;
+  raisedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type RfiInput = Omit<
+  Rfi,
+  | "id"
+  | "projectId"
+  | "dateAnswered"
+  | "raisedById"
+  | "raisedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

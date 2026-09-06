@@ -9,6 +9,7 @@ import {
   PaymentClaim,
   Permit,
   Project,
+  Rfi,
   Risk,
   SiteVisit,
   SqeRecord,
@@ -341,4 +342,18 @@ export function describeInsuranceWarrantyUpdate(
 ): string {
   const noun = before.type === "WARRANTY" ? "warranty" : "insurance policy";
   return `updated ${noun} "${before.title}"`;
+}
+
+const RFI_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  ANSWERED: "Answered",
+  CLOSED: "Closed",
+};
+
+export function describeRfiUpdate(before: Rfi, body: Record<string, unknown>): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = RFI_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked RFI "${before.rfiNumber}" as ${label}`;
+  }
+  return `updated RFI "${before.rfiNumber}"`;
 }

@@ -25,6 +25,8 @@ import {
   PermitInput,
   Project,
   ProjectInput,
+  Rfi,
+  RfiInput,
   Risk,
   RiskInput,
   Role,
@@ -820,4 +822,32 @@ export function deleteInsuranceWarranty(id: string): Promise<void> {
   return fetch(`${API_BASE}/insurance-warranties/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
+}
+
+export function getRfis(projectId: string): Promise<Rfi[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/rfis`).then((res) => handle(res));
+}
+
+export function getAllRfis(): Promise<Rfi[]> {
+  return fetch(`${API_BASE}/rfis`).then((res) => handle(res));
+}
+
+export function createRfi(projectId: string, data: Partial<RfiInput>): Promise<Rfi> {
+  return fetch(`${API_BASE}/projects/${projectId}/rfis`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateRfi(id: string, data: Partial<RfiInput>): Promise<Rfi> {
+  return fetch(`${API_BASE}/rfis/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteRfi(id: string): Promise<void> {
+  return fetch(`${API_BASE}/rfis/${id}`, { method: "DELETE" }).then((res) => handle(res));
 }
