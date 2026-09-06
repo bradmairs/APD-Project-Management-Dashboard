@@ -9,6 +9,8 @@ import {
   ChecklistItemInput,
   DefectItem,
   DefectItemInput,
+  DocumentRecord,
+  DocumentRecordInput,
   EotClaim,
   EotClaimInput,
   InsuranceWarranty,
@@ -850,4 +852,38 @@ export function updateRfi(id: string, data: Partial<RfiInput>): Promise<Rfi> {
 
 export function deleteRfi(id: string): Promise<void> {
   return fetch(`${API_BASE}/rfis/${id}`, { method: "DELETE" }).then((res) => handle(res));
+}
+
+export function getDocuments(projectId: string): Promise<DocumentRecord[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/documents`).then((res) => handle(res));
+}
+
+export function getAllDocuments(): Promise<DocumentRecord[]> {
+  return fetch(`${API_BASE}/documents`).then((res) => handle(res));
+}
+
+export function createDocument(
+  projectId: string,
+  data: Partial<DocumentRecordInput>
+): Promise<DocumentRecord> {
+  return fetch(`${API_BASE}/projects/${projectId}/documents`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateDocument(
+  id: string,
+  data: Partial<DocumentRecordInput>
+): Promise<DocumentRecord> {
+  return fetch(`${API_BASE}/documents/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteDocument(id: string): Promise<void> {
+  return fetch(`${API_BASE}/documents/${id}`, { method: "DELETE" }).then((res) => handle(res));
 }

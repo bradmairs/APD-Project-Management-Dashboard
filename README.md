@@ -507,6 +507,27 @@ alongside task deadlines and expiring permits/insurance, so a late
 response shows up wherever a PM is already looking. Open to any
 logged-in user to edit.
 
+## Document Register
+
+Each project has a **Document Register** — a controlled-document list for
+drawings, specifications, reports, and other project documents subject to
+revision control, distinct from **Attachments** (arbitrary uploaded files
+with no revision or status lifecycle). A document has a Document Number,
+Title, Category (Drawing, Specification, Report, Correspondence, As-Built —
+with suggestions, freeform text), Revision, a Status of Draft/For Review/
+Approved/Superseded, an Issue Date, a Description, and Notes.
+
+The status models a standard document-control lifecycle: a document is
+drafted, put out for review, approved for use (e.g. Issued For
+Construction), and eventually superseded by a later revision — a new
+revision is added as a new record rather than overwriting the old one, so
+the register keeps a full revision history rather than deleting anything.
+The panel sorts documents awaiting action (For Review, then Draft) ahead
+of Approved (current, in-use) documents, with Superseded revisions sinking
+to the bottom (`frontend/src/documentMeta.ts`'s `documentStatusRank`,
+the same status-rank pattern every other register uses). Open to any
+logged-in user to edit.
+
 ## Safety, Quality & Environment
 
 Each project has an **SQE** register for logging safety, quality, and

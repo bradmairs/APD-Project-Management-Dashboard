@@ -160,6 +160,17 @@ enum RfiStatus {
   CLOSED
 }
 
+// Standard document-control lifecycle: a document is drafted, put out for
+// review, approved for use (e.g. Issued For Construction), and eventually
+// superseded by a later revision — never deleted, so the register keeps a
+// full revision history.
+enum DocumentStatus {
+  DRAFT
+  FOR_REVIEW
+  APPROVED
+  SUPERSEDED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -187,6 +198,7 @@ model User {
   paymentClaims  PaymentClaim[]
   insuranceWarranties InsuranceWarranty[]
   rfis           Rfi[]
+  documents      DocumentRecord[]
 }
 
 model Project {
@@ -231,6 +243,7 @@ model Project {
   paymentClaims          PaymentClaim[]
   insuranceWarranties    InsuranceWarranty[]
   rfis                   Rfi[]
+  documents              DocumentRecord[]
 }
 
 model Task {
@@ -814,6 +827,30 @@ model Rfi {
   notes         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// A controlled-document register — drawings, specifications, and other
+// project documents subject to revision control, distinct from Attachment
+// (arbitrary uploaded files with no revision/status lifecycle).
+model DocumentRecord {
+  id             String         @id @default(cuid())
+  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  documentNumber String
+  title          String
+  category       String?
+  revision       String
+  status         DocumentStatus @default(DRAFT)
+  issueDate      DateTime?
+  description    String?
+  uploadedBy     User?          @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedById   String?
+  uploadedByName String
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   @@index([projectId])
 }

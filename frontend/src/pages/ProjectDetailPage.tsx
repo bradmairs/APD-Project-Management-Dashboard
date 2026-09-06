@@ -11,6 +11,8 @@ import {
   ChecklistItemInput,
   DefectItem,
   DefectItemInput,
+  DocumentRecord,
+  DocumentRecordInput,
   EotClaim,
   EotClaimInput,
   InsuranceWarranty,
@@ -47,6 +49,7 @@ import {
   createActionItem,
   createChecklistItem,
   createDefect,
+  createDocument,
   createEotClaim,
   createInsuranceWarranty,
   createLessonLearned,
@@ -66,6 +69,7 @@ import {
   deleteCashFlowEntry,
   deleteChecklistItem,
   deleteDefect,
+  deleteDocument,
   deleteEotClaim,
   deleteInsuranceWarranty,
   deleteLessonLearned,
@@ -87,6 +91,7 @@ import {
   getCashFlowEntries,
   getChecklistItems,
   getDefects,
+  getDocuments,
   getEotClaims,
   getInsuranceWarranties,
   getLessonsLearned,
@@ -107,6 +112,7 @@ import {
   updateActionItem,
   updateChecklistItem,
   updateDefect,
+  updateDocument,
   updateEotClaim,
   updateInsuranceWarranty,
   updateLessonLearned,
@@ -146,6 +152,7 @@ import SqePanel from "../components/SqePanel";
 import EotPanel from "../components/EotPanel";
 import ChecklistPanel from "../components/ChecklistPanel";
 import DefectsPanel from "../components/DefectsPanel";
+import DocumentsPanel from "../components/DocumentsPanel";
 import PaymentClaimsPanel from "../components/PaymentClaimsPanel";
 import HealthBadge from "../components/HealthBadge";
 import { computeProjectHealth } from "../health";
@@ -182,6 +189,7 @@ export default function ProjectDetailPage() {
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [defects, setDefects] = useState<DefectItem[]>([]);
   const [paymentClaims, setPaymentClaims] = useState<PaymentClaim[]>([]);
+  const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -213,6 +221,7 @@ export default function ProjectDetailPage() {
         paymentClaimData,
         insuranceWarrantyData,
         rfiData,
+        documentData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -235,6 +244,7 @@ export default function ProjectDetailPage() {
         getPaymentClaims(id),
         getInsuranceWarranties(id),
         getRfis(id),
+        getDocuments(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -257,6 +267,7 @@ export default function ProjectDetailPage() {
       setPaymentClaims(paymentClaimData);
       setInsuranceWarranties(insuranceWarrantyData);
       setRfis(rfiData);
+      setDocuments(documentData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -631,6 +642,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateDocument(data: Partial<DocumentRecordInput>) {
+    if (!project) return;
+    await createDocument(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateDocument(
+    document: DocumentRecord,
+    data: Partial<DocumentRecordInput>
+  ) {
+    await updateDocument(document.id, data);
+    await load();
+  }
+
+  async function handleDeleteDocument(document: DocumentRecord) {
+    await deleteDocument(document.id);
+    await load();
+  }
+
   const revisedTargetCompletion = useMemo(
     () => (project ? revisedCompletionDate(project, eotClaims) : null),
     [project, eotClaims]
@@ -826,6 +856,13 @@ export default function ProjectDetailPage() {
           onCreate={handleCreateRfi}
           onUpdate={handleUpdateRfi}
           onDelete={handleDeleteRfi}
+        />
+
+        <DocumentsPanel
+          documents={documents}
+          onCreate={handleCreateDocument}
+          onUpdate={handleUpdateDocument}
+          onDelete={handleDeleteDocument}
         />
 
         <SqePanel

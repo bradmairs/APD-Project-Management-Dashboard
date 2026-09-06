@@ -600,3 +600,34 @@ export type RfiInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export type DocumentStatus = "DRAFT" | "FOR_REVIEW" | "APPROVED" | "SUPERSEDED";
+
+export interface DocumentRecord {
+  id: string;
+  projectId: string;
+  documentNumber: string;
+  title: string;
+  category: string | null;
+  revision: string;
+  status: DocumentStatus;
+  issueDate: string | null;
+  description: string | null;
+  uploadedById: string | null;
+  uploadedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type DocumentRecordInput = Omit<
+  DocumentRecord,
+  | "id"
+  | "projectId"
+  | "uploadedById"
+  | "uploadedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

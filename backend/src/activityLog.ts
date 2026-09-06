@@ -2,6 +2,7 @@ import {
   ActionItem,
   ChecklistItem,
   DefectItem,
+  DocumentRecord,
   EotClaim,
   InsuranceWarranty,
   LessonLearned,
@@ -356,4 +357,22 @@ export function describeRfiUpdate(before: Rfi, body: Record<string, unknown>): s
     return `marked RFI "${before.rfiNumber}" as ${label}`;
   }
   return `updated RFI "${before.rfiNumber}"`;
+}
+
+const DOCUMENT_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Draft",
+  FOR_REVIEW: "For Review",
+  APPROVED: "Approved",
+  SUPERSEDED: "Superseded",
+};
+
+export function describeDocumentUpdate(
+  before: DocumentRecord,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = DOCUMENT_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked document "${before.documentNumber}: ${before.title}" as ${label}`;
+  }
+  return `updated document "${before.documentNumber}: ${before.title}"`;
 }
