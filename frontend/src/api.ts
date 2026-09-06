@@ -19,6 +19,8 @@ import {
   InsuranceWarrantyInput,
   LessonLearned,
   LessonLearnedInput,
+  MeetingMinutes,
+  MeetingMinutesInput,
   Milestone,
   MilestoneInput,
   MonthlyReport,
@@ -962,6 +964,38 @@ export function updateSubcontractor(
 
 export function deleteSubcontractor(id: string): Promise<void> {
   return fetch(`${API_BASE}/subcontractors/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getMeetingMinutes(projectId: string): Promise<MeetingMinutes[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/meeting-minutes`).then((res) => handle(res));
+}
+
+export function createMeetingMinutes(
+  projectId: string,
+  data: Partial<MeetingMinutesInput>
+): Promise<MeetingMinutes> {
+  return fetch(`${API_BASE}/projects/${projectId}/meeting-minutes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateMeetingMinutes(
+  id: string,
+  data: Partial<MeetingMinutesInput>
+): Promise<MeetingMinutes> {
+  return fetch(`${API_BASE}/meeting-minutes/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteMeetingMinutes(id: string): Promise<void> {
+  return fetch(`${API_BASE}/meeting-minutes/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }

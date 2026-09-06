@@ -702,3 +702,24 @@ export type SubcontractorInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export interface MeetingMinutes {
+  id: string;
+  projectId: string;
+  meetingDate: string;
+  meetingType: string | null;
+  location: string | null;
+  attendees: string | null;
+  summary: string | null;
+  nextMeetingDate: string | null;
+  notes: string | null;
+  recordedById: string | null;
+  recordedByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type MeetingMinutesInput = Omit<
+  MeetingMinutes,
+  "id" | "projectId" | "recordedById" | "recordedByName" | "createdAt" | "updatedAt"
+>;

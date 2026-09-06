@@ -606,6 +606,20 @@ Like Risks and Variations, an action item is live data with no per-month
 snapshot. Open to any logged-in user to edit, matching Tasks,
 Attachments, Milestones, Variations, and Risks.
 
+## Meeting Minutes
+
+Each project has a **Meeting Minutes** register — a simple log of project
+meetings (progress meetings, design reviews, site meetings), distinct
+from **Actions & Decisions** (a single decision or action, not a full
+meeting record). A meeting has a Meeting Date, Type (free text, with
+suggestions like "Progress Meeting" or "Design Review"), Location,
+Attendees (freeform), a Summary, an optional Next Meeting Date, and
+Notes.
+
+Like Site Visits, this is a plain log with no status workflow — nothing
+to mark open or closed, just a record of what happened. The panel sorts
+by meeting date, most recent first. Open to any logged-in user to edit.
+
 ## Stakeholders
 
 Each project has a **Stakeholders** register — a simple contact

@@ -7,6 +7,7 @@ import {
   EotClaim,
   InsuranceWarranty,
   LessonLearned,
+  MeetingMinutes,
   Milestone,
   PaymentClaim,
   Permit,
@@ -414,4 +415,10 @@ export function describeSubcontractorUpdate(
     return `marked subcontractor "${before.companyName}" as ${label}`;
   }
   return `updated subcontractor "${before.companyName}"`;
+}
+
+export function describeMeetingMinutesUpdate(before: MeetingMinutes): string {
+  return before.meetingType
+    ? `updated meeting minutes for a ${before.meetingType}`
+    : "updated meeting minutes";
 }

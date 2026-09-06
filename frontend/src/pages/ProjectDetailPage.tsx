@@ -21,6 +21,8 @@ import {
   InsuranceWarrantyInput,
   LessonLearned,
   LessonLearnedInput,
+  MeetingMinutes,
+  MeetingMinutesInput,
   PaymentClaim,
   PaymentClaimInput,
   Permit,
@@ -58,6 +60,7 @@ import {
   createEotClaim,
   createInsuranceWarranty,
   createLessonLearned,
+  createMeetingMinutes,
   createMilestone,
   createMonthlyReport,
   createPaymentClaim,
@@ -80,6 +83,7 @@ import {
   deleteEotClaim,
   deleteInsuranceWarranty,
   deleteLessonLearned,
+  deleteMeetingMinutes,
   deleteMilestone,
   deleteMonthlyReport,
   deletePaymentClaim,
@@ -104,6 +108,7 @@ import {
   getEotClaims,
   getInsuranceWarranties,
   getLessonsLearned,
+  getMeetingMinutes,
   getMilestones,
   getMonthlyReports,
   getPaymentClaims,
@@ -127,6 +132,7 @@ import {
   updateEotClaim,
   updateInsuranceWarranty,
   updateLessonLearned,
+  updateMeetingMinutes,
   updateMilestone,
   updateMonthlyReport,
   updatePaymentClaim,
@@ -161,6 +167,7 @@ import SubcontractorsPanel from "../components/SubcontractorsPanel";
 import PermitsPanel from "../components/PermitsPanel";
 import InsuranceWarrantiesPanel from "../components/InsuranceWarrantiesPanel";
 import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
+import MeetingMinutesPanel from "../components/MeetingMinutesPanel";
 import SqePanel from "../components/SqePanel";
 import EotPanel from "../components/EotPanel";
 import ChecklistPanel from "../components/ChecklistPanel";
@@ -217,6 +224,7 @@ export default function ProjectDetailPage() {
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [communityEnquiries, setCommunityEnquiries] = useState<CommunityEnquiry[]>([]);
   const [subcontractors, setSubcontractors] = useState<Subcontractor[]>([]);
+  const [meetingMinutes, setMeetingMinutes] = useState<MeetingMinutes[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -252,6 +260,7 @@ export default function ProjectDetailPage() {
         documentData,
         communityEnquiryData,
         subcontractorData,
+        meetingMinutesData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -277,6 +286,7 @@ export default function ProjectDetailPage() {
         getDocuments(id),
         getCommunityEnquiries(id),
         getSubcontractors(id),
+        getMeetingMinutes(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -302,6 +312,7 @@ export default function ProjectDetailPage() {
       setDocuments(documentData);
       setCommunityEnquiries(communityEnquiryData);
       setSubcontractors(subcontractorData);
+      setMeetingMinutes(meetingMinutesData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -733,6 +744,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateMeetingMinutes(data: Partial<MeetingMinutesInput>) {
+    if (!project) return;
+    await createMeetingMinutes(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateMeetingMinutes(
+    meeting: MeetingMinutes,
+    data: Partial<MeetingMinutesInput>
+  ) {
+    await updateMeetingMinutes(meeting.id, data);
+    await load();
+  }
+
+  async function handleDeleteMeetingMinutes(meeting: MeetingMinutes) {
+    await deleteMeetingMinutes(meeting.id);
+    await load();
+  }
+
   const revisedTargetCompletion = useMemo(
     () => (project ? revisedCompletionDate(project, eotClaims) : null),
     [project, eotClaims]
@@ -890,6 +920,13 @@ export default function ProjectDetailPage() {
                 onCreate={handleCreateActionItem}
                 onUpdate={handleUpdateActionItem}
                 onDelete={handleDeleteActionItem}
+              />
+
+              <MeetingMinutesPanel
+                meetings={meetingMinutes}
+                onCreate={handleCreateMeetingMinutes}
+                onUpdate={handleUpdateMeetingMinutes}
+                onDelete={handleDeleteMeetingMinutes}
               />
 
               <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
