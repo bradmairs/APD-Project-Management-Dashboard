@@ -74,17 +74,30 @@ notification bell described below.
 
 See `backend/prisma/schema.prisma` for the source of truth.
 
-## Deadline notifications
+## Notifications
 
 A bell icon next to the account menu — present on every page, not just the
-dashboard — shows a badge with the count of tasks that are overdue or due
-within the next 7 days (across all projects, not just your own). The badge
-is red if anything is overdue, amber if only "due soon" items remain.
-Clicking it opens a list of those tasks, each linking to its project.
+dashboard — shows a badge with the count of items that are overdue/expired
+or due/expiring within their respective windows (across all projects, not
+just your own): tasks due within 7 days, and permits or insurance/
+warranties expiring within 60 days. The badge is red if anything is
+overdue or expired, amber if only "due soon"/"expiring soon" items remain.
+Clicking it opens one merged list — tasks, permits, and insurance/
+warranties together, sorted soonest first, each tagged with its type and
+linking to its project.
 
-There's no email/SMS delivery — this is in-app only, reusing the same
-`/api/tasks/upcoming` data as the dashboard's "Upcoming Deadlines" panel, so
-the two always agree. Nothing to configure (no SMTP credentials needed).
+`frontend/src/components/NotificationBell.tsx` composes this from three
+existing portfolio-wide endpoints and their existing expiry helpers rather
+than adding new backend logic: `getUpcomingTasks()` (all fetched tasks are
+listed, but only overdue/due-soon ones count toward the badge, via
+`taskMeta.ts`'s `isTaskOverdue`/`isTaskDueSoon`), and `getAllPermits()` /
+`getAllInsuranceWarranties()` filtered to flagged items only via
+`permitMeta.ts`'s and `insuranceWarrantyMeta.ts`'s expiry helpers — the
+same ones the dashboard's "Permits Expiring Soon" and "Insurance &
+Warranties Expiring Soon" panels use, so all three stay in agreement.
+
+There's no email/SMS delivery — this is in-app only. Nothing to configure
+(no SMTP credentials needed).
 
 ## Activity history
 
