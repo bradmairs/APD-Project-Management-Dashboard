@@ -13,6 +13,8 @@ import {
   DefectItemInput,
   DocumentRecord,
   DocumentRecordInput,
+  EnvironmentalMonitoringRecord,
+  EnvironmentalMonitoringRecordInput,
   EotClaim,
   EotClaimInput,
   InsuranceWarranty,
@@ -1146,4 +1148,44 @@ export function updateToolboxTalk(
 
 export function deleteToolboxTalk(id: string): Promise<void> {
   return fetch(`${API_BASE}/toolbox-talks/${id}`, { method: "DELETE" }).then((res) => handle(res));
+}
+
+export function getEnvironmentalMonitoring(
+  projectId: string
+): Promise<EnvironmentalMonitoringRecord[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/environmental-monitoring`).then((res) =>
+    handle(res)
+  );
+}
+
+export function getAllEnvironmentalMonitoring(): Promise<EnvironmentalMonitoringRecord[]> {
+  return fetch(`${API_BASE}/environmental-monitoring`).then((res) => handle(res));
+}
+
+export function createEnvironmentalMonitoring(
+  projectId: string,
+  data: Partial<EnvironmentalMonitoringRecordInput>
+): Promise<EnvironmentalMonitoringRecord> {
+  return fetch(`${API_BASE}/projects/${projectId}/environmental-monitoring`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateEnvironmentalMonitoring(
+  id: string,
+  data: Partial<EnvironmentalMonitoringRecordInput>
+): Promise<EnvironmentalMonitoringRecord> {
+  return fetch(`${API_BASE}/environmental-monitoring/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteEnvironmentalMonitoring(id: string): Promise<void> {
+  return fetch(`${API_BASE}/environmental-monitoring/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
 }

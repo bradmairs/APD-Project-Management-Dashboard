@@ -8,6 +8,7 @@ import {
   Correspondence,
   Subcontractor,
   DefectItem,
+  EnvironmentalMonitoringRecord,
   EotClaim,
   InsuranceWarranty,
   PaymentClaim,
@@ -32,6 +33,7 @@ import {
   getAllCorrespondence,
   getAllSubcontractors,
   getAllDefects,
+  getAllEnvironmentalMonitoring,
   getAllEotClaims,
   getAllInsuranceWarranties,
   getAllPaymentClaims,
@@ -57,6 +59,7 @@ import OpenActionsPanel from "../components/OpenActionsPanel";
 import ExpiringPermitsPanel from "../components/ExpiringPermitsPanel";
 import ExpiringInsuranceWarrantiesPanel from "../components/ExpiringInsuranceWarrantiesPanel";
 import OpenSqePanel from "../components/OpenSqePanel";
+import EnvironmentalExceedancesPanel from "../components/EnvironmentalExceedancesPanel";
 import OpenDefectsPanel from "../components/OpenDefectsPanel";
 import OpenPaymentClaimsPanel from "../components/OpenPaymentClaimsPanel";
 import OpenRfisPanel from "../components/OpenRfisPanel";
@@ -110,6 +113,9 @@ export default function DashboardPage() {
   const [correspondence, setCorrespondence] = useState<Correspondence[]>([]);
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
   const [performanceReviews, setPerformanceReviews] = useState<PerformanceReview[]>([]);
+  const [environmentalMonitoring, setEnvironmentalMonitoring] = useState<
+    EnvironmentalMonitoringRecord[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -144,6 +150,7 @@ export default function DashboardPage() {
         correspondenceData,
         trainingRecordData,
         performanceReviewData,
+        environmentalMonitoringData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -164,6 +171,7 @@ export default function DashboardPage() {
         getAllCorrespondence(),
         getAllTrainingRecords(),
         getAllPerformanceReviews(),
+        getAllEnvironmentalMonitoring(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -184,6 +192,7 @@ export default function DashboardPage() {
       setCorrespondence(correspondenceData);
       setTrainingRecords(trainingRecordData);
       setPerformanceReviews(performanceReviewData);
+      setEnvironmentalMonitoring(environmentalMonitoringData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -371,6 +380,7 @@ export default function DashboardPage() {
             <OpenActionsPanel actionItems={actionItems} />
             <ExpiringPermitsPanel permits={permits} />
             <OpenSqePanel records={sqeRecords} />
+            <EnvironmentalExceedancesPanel records={environmentalMonitoring} />
             <OpenDefectsPanel defects={defects} />
             <OpenPaymentClaimsPanel claims={paymentClaims} />
             <ExpiringInsuranceWarrantiesPanel items={insuranceWarranties} />

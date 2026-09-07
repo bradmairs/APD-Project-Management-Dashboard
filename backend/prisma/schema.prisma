@@ -203,6 +203,11 @@ enum CorrespondenceStatus {
   CLOSED
 }
 
+enum LimitType {
+  MAX
+  MIN
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -238,6 +243,7 @@ model User {
   trainingRecords TrainingRecord[]
   performanceReviews PerformanceReview[]
   toolboxTalks ToolboxTalk[]
+  environmentalMonitoringRecords EnvironmentalMonitoringRecord[]
 }
 
 model Project {
@@ -290,6 +296,7 @@ model Project {
   trainingRecords        TrainingRecord[]
   performanceReviews     PerformanceReview[]
   toolboxTalks           ToolboxTalk[]
+  environmentalMonitoringRecords EnvironmentalMonitoringRecord[]
 }
 
 model Task {
@@ -1092,6 +1099,34 @@ model ToolboxTalk {
   recordedByName String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+// A routine environmental compliance reading (noise, dust, turbidity,
+// vibration, groundwater level) taken against a licence or approval
+// condition limit — distinct from SqeRecord (a one-off safety/quality/
+// environment incident, not a scheduled quantitative sample). isExceedance
+// is computed client-side from readingValue vs limitValue/limitType, never
+// stored, the same computed-not-stored pattern as the expiry checks.
+model EnvironmentalMonitoringRecord {
+  id               String    @id @default(cuid())
+  project          Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  parameter        String
+  location         String?
+  monitoringDate   DateTime
+  readingValue     Float
+  unit             String
+  limitValue       Float?
+  limitType        LimitType @default(MAX)
+  correctiveAction String?
+  notes            String?
+  monitoredBy      User?     @relation(fields: [monitoredById], references: [id], onDelete: SetNull)
+  monitoredById    String?
+  monitoredByName  String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@index([projectId])
 }

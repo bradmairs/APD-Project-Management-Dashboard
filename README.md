@@ -1022,6 +1022,28 @@ workflow and no portfolio-wide Dashboard panel — it's too
 project-specific to aggregate. The panel sorts by talk date, most recent
 first. Open to any logged-in user to edit.
 
+## Environmental Monitoring
+
+Each project has an **Environmental Monitoring** register — routine
+compliance readings (noise, dust, turbidity, vibration, groundwater
+level) taken against a licence or approval condition limit, distinct
+from the **Safety, Quality & Environment** register (a one-off incident,
+not a scheduled quantitative sample). A reading has a Parameter
+(freeform, with suggestions), Location, Monitoring Date, a Reading value
+and Unit, an optional Limit value and Limit Type (must-not-exceed or
+must-not-fall-below), Corrective Action, and Notes.
+
+`limitValue` is optional — some readings are recorded for information
+only, with no licence condition attached. When present, whether a
+reading is an **exceedance** is computed from the reading against the
+limit and limit type rather than stored, the same computed-not-stored
+pattern as the expiry checks (`frontend/src/environmentalMeta.ts`'s
+`isExceedance`). The panel sorts exceedances first, then most recent.
+
+The Dashboard has a portfolio-wide **Environmental Exceedances** panel
+listing every exceedance across every project, most recent first. Open
+to any logged-in user to edit.
+
 ## Tabbed Navigation
 
 Both the Dashboard and a project's detail page had grown into one long
