@@ -54,6 +54,8 @@ import {
   SubcontractorInput,
   Task,
   TaskStatus,
+  ToolboxTalk,
+  ToolboxTalkInput,
   Variation,
   VariationInput,
 } from "../types";
@@ -80,6 +82,7 @@ import {
   createSubcontractor,
   createTask,
   createPerformanceReview,
+  createToolboxTalk,
   createTrainingRecord,
   createVariation,
   deleteActionItem,
@@ -108,6 +111,7 @@ import {
   deleteSubcontractor,
   deleteTask,
   deletePerformanceReview,
+  deleteToolboxTalk,
   deleteTrainingRecord,
   deleteVariation,
   getActionItems,
@@ -136,6 +140,7 @@ import {
   getStakeholders,
   getSubcontractors,
   getPerformanceReviews,
+  getToolboxTalks,
   getTrainingRecords,
   getVariations,
   reorderMilestone,
@@ -162,6 +167,7 @@ import {
   updateSubcontractor,
   updateTask,
   updatePerformanceReview,
+  updateToolboxTalk,
   updateTrainingRecord,
   updateVariation,
   uploadAttachment,
@@ -195,6 +201,7 @@ import EnquiriesPanel from "../components/EnquiriesPanel";
 import CorrespondencePanel from "../components/CorrespondencePanel";
 import TrainingRecordsPanel from "../components/TrainingRecordsPanel";
 import PerformanceReviewsPanel from "../components/PerformanceReviewsPanel";
+import ToolboxTalksPanel from "../components/ToolboxTalksPanel";
 import Tabs from "../components/Tabs";
 import PaymentClaimsPanel from "../components/PaymentClaimsPanel";
 import HealthBadge from "../components/HealthBadge";
@@ -249,6 +256,7 @@ export default function ProjectDetailPage() {
   const [correspondence, setCorrespondence] = useState<Correspondence[]>([]);
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
   const [performanceReviews, setPerformanceReviews] = useState<PerformanceReview[]>([]);
+  const [toolboxTalks, setToolboxTalks] = useState<ToolboxTalk[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -288,6 +296,7 @@ export default function ProjectDetailPage() {
         correspondenceData,
         trainingRecordData,
         performanceReviewData,
+        toolboxTalkData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -317,6 +326,7 @@ export default function ProjectDetailPage() {
         getCorrespondence(id),
         getTrainingRecords(id),
         getPerformanceReviews(id),
+        getToolboxTalks(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -346,6 +356,7 @@ export default function ProjectDetailPage() {
       setCorrespondence(correspondenceData);
       setTrainingRecords(trainingRecordData);
       setPerformanceReviews(performanceReviewData);
+      setToolboxTalks(toolboxTalkData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -774,6 +785,22 @@ export default function ProjectDetailPage() {
 
   async function handleDeletePerformanceReview(item: PerformanceReview) {
     await deletePerformanceReview(item.id);
+    await load();
+  }
+
+  async function handleCreateToolboxTalk(data: Partial<ToolboxTalkInput>) {
+    if (!project) return;
+    await createToolboxTalk(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateToolboxTalk(item: ToolboxTalk, data: Partial<ToolboxTalkInput>) {
+    await updateToolboxTalk(item.id, data);
+    await load();
+  }
+
+  async function handleDeleteToolboxTalk(item: ToolboxTalk) {
+    await deleteToolboxTalk(item.id);
     await load();
   }
 
@@ -1207,6 +1234,13 @@ export default function ProjectDetailPage() {
                 onCreate={handleCreateTrainingRecord}
                 onUpdate={handleUpdateTrainingRecord}
                 onDelete={handleDeleteTrainingRecord}
+              />
+
+              <ToolboxTalksPanel
+                talks={toolboxTalks}
+                onCreate={handleCreateToolboxTalk}
+                onUpdate={handleUpdateToolboxTalk}
+                onDelete={handleDeleteToolboxTalk}
               />
             </>
           )}

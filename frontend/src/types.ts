@@ -816,3 +816,30 @@ export type PerformanceReviewInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export interface ToolboxTalk {
+  id: string;
+  projectId: string;
+  talkDate: string;
+  topic: string;
+  conductedBy: string;
+  attendees: string | null;
+  keyPoints: string | null;
+  notes: string | null;
+  recordedById: string | null;
+  recordedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type ToolboxTalkInput = Omit<
+  ToolboxTalk,
+  | "id"
+  | "projectId"
+  | "recordedById"
+  | "recordedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;

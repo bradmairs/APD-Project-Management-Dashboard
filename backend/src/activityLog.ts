@@ -21,6 +21,7 @@ import {
   PerformanceReview,
   Subcontractor,
   Task,
+  ToolboxTalk,
   TrainingRecord,
   Variation,
 } from "@prisma/client";
@@ -443,4 +444,8 @@ export function describeTrainingRecordUpdate(before: TrainingRecord): string {
 
 export function describePerformanceReviewUpdate(before: PerformanceReview): string {
   return `updated the performance review for "${before.revieweeName}"`;
+}
+
+export function describeToolboxTalkUpdate(before: ToolboxTalk): string {
+  return `updated the toolbox talk on "${before.topic}"`;
 }

@@ -1006,6 +1006,22 @@ The Dashboard has a portfolio-wide **Training Expiring Soon** panel
 listing every expired or soon-to-expire record across every project,
 soonest first. Open to any logged-in user to edit.
 
+## Toolbox Talks
+
+Each project has a **Toolbox Talks** log — routine on-site safety
+briefings (a pre-start talk on manual handling, working at heights,
+traffic management), distinct from **Meeting Minutes** (a project,
+design, or progress meeting with the project team) and the
+**Safety, Quality & Environment** register (a one-off incident, not a
+routine briefing). A talk has a Date, Topic (freeform, with
+suggestions), who Conducted it, Attendees (freeform), Key Points, and
+Notes.
+
+Like Meeting Minutes and Site Visits, this is a plain log with no status
+workflow and no portfolio-wide Dashboard panel — it's too
+project-specific to aggregate. The panel sorts by talk date, most recent
+first. Open to any logged-in user to edit.
+
 ## Tabbed Navigation
 
 Both the Dashboard and a project's detail page had grown into one long

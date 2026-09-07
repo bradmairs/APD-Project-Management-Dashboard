@@ -237,6 +237,7 @@ model User {
   correspondence Correspondence[]
   trainingRecords TrainingRecord[]
   performanceReviews PerformanceReview[]
+  toolboxTalks ToolboxTalk[]
 }
 
 model Project {
@@ -288,6 +289,7 @@ model Project {
   correspondence         Correspondence[]
   trainingRecords        TrainingRecord[]
   performanceReviews     PerformanceReview[]
+  toolboxTalks           ToolboxTalk[]
 }
 
 model Task {
@@ -1066,6 +1068,30 @@ model PerformanceReview {
   reviewedByName      String
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+// A routine on-site safety briefing — distinct from MeetingMinutes (a
+// project/design/progress meeting with the project team) and SqeRecord (a
+// one-off incident). A plain log with no status workflow, like
+// MeetingMinutes and SiteVisit; no portfolio-wide GET endpoint either,
+// matching that same precedent — too project-specific to aggregate.
+model ToolboxTalk {
+  id             String   @id @default(cuid())
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  talkDate       DateTime
+  topic          String
+  conductedBy    String
+  attendees      String?
+  keyPoints      String?
+  notes          String?
+  recordedBy     User?    @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  recordedById   String?
+  recordedByName String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([projectId])
 }
