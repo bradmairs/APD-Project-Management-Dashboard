@@ -5,6 +5,7 @@ import {
   Correspondence,
   DefectItem,
   DocumentRecord,
+  EnvironmentalMonitoringRecord,
   EotClaim,
   InsuranceWarranty,
   LessonLearned,
@@ -448,4 +449,10 @@ export function describePerformanceReviewUpdate(before: PerformanceReview): stri
 
 export function describeToolboxTalkUpdate(before: ToolboxTalk): string {
   return `updated the toolbox talk on "${before.topic}"`;
+}
+
+export function describeEnvironmentalMonitoringUpdate(
+  before: EnvironmentalMonitoringRecord
+): string {
+  return `updated the environmental monitoring reading for "${before.parameter}"`;
 }

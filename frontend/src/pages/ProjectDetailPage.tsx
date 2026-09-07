@@ -21,6 +21,8 @@ import {
   DefectItemInput,
   DocumentRecord,
   DocumentRecordInput,
+  EnvironmentalMonitoringRecord,
+  EnvironmentalMonitoringRecordInput,
   EotClaim,
   EotClaimInput,
   InsuranceWarranty,
@@ -66,6 +68,7 @@ import {
   createCorrespondence,
   createDefect,
   createDocument,
+  createEnvironmentalMonitoring,
   createEotClaim,
   createInsuranceWarranty,
   createLessonLearned,
@@ -93,6 +96,7 @@ import {
   deleteCorrespondence,
   deleteDefect,
   deleteDocument,
+  deleteEnvironmentalMonitoring,
   deleteEotClaim,
   deleteInsuranceWarranty,
   deleteLessonLearned,
@@ -122,6 +126,7 @@ import {
   getCorrespondence,
   getDefects,
   getDocuments,
+  getEnvironmentalMonitoring,
   getEotClaims,
   getInsuranceWarranties,
   getLessonsLearned,
@@ -150,6 +155,7 @@ import {
   updateCorrespondence,
   updateDefect,
   updateDocument,
+  updateEnvironmentalMonitoring,
   updateEotClaim,
   updateInsuranceWarranty,
   updateLessonLearned,
@@ -193,6 +199,7 @@ import InsuranceWarrantiesPanel from "../components/InsuranceWarrantiesPanel";
 import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
 import MeetingMinutesPanel from "../components/MeetingMinutesPanel";
 import SqePanel from "../components/SqePanel";
+import EnvironmentalMonitoringPanel from "../components/EnvironmentalMonitoringPanel";
 import EotPanel from "../components/EotPanel";
 import ChecklistPanel from "../components/ChecklistPanel";
 import DefectsPanel from "../components/DefectsPanel";
@@ -257,6 +264,9 @@ export default function ProjectDetailPage() {
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
   const [performanceReviews, setPerformanceReviews] = useState<PerformanceReview[]>([]);
   const [toolboxTalks, setToolboxTalks] = useState<ToolboxTalk[]>([]);
+  const [environmentalMonitoring, setEnvironmentalMonitoring] = useState<
+    EnvironmentalMonitoringRecord[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -297,6 +307,7 @@ export default function ProjectDetailPage() {
         trainingRecordData,
         performanceReviewData,
         toolboxTalkData,
+        environmentalMonitoringData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -327,6 +338,7 @@ export default function ProjectDetailPage() {
         getTrainingRecords(id),
         getPerformanceReviews(id),
         getToolboxTalks(id),
+        getEnvironmentalMonitoring(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -357,6 +369,7 @@ export default function ProjectDetailPage() {
       setTrainingRecords(trainingRecordData);
       setPerformanceReviews(performanceReviewData);
       setToolboxTalks(toolboxTalkData);
+      setEnvironmentalMonitoring(environmentalMonitoringData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -626,6 +639,27 @@ export default function ProjectDetailPage() {
 
   async function handleDeleteSqeRecord(record: SqeRecord) {
     await deleteSqeRecord(record.id);
+    await load();
+  }
+
+  async function handleCreateEnvironmentalMonitoring(
+    data: Partial<EnvironmentalMonitoringRecordInput>
+  ) {
+    if (!project) return;
+    await createEnvironmentalMonitoring(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateEnvironmentalMonitoring(
+    record: EnvironmentalMonitoringRecord,
+    data: Partial<EnvironmentalMonitoringRecordInput>
+  ) {
+    await updateEnvironmentalMonitoring(record.id, data);
+    await load();
+  }
+
+  async function handleDeleteEnvironmentalMonitoring(record: EnvironmentalMonitoringRecord) {
+    await deleteEnvironmentalMonitoring(record.id);
     await load();
   }
 
@@ -1156,6 +1190,13 @@ export default function ProjectDetailPage() {
                 onCreate={handleCreateSqeRecord}
                 onUpdate={handleUpdateSqeRecord}
                 onDelete={handleDeleteSqeRecord}
+              />
+
+              <EnvironmentalMonitoringPanel
+                records={environmentalMonitoring}
+                onCreate={handleCreateEnvironmentalMonitoring}
+                onUpdate={handleUpdateEnvironmentalMonitoring}
+                onDelete={handleDeleteEnvironmentalMonitoring}
               />
 
               <DefectsPanel

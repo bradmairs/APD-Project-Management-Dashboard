@@ -369,6 +369,8 @@ export type SqeSeverity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
 export type SqeStatus = "OPEN" | "IN_PROGRESS" | "CLOSED";
 
+export type LimitType = "MAX" | "MIN";
+
 export interface SqeRecord {
   id: string;
   projectId: string;
@@ -839,6 +841,36 @@ export type ToolboxTalkInput = Omit<
   | "projectId"
   | "recordedById"
   | "recordedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
+
+export interface EnvironmentalMonitoringRecord {
+  id: string;
+  projectId: string;
+  parameter: string;
+  location: string | null;
+  monitoringDate: string;
+  readingValue: number;
+  unit: string;
+  limitValue: number | null;
+  limitType: LimitType;
+  correctiveAction: string | null;
+  notes: string | null;
+  monitoredById: string | null;
+  monitoredByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type EnvironmentalMonitoringRecordInput = Omit<
+  EnvironmentalMonitoringRecord,
+  | "id"
+  | "projectId"
+  | "monitoredById"
+  | "monitoredByName"
   | "createdAt"
   | "updatedAt"
   | "project"
