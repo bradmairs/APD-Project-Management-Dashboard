@@ -84,6 +84,7 @@ export interface Attachment {
   originalName: string;
   mimeType: string;
   size: number;
+  meetingMinutesId: string | null;
   uploadedById: string | null;
   uploadedByName: string;
   createdAt: string;
@@ -280,6 +281,7 @@ export interface ActionItem {
   raisedById: string | null;
   raisedByName: string;
   notes: string | null;
+  meetingMinutesId: string | null;
   createdAt: string;
   updatedAt: string;
   project?: { id: string; name: string };
@@ -296,6 +298,12 @@ export type ActionItemInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export interface SuggestedAction {
+  title: string;
+  ownerName: string | null;
+  dueDateHint: string | null;
+}
 
 export interface Stakeholder {
   id: string;
@@ -376,6 +384,17 @@ export type SafetyInspectionStatus = "OPEN" | "IN_PROGRESS" | "CLOSED";
 export type TenderMethod = "OPEN" | "SELECTIVE" | "DIRECT_ENGAGE" | "EXPRESSION_OF_INTEREST";
 
 export type TenderStatus = "PLANNED" | "ISSUED" | "EVALUATION" | "AWARDED" | "CANCELLED";
+
+export interface SearchResult {
+  type: string;
+  typeLabel: string;
+  id: string;
+  projectId: string;
+  projectName: string;
+  title: string;
+  subtitle: string | null;
+  date: string | null;
+}
 
 export interface SqeRecord {
   id: string;

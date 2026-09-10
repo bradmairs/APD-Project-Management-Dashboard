@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import ChangePasswordModal from "./ChangePasswordModal";
+import GlobalSearch from "./GlobalSearch";
 import NotificationBell from "./NotificationBell";
 import ThemeToggle from "./ThemeToggle";
 
@@ -20,6 +21,7 @@ export default function UserMenu() {
 
   return (
     <div className="flex flex-wrap items-center gap-3 text-sm">
+      <GlobalSearch />
       <ThemeToggle />
       <NotificationBell />
 

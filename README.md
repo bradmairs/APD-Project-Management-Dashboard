@@ -101,6 +101,30 @@ helpers, and `getAllRfis()` filtered via `rfiMeta.ts`'s
 There's no email/SMS delivery — this is in-app only. Nothing to configure
 (no SMTP credentials needed).
 
+## Global Search
+
+A search box next to the account menu — present on every page, the same
+"always available" placement as the notification bell — lets you find a
+record by keyword without knowing which project or register it's in.
+Type two or more characters and, after a short debounce, a dropdown shows
+matches grouped by type, each linking straight to its project.
+
+It searches across Projects, Risks & Opportunities, Actions & Decisions,
+RFIs, Defects, Variations, the Document Register, Correspondence,
+Subcontractors, and Tender Packages — a curated set of the registers
+most often searched for by name or number (an RFI number, a document
+number, a contractor's name), not a full-text index over every table in
+the app. `GET /api/search?q=` (`backend/src/routes/search.ts`) runs one
+case-insensitive `contains` query per register in parallel, capped at 5
+results each, and returns them ungrouped for the frontend to bucket by
+type — there's no cross-category relevance ranking, since "5 RFIs and 5
+documents" is more useful here than one merged, arbitrarily-ordered list.
+
+`frontend/src/components/GlobalSearch.tsx` is self-contained like
+`NotificationBell` — no props, it fetches on its own as you type — and is
+wired into `UserMenu.tsx` so it appears in both the Dashboard and project
+detail page headers without being wired into each page separately.
+
 ## Activity history
 
 Every project and task change is written to an append-only `ActivityLog` —
@@ -619,6 +643,30 @@ Notes.
 Like Site Visits, this is a plain log with no status workflow — nothing
 to mark open or closed, just a record of what happened. The panel sorts
 by meeting date, most recent first. Open to any logged-in user to edit.
+
+Expanding a meeting reveals two linked sub-sections:
+
+- **Attachments** — files (the signed PDF, a slide deck) uploaded against
+  that specific meeting rather than the project's general Attachments
+  list. Reuses the same upload infrastructure with an optional
+  `meetingMinutesId` tag; deleting the meeting deletes its attachments
+  too (cascade), since the files have no purpose without it.
+- **Actions from this meeting** — Action Items (from the Actions &
+  Decisions register) tagged with the meeting they arose from, via an
+  optional `meetingMinutesId` on `ActionItem`. Unlike attachments, an
+  action is unlinked rather than deleted if its meeting is removed (a
+  follow-up task is still real work to track even without the meeting
+  record). Add one with the quick-add field, or generate a first draft
+  with **AI: Suggest Actions from Notes**.
+
+That button sends the meeting's summary and notes to the same
+self-hosted Ollama model the AI Assistant uses (see below), asking it to
+extract a list of candidate follow-up items — each with a title and,
+where the notes say so, an owner and a due-date hint. Nothing is created
+automatically: the suggestions appear as a checklist (all pre-selected)
+for you to review, deselect, and add. If Ollama can't be reached, the
+button shows the same clear inline error as the AI Assistant rather than
+failing silently.
 
 ## Correspondence
 

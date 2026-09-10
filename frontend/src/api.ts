@@ -44,6 +44,7 @@ import {
   Role,
   SafetyInspection,
   SafetyInspectionInput,
+  SearchResult,
   SiteVisit,
   SiteVisitInput,
   SiteVisitPhoto,
@@ -51,6 +52,7 @@ import {
   SqeRecordInput,
   Stakeholder,
   StakeholderInput,
+  SuggestedAction,
   Subcontractor,
   SubcontractorInput,
   Task,
@@ -189,10 +191,12 @@ export function getAttachments(projectId: string): Promise<Attachment[]> {
 
 export function uploadAttachment(
   projectId: string,
-  file: File
+  file: File,
+  meetingMinutesId?: string
 ): Promise<Attachment> {
   const formData = new FormData();
   formData.append("file", file);
+  if (meetingMinutesId) formData.append("meetingMinutesId", meetingMinutesId);
   return fetch(`${API_BASE}/projects/${projectId}/attachments`, {
     method: "POST",
     body: formData,
@@ -1014,6 +1018,14 @@ export function deleteMeetingMinutes(id: string): Promise<void> {
   );
 }
 
+export function extractMeetingActions(
+  meetingId: string
+): Promise<{ actions: SuggestedAction[] }> {
+  return fetch(`${API_BASE}/meeting-minutes/${meetingId}/ai/extract-actions`, {
+    method: "POST",
+  }).then((res) => handle(res));
+}
+
 export function getCorrespondence(projectId: string): Promise<Correspondence[]> {
   return fetch(`${API_BASE}/projects/${projectId}/correspondence`).then((res) => handle(res));
 }
@@ -1280,4 +1292,8 @@ export function askPortfolioAi(question: string): Promise<{ answer: string }> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question }),
   }).then((res) => handle(res));
+}
+
+export function searchAll(query: string): Promise<{ query: string; results: SearchResult[] }> {
+  return fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`).then((res) => handle(res));
 }
