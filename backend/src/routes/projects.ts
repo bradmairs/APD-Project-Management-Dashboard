@@ -30,6 +30,7 @@ import projectPerformanceReviewsRouter from "./performanceReviews";
 import projectToolboxTalksRouter from "./toolboxTalks";
 import projectEnvironmentalMonitoringRouter from "./environmentalMonitoring";
 import projectSafetyInspectionsRouter from "./safetyInspections";
+import projectTenderPackagesRouter from "./tenderPackages";
 import projectAiRouter from "./ai";
 import { describeProjectChanges, logActivity } from "../activityLog";
 import { projectUploadDir, upload } from "../upload";
@@ -66,6 +67,7 @@ router.use("/:id/performance-reviews", projectPerformanceReviewsRouter);
 router.use("/:id/toolbox-talks", projectToolboxTalksRouter);
 router.use("/:id/environmental-monitoring", projectEnvironmentalMonitoringRouter);
 router.use("/:id/safety-inspections", projectSafetyInspectionsRouter);
+router.use("/:id/tender-packages", projectTenderPackagesRouter);
 router.use("/:id/ai", projectAiRouter);
 
 router.get("/", async (_req, res) => {

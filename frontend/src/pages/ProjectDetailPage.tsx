@@ -58,6 +58,8 @@ import {
   SubcontractorInput,
   Task,
   TaskStatus,
+  TenderPackage,
+  TenderPackageInput,
   ToolboxTalk,
   ToolboxTalkInput,
   Variation,
@@ -88,6 +90,7 @@ import {
   createStakeholder,
   createSubcontractor,
   createTask,
+  createTenderPackage,
   createPerformanceReview,
   createToolboxTalk,
   createTrainingRecord,
@@ -119,6 +122,7 @@ import {
   deleteStakeholder,
   deleteSubcontractor,
   deleteTask,
+  deleteTenderPackage,
   deletePerformanceReview,
   deleteToolboxTalk,
   deleteTrainingRecord,
@@ -150,6 +154,7 @@ import {
   getSqeRecords,
   getStakeholders,
   getSubcontractors,
+  getTenderPackages,
   getPerformanceReviews,
   getToolboxTalks,
   getTrainingRecords,
@@ -179,6 +184,7 @@ import {
   updateStakeholder,
   updateSubcontractor,
   updateTask,
+  updateTenderPackage,
   updatePerformanceReview,
   updateToolboxTalk,
   updateTrainingRecord,
@@ -208,6 +214,7 @@ import MeetingMinutesPanel from "../components/MeetingMinutesPanel";
 import SqePanel from "../components/SqePanel";
 import EnvironmentalMonitoringPanel from "../components/EnvironmentalMonitoringPanel";
 import SafetyInspectionsPanel from "../components/SafetyInspectionsPanel";
+import TenderPackagesPanel from "../components/TenderPackagesPanel";
 import AiAssistantPanel from "../components/AiAssistantPanel";
 import EotPanel from "../components/EotPanel";
 import ChecklistPanel from "../components/ChecklistPanel";
@@ -278,6 +285,7 @@ export default function ProjectDetailPage() {
     EnvironmentalMonitoringRecord[]
   >([]);
   const [safetyInspections, setSafetyInspections] = useState<SafetyInspection[]>([]);
+  const [tenderPackages, setTenderPackages] = useState<TenderPackage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -320,6 +328,7 @@ export default function ProjectDetailPage() {
         toolboxTalkData,
         environmentalMonitoringData,
         safetyInspectionData,
+        tenderPackageData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -352,6 +361,7 @@ export default function ProjectDetailPage() {
         getToolboxTalks(id),
         getEnvironmentalMonitoring(id),
         getSafetyInspections(id),
+        getTenderPackages(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -384,6 +394,7 @@ export default function ProjectDetailPage() {
       setToolboxTalks(toolboxTalkData);
       setEnvironmentalMonitoring(environmentalMonitoringData);
       setSafetyInspections(safetyInspectionData);
+      setTenderPackages(tenderPackageData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -693,6 +704,25 @@ export default function ProjectDetailPage() {
 
   async function handleDeleteSafetyInspection(inspection: SafetyInspection) {
     await deleteSafetyInspection(inspection.id);
+    await load();
+  }
+
+  async function handleCreateTenderPackage(data: Partial<TenderPackageInput>) {
+    if (!project) return;
+    await createTenderPackage(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateTenderPackage(
+    tenderPackage: TenderPackage,
+    data: Partial<TenderPackageInput>
+  ) {
+    await updateTenderPackage(tenderPackage.id, data);
+    await load();
+  }
+
+  async function handleDeleteTenderPackage(tenderPackage: TenderPackage) {
+    await deleteTenderPackage(tenderPackage.id);
     await load();
   }
 
@@ -1191,6 +1221,13 @@ export default function ProjectDetailPage() {
                 onCreate={handleCreatePermit}
                 onUpdate={handleUpdatePermit}
                 onDelete={handleDeletePermit}
+              />
+
+              <TenderPackagesPanel
+                tenderPackages={tenderPackages}
+                onCreate={handleCreateTenderPackage}
+                onUpdate={handleUpdateTenderPackage}
+                onDelete={handleDeleteTenderPackage}
               />
 
               <SubcontractorsPanel
