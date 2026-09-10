@@ -1067,6 +1067,51 @@ listing every open or in-progress inspection across every project,
 lowest score first, linking back to its project. Open to any logged-in
 user to edit.
 
+## AI Assistant
+
+Both a project's detail page and the Dashboard have an **AI Assistant**
+tab — a simple ask-a-question panel backed by a self-hosted
+[Ollama](https://ollama.com) model, running on the same machine that
+hosts this app. There's no chat history stored anywhere: each question
+and answer lives only in that tab's state for the current browser
+session.
+
+- On a **project's** AI Assistant tab, questions are scoped to that
+  project — its budget vs. spend, schedule, and a summary of open items
+  across every register (risks, actions, defects, RFIs, SQE issues,
+  safety inspections, environmental exceedances, expired permits/
+  insurance/training, low-scoring performance reviews).
+- On the **Dashboard's** AI Assistant tab, questions are scoped to the
+  whole portfolio — status counts, total budget vs. spend, and a
+  per-project summary flagging which projects have open issues.
+
+The backend builds this context itself from the database on every
+question (`backend/src/aiContext.ts`) — a concise, bounded summary, not
+a dump of every row in every table — then sends it to Ollama's `/api/chat`
+endpoint alongside the question (`backend/src/ollama.ts`). No
+conversation state is kept server-side either; every question is
+answered fresh from the latest data.
+
+### Configuration
+
+Two environment variables point the backend at Ollama:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `OLLAMA_BASE_URL` | `http://host.docker.internal:11434` (docker-compose) / `http://localhost:11434` (local dev) | Where Ollama's HTTP API is reachable from the backend. |
+| `OLLAMA_MODEL` | `llama3.1` | The model to call — must already be pulled on that Ollama server (`ollama pull llama3.1`). |
+
+`host.docker.internal` lets the `backend` container reach Ollama running
+directly on the Docker host; `docker-compose.yml` adds the
+`extra_hosts: host.docker.internal:host-gateway` mapping this needs on
+Linux (Docker Desktop resolves it out of the box). If Ollama runs on a
+different machine, point `OLLAMA_BASE_URL` at that host instead.
+
+Ollama has no built-in authentication, so this integration assumes
+Ollama is only reachable from trusted hosts (e.g. not exposed directly
+to the internet). If the backend can't reach Ollama, the Assistant shows
+a clear error in place of an answer rather than failing silently.
+
 ## Tabbed Navigation
 
 Both the Dashboard and a project's detail page had grown into one long

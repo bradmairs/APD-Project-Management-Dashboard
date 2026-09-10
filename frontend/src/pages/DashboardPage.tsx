@@ -37,6 +37,7 @@ import {
   getAllEnvironmentalMonitoring,
   getAllEotClaims,
   getAllSafetyInspections,
+  askPortfolioAi,
   getAllInsuranceWarranties,
   getAllPaymentClaims,
   getAllPermits,
@@ -63,6 +64,7 @@ import ExpiringInsuranceWarrantiesPanel from "../components/ExpiringInsuranceWar
 import OpenSqePanel from "../components/OpenSqePanel";
 import EnvironmentalExceedancesPanel from "../components/EnvironmentalExceedancesPanel";
 import OpenSafetyInspectionsPanel from "../components/OpenSafetyInspectionsPanel";
+import AiAssistantPanel from "../components/AiAssistantPanel";
 import OpenDefectsPanel from "../components/OpenDefectsPanel";
 import OpenPaymentClaimsPanel from "../components/OpenPaymentClaimsPanel";
 import OpenRfisPanel from "../components/OpenRfisPanel";
@@ -84,13 +86,14 @@ import Tabs from "../components/Tabs";
 import { useAuth } from "../auth/AuthContext";
 import gvwLogo from "../assets/gvw-logo.png";
 
-type DashboardTabId = "projects" | "alerts" | "charts" | "activity";
+type DashboardTabId = "projects" | "alerts" | "charts" | "activity" | "ai";
 
 const DASHBOARD_TABS: { id: DashboardTabId; label: string }[] = [
   { id: "projects", label: "Projects" },
   { id: "alerts", label: "Alerts" },
   { id: "charts", label: "Charts" },
   { id: "activity", label: "Activity" },
+  { id: "ai", label: "AI Assistant" },
 ];
 
 export default function DashboardPage() {
@@ -434,6 +437,15 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === "ai" && (
+          <AiAssistantPanel
+            title="AI Assistant"
+            description="Ask questions across the whole portfolio — budgets, schedules, risks, and open items across every project. Powered by a locally-hosted Ollama model."
+            suggestedQuestion="Which projects need attention right now, and why?"
+            onAsk={askPortfolioAi}
+          />
         )}
       </main>
 
