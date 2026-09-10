@@ -1,5 +1,6 @@
 import { CashFlowEntry, EotClaim, Project, RagStatus, Risk, Variation } from "./types";
 import { STATUSES_EXEMPT_FROM_OVERDUE } from "./statusMeta";
+import { forecastAtCompletion } from "./cashflow";
 import { revisedBudget } from "./variations";
 import { revisedCompletionDate } from "./eot";
 import { riskBand, riskScore } from "./riskScoring";
@@ -54,13 +55,7 @@ function budgetHealth(
   const budget = revisedBudget(project, variations);
   if (budget === null || entries.length === 0) return "GREEN";
 
-  const expenditureToDate = entries
-    .filter((e) => e.type === "ACTUAL")
-    .reduce((sum, e) => sum + Number(e.amount), 0);
-  const forecastRemaining = entries
-    .filter((e) => e.type === "FORECAST")
-    .reduce((sum, e) => sum + Number(e.amount), 0);
-  const forecastTotal = expenditureToDate + forecastRemaining;
+  const forecastTotal = forecastAtCompletion(entries);
 
   if (forecastTotal > budget) return "RED";
   if (forecastTotal > budget * 0.9) return "AMBER";

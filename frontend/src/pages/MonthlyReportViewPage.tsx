@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { CashFlowEntry, Milestone, MonthlyReport, Project } from "../types";
 import { getCashFlowEntries, getMilestones, getMonthlyReport, getProject } from "../api";
 import { formatCurrency, formatDate, formatReportMonth } from "../format";
+import { expenditureToDate as sumExpenditureToDate, forecastAtCompletion } from "../cashflow";
 import { HealthRow, NarrativeBlock, ReportField, ReportSection } from "../components/ReportPrimitives";
 import gvwLogo from "../assets/gvw-logo.png";
 
@@ -62,13 +63,8 @@ export default function MonthlyReportViewPage() {
 
   // Milestones and cash flow are live data (see README) — this view shows
   // them as they stand now, not as they stood in the reporting month.
-  const expenditureToDate = cashFlowEntries
-    .filter((e) => e.type === "ACTUAL")
-    .reduce((sum, e) => sum + Number(e.amount), 0);
-  const forecastRemaining = cashFlowEntries
-    .filter((e) => e.type === "FORECAST")
-    .reduce((sum, e) => sum + Number(e.amount), 0);
-  const forecastTotal = expenditureToDate + forecastRemaining;
+  const expenditureToDate = sumExpenditureToDate(cashFlowEntries);
+  const forecastTotal = forecastAtCompletion(cashFlowEntries);
   const variance =
     project.budget === null ? null : Number(project.budget) - forecastTotal;
 

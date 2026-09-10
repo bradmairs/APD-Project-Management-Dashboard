@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CashFlowEntry, CashFlowEntryInput, Project, Variation } from "../types";
 import { formatCurrency, formatReportMonth } from "../format";
 import { approvedVariationsTotal, revisedBudget } from "../variations";
+import { expenditureToDate, forecastAtCompletion } from "../cashflow";
 import CashFlowChart from "../charts/CashFlowChart";
 import CumulativeSpendChart from "../charts/CumulativeSpendChart";
 import CashFlowEntryFormModal from "./CashFlowEntryFormModal";
@@ -24,13 +25,8 @@ export default function CashFlowPanel({
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<CashFlowEntry | null>(null);
 
-  const expenditureToDate = entries
-    .filter((e) => e.type === "ACTUAL")
-    .reduce((sum, e) => sum + Number(e.amount), 0);
-  const forecastRemaining = entries
-    .filter((e) => e.type === "FORECAST")
-    .reduce((sum, e) => sum + Number(e.amount), 0);
-  const forecastTotal = expenditureToDate + forecastRemaining;
+  const expenditure = expenditureToDate(entries);
+  const forecastTotal = forecastAtCompletion(entries);
   const approvedVariations = approvedVariationsTotal(variations);
   const currentBudget = revisedBudget(project, variations);
   const variance = currentBudget === null ? null : currentBudget - forecastTotal;
@@ -84,7 +80,7 @@ export default function CashFlowPanel({
           </>
         )}
         <Stat label="Contingency" value={formatCurrency(project.contingency)} />
-        <Stat label="Expenditure to Date" value={formatCurrency(expenditureToDate)} />
+        <Stat label="Expenditure to Date" value={formatCurrency(expenditure)} />
         <Stat label="Forecast Total" value={formatCurrency(forecastTotal)} />
         <Stat
           label="Variance"
