@@ -288,6 +288,37 @@ organizations (so logging in as Admin demonstrates the org switcher), plus
 two demo CMP projects (see `backend/prisma/cmp/seed.ts`) — one active
 commission partway through Detailed Design, one still at Proposal stage.
 
+### CMP: Fee Claims, Meeting Minutes, and the portfolio dashboard
+
+CMP's accent color is **red**, not GVW's blue — a deliberate visual cue
+that you're in a different organization's data, matching the CMP
+Consulting Group logo. This is a brand-accent change only: buttons, links,
+progress bars, and decorative status pills moved from emerald to red, but
+*semantic* status colors (a design review outcome of "Approved", a fee
+claim of "Paid") stay green — recoloring those would remove meaningful
+at-a-glance signal.
+
+Two more registers round out CMP's project detail page, both scoped to a
+design consultancy's actual workflow rather than construction delivery:
+
+- **Fee Claims** (`FeeClaim`) — the consultancy-fee counterpart to GVW's
+  Cash Flow/Payment Claims: progress billing raised against a project's
+  fee budget, with a claim number, optional design stage, claimed vs.
+  approved amount, and a Draft → Submitted → Approved → Paid status. The
+  project header shows running "Fee Claimed to Date" and "Fee Approved to
+  Date" totals alongside the existing Fee Budget tile.
+- **Meeting Minutes** (`CmpMeetingMinutes`) — a simpler, CMP-scoped sibling
+  of GVW's `MeetingMinutes` (no linked attachments or action items, since
+  CMP has neither register): date, type, location, attendees, summary,
+  and next-meeting date.
+
+The CMP dashboard (`/cmp`) also gained the same shape GVW's dashboard
+already has: **stat cards** (Total Projects, Active Projects, Total Fee
+Budget, Fee Claimed/Approved to date — summed across every project's fee
+claims), a **status filter** (pills above the project table, same pattern
+as GVW's), and a **Recent Activity** feed reading `CmpActivityLog` via
+`GET /api/cmp/activity/recent`.
+
 ## Charts
 
 The dashboard shows a **Spend vs Budget Over Time — All Projects** chart

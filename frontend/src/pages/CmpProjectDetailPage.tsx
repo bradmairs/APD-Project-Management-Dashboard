@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  CmpMeetingMinutes,
+  CmpMeetingMinutesInput,
   CmpProject,
   CmpProjectInput,
   DesignReview,
@@ -10,22 +12,30 @@ import {
   Drawing,
   DrawingInput,
   DrawingRevisionInput,
+  FeeClaim,
+  FeeClaimInput,
 } from "../cmpTypes";
 import {
+  createCmpMeetingMinutes,
   createDesignReview,
   createDesignStage,
   createDrawing,
+  createFeeClaim,
+  deleteCmpMeetingMinutes,
   deleteCmpProject,
   deleteDesignReview,
   deleteDesignStage,
   deleteDrawing,
+  deleteFeeClaim,
   getCmpProject,
   issueDrawingRevision,
   reorderDesignStage,
+  updateCmpMeetingMinutes,
   updateCmpProject,
   updateDesignReview,
   updateDesignStage,
   updateDrawing,
+  updateFeeClaim,
 } from "../cmpApi";
 import { CMP_PROJECT_STATUS_COLORS, CMP_PROJECT_STATUS_LABELS } from "../cmpStatusMeta";
 import { formatCurrency, formatDate } from "../format";
@@ -33,6 +43,8 @@ import CmpProjectFormModal from "../components/CmpProjectFormModal";
 import DesignStagesPanel from "../components/DesignStagesPanel";
 import DrawingRegisterPanel from "../components/DrawingRegisterPanel";
 import DesignReviewsPanel from "../components/DesignReviewsPanel";
+import FeeClaimsPanel from "../components/FeeClaimsPanel";
+import CmpMeetingMinutesPanel from "../components/CmpMeetingMinutesPanel";
 import UserMenu from "../components/UserMenu";
 
 export default function CmpProjectDetailPage() {
@@ -70,7 +82,7 @@ export default function CmpProjectDetailPage() {
         <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm rounded p-3">
           {error || "Project not found"}
         </div>
-        <Link to="/cmp" className="text-emerald-600 dark:text-emerald-400 hover:underline text-sm mt-4 inline-block">
+        <Link to="/cmp" className="text-red-600 dark:text-red-400 hover:underline text-sm mt-4 inline-block">
           ← Back to dashboard
         </Link>
       </div>
@@ -144,12 +156,49 @@ export default function CmpProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateFeeClaim(data: Partial<FeeClaimInput>) {
+    await createFeeClaim(project!.id, data);
+    await load();
+  }
+
+  async function handleUpdateFeeClaim(claim: FeeClaim, data: Partial<FeeClaimInput>) {
+    await updateFeeClaim(claim.id, data);
+    await load();
+  }
+
+  async function handleDeleteFeeClaim(claim: FeeClaim) {
+    await deleteFeeClaim(claim.id);
+    await load();
+  }
+
+  async function handleCreateMeeting(data: Partial<CmpMeetingMinutesInput>) {
+    await createCmpMeetingMinutes(project!.id, data);
+    await load();
+  }
+
+  async function handleUpdateMeeting(
+    meeting: CmpMeetingMinutes,
+    data: Partial<CmpMeetingMinutesInput>
+  ) {
+    await updateCmpMeetingMinutes(meeting.id, data);
+    await load();
+  }
+
+  async function handleDeleteMeeting(meeting: CmpMeetingMinutes) {
+    await deleteCmpMeetingMinutes(meeting.id);
+    await load();
+  }
+
+  const feeClaims = project.feeClaims ?? [];
+  const feeClaimedToDate = feeClaims.reduce((sum, c) => sum + Number(c.claimedAmount), 0);
+  const feeApprovedToDate = feeClaims.reduce((sum, c) => sum + Number(c.approvedAmount ?? 0), 0);
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between mb-2">
-            <Link to="/cmp" className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline">
+            <Link to="/cmp" className="text-sm text-red-600 dark:text-red-400 hover:underline">
               ← Back to dashboard
             </Link>
             <UserMenu />
@@ -219,6 +268,18 @@ export default function CmpProjectDetailPage() {
               {formatDate(project.targetIssueDate)}
             </div>
           </div>
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+            <div className="text-xs text-slate-500 dark:text-slate-400">Fee Claimed to Date</div>
+            <div className="text-sm font-medium text-slate-900 dark:text-slate-100 mt-0.5">
+              {formatCurrency(feeClaimedToDate)}
+            </div>
+          </div>
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-3">
+            <div className="text-xs text-slate-500 dark:text-slate-400">Fee Approved to Date</div>
+            <div className="text-sm font-medium text-slate-900 dark:text-slate-100 mt-0.5">
+              {formatCurrency(feeApprovedToDate)}
+            </div>
+          </div>
         </div>
 
         <DesignStagesPanel
@@ -242,6 +303,20 @@ export default function CmpProjectDetailPage() {
           onCreate={handleCreateReview}
           onUpdate={handleUpdateReview}
           onDelete={handleDeleteReview}
+        />
+
+        <FeeClaimsPanel
+          claims={feeClaims}
+          onCreate={handleCreateFeeClaim}
+          onUpdate={handleUpdateFeeClaim}
+          onDelete={handleDeleteFeeClaim}
+        />
+
+        <CmpMeetingMinutesPanel
+          meetings={project.meetingMinutes ?? []}
+          onCreate={handleCreateMeeting}
+          onUpdate={handleUpdateMeeting}
+          onDelete={handleDeleteMeeting}
         />
       </main>
 

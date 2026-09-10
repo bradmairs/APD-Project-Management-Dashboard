@@ -61,7 +61,7 @@ export default function DesignReviewsPanel({ reviews, onCreate, onUpdate, onDele
         </h2>
         <button
           onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-emerald-600 text-white hover:bg-emerald-700"
+          className="px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700"
         >
           + Log Review
         </button>

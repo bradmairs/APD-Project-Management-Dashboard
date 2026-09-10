@@ -113,7 +113,7 @@ export default function DrawingFormModal({ drawing, onClose, onSave }: Props) {
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 text-sm rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save Drawing"}
             </button>

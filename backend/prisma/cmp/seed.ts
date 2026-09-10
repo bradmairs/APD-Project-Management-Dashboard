@@ -133,6 +133,57 @@ async function main() {
           },
         ],
       },
+      feeClaims: {
+        create: [
+          {
+            claimNumber: "FC-01",
+            stage: "CONCEPT_DESIGN",
+            periodEnding: daysFromNow(-58),
+            claimedAmount: 40000,
+            approvedAmount: 40000,
+            status: "PAID",
+            dateSubmitted: daysFromNow(-56),
+            dateApproved: daysFromNow(-50),
+            datePaid: daysFromNow(-20),
+            createdByName: "R. Chen",
+          },
+          {
+            claimNumber: "FC-02",
+            stage: "PRELIMINARY_DESIGN",
+            periodEnding: daysFromNow(-15),
+            claimedAmount: 90000,
+            approvedAmount: 85000,
+            status: "APPROVED",
+            dateSubmitted: daysFromNow(-13),
+            dateApproved: daysFromNow(-5),
+            notes: "Client queried 5k of survey coordination time; agreed reduction.",
+            createdByName: "R. Chen",
+          },
+          {
+            claimNumber: "FC-03",
+            stage: "DETAILED_DESIGN",
+            periodEnding: daysFromNow(-2),
+            claimedAmount: 105000,
+            status: "SUBMITTED",
+            dateSubmitted: daysFromNow(-2),
+            createdByName: "R. Chen",
+          },
+        ],
+      },
+      meetingMinutes: {
+        create: [
+          {
+            meetingDate: daysFromNow(-15),
+            meetingType: "Design Review",
+            location: "North East Water offices, Wangaratta",
+            attendees: "R. Chen (CMP), M. Farrell (NEW), T. Osei (CMP)",
+            summary:
+              "Reviewed preliminary design. Client requested confirmation of pump duty points before detailed design proceeds.",
+            nextMeetingDate: daysFromNow(20),
+            recordedByName: "R. Chen",
+          },
+        ],
+      },
     },
   });
 

@@ -4,6 +4,8 @@
 // backend routes (/api/cmp/...) backed by CMP's own database.
 import {
   CmpActivityLogEntry,
+  CmpMeetingMinutes,
+  CmpMeetingMinutesInput,
   CmpProject,
   CmpProjectInput,
   DesignReview,
@@ -14,6 +16,8 @@ import {
   DrawingInput,
   DrawingRevision,
   DrawingRevisionInput,
+  FeeClaim,
+  FeeClaimInput,
 } from "./cmpTypes";
 
 const API_BASE = "/api/cmp";
@@ -136,4 +140,47 @@ export function updateDesignReview(
 
 export function deleteDesignReview(id: string): Promise<void> {
   return fetch(`${API_BASE}/design-reviews/${id}`, { method: "DELETE" }).then((res) => handle(res));
+}
+
+export function createFeeClaim(
+  projectId: string,
+  data: Partial<FeeClaimInput>
+): Promise<FeeClaim> {
+  return fetch(`${API_BASE}/projects/${projectId}/fee-claims`, jsonRequest("POST", data)).then(
+    (res) => handle(res)
+  );
+}
+
+export function updateFeeClaim(id: string, data: Partial<FeeClaimInput>): Promise<FeeClaim> {
+  return fetch(`${API_BASE}/fee-claims/${id}`, jsonRequest("PUT", data)).then((res) => handle(res));
+}
+
+export function deleteFeeClaim(id: string): Promise<void> {
+  return fetch(`${API_BASE}/fee-claims/${id}`, { method: "DELETE" }).then((res) => handle(res));
+}
+
+export function createCmpMeetingMinutes(
+  projectId: string,
+  data: Partial<CmpMeetingMinutesInput>
+): Promise<CmpMeetingMinutes> {
+  return fetch(`${API_BASE}/projects/${projectId}/meeting-minutes`, jsonRequest("POST", data)).then(
+    (res) => handle(res)
+  );
+}
+
+export function updateCmpMeetingMinutes(
+  id: string,
+  data: Partial<CmpMeetingMinutesInput>
+): Promise<CmpMeetingMinutes> {
+  return fetch(`${API_BASE}/meeting-minutes/${id}`, jsonRequest("PUT", data)).then((res) =>
+    handle(res)
+  );
+}
+
+export function deleteCmpMeetingMinutes(id: string): Promise<void> {
+  return fetch(`${API_BASE}/meeting-minutes/${id}`, { method: "DELETE" }).then((res) => handle(res));
+}
+
+export function getCmpRecentActivity(): Promise<CmpActivityLogEntry[]> {
+  return fetch(`${API_BASE}/activity/recent`).then((res) => handle(res));
 }

@@ -68,7 +68,7 @@ export default function DrawingRegisterPanel({
         </h2>
         <button
           onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-emerald-600 text-white hover:bg-emerald-700"
+          className="px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700"
         >
           + New Drawing
         </button>
@@ -94,7 +94,7 @@ export default function DrawingRegisterPanel({
                       <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
                         {drawing.title}
                       </span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300">
                         {DRAWING_STATUS_LABELS[drawing.status]}
                       </span>
                       {drawing.currentRevision && (
@@ -112,7 +112,7 @@ export default function DrawingRegisterPanel({
                   <div className="flex items-center gap-3 shrink-0">
                     <button
                       onClick={() => setRevisionFor(drawing)}
-                      className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
+                      className="text-xs text-red-600 dark:text-red-400 hover:underline"
                     >
                       Issue Revision
                     </button>

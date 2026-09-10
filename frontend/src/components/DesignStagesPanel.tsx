@@ -56,7 +56,7 @@ export default function DesignStagesPanel({
         </h2>
         <button
           onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-emerald-600 text-white hover:bg-emerald-700"
+          className="px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700"
         >
           + Add Stage
         </button>
@@ -94,7 +94,7 @@ export default function DesignStagesPanel({
                       <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
                         {DESIGN_STAGE_LABELS[stage.stage]}
                       </span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300">
                         {DESIGN_STAGE_STATUS_LABELS[stage.status]}
                       </span>
                     </div>
@@ -102,7 +102,7 @@ export default function DesignStagesPanel({
                     <div className="flex items-center gap-2 mt-1.5">
                       <div className="w-32 h-1.5 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
                         <div
-                          className="h-full bg-emerald-600 dark:bg-emerald-500"
+                          className="h-full bg-red-600 dark:bg-red-500"
                           style={{ width: `${stage.percentComplete}%` }}
                         />
                       </div>

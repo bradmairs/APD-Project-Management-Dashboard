@@ -57,6 +57,13 @@ enum DesignReviewOutcome {
   REJECTED
 }
 
+enum FeeClaimStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  PAID
+}
+
 // A design commission — CMP's unit of work, the counterpart to GVW's
 // Project but scoped to design rather than construction delivery: no
 // contractor, contract value, or completion date, since CMP doesn't
@@ -85,10 +92,12 @@ model CmpProject {
   createdByName String
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
-  designStages  DesignStage[]
-  drawings      Drawing[]
-  designReviews DesignReview[]
-  activityLogs  CmpActivityLog[]
+  designStages   DesignStage[]
+  drawings       Drawing[]
+  designReviews  DesignReview[]
+  feeClaims      FeeClaim[]
+  meetingMinutes CmpMeetingMinutes[]
+  activityLogs   CmpActivityLog[]
 }
 
 // A stage-gate tracker entry — CMP's counterpart to GVW's Milestone, but
@@ -178,6 +187,61 @@ model DesignReview {
   createdByName String
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
+
+  @@index([projectId])
+}
+
+// A progress claim CMP raises against a project's fee budget — the
+// consultancy-fee counterpart to GVW's Cash Flow entries/PaymentClaim, but
+// shaped around billing a fee-for-service commission rather than
+// certifying a contractor's construction claim: claimedAmount is what CMP
+// invoices for; approvedAmount is what the client actually agrees to pay
+// (occasionally less, e.g. a disputed line item), kept separate rather
+// than overwriting claimedAmount in place, the same reasoning GVW's
+// PaymentClaim keeps claimed and certified amounts distinct. stage is
+// optional since a claim might cover work spanning more than one design
+// stage.
+model FeeClaim {
+  id             String         @id @default(cuid())
+  project        CmpProject     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  claimNumber    String
+  stage          DesignStageName?
+  periodEnding   DateTime?
+  claimedAmount  Decimal        @db.Decimal(14, 2)
+  approvedAmount Decimal?       @db.Decimal(14, 2)
+  status         FeeClaimStatus @default(DRAFT)
+  dateSubmitted  DateTime?
+  dateApproved   DateTime?
+  datePaid       DateTime?
+  notes          String?
+  createdById    String?
+  createdByName  String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([projectId])
+}
+
+// A record of a client or internal design meeting — mirrors GVW's
+// MeetingMinutes (a simple log, not a status workflow): attendees and a
+// summary rather than a full transcript, with nextMeetingDate carried
+// forward so the next one is never lost between records.
+model CmpMeetingMinutes {
+  id              String    @id @default(cuid())
+  project         CmpProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  meetingDate     DateTime
+  meetingType     String?
+  location        String?
+  attendees       String?
+  summary         String?
+  nextMeetingDate DateTime?
+  notes           String?
+  recordedById    String?
+  recordedByName  String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([projectId])
 }

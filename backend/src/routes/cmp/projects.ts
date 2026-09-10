@@ -4,17 +4,24 @@ import { logCmpActivity } from "../../cmpActivityLog";
 import projectDesignStagesRouter from "./designStages";
 import projectDrawingsRouter from "./drawings";
 import projectDesignReviewsRouter from "./designReviews";
+import projectFeeClaimsRouter from "./feeClaims";
+import projectMeetingMinutesRouter from "./meetingMinutes";
 
 const router = Router();
 
 router.use("/:id/design-stages", projectDesignStagesRouter);
 router.use("/:id/drawings", projectDrawingsRouter);
 router.use("/:id/design-reviews", projectDesignReviewsRouter);
+router.use("/:id/fee-claims", projectFeeClaimsRouter);
+router.use("/:id/meeting-minutes", projectMeetingMinutesRouter);
 
 router.get("/", async (_req, res) => {
   const projects = await cmpPrisma.cmpProject.findMany({
     orderBy: { updatedAt: "desc" },
-    include: { designStages: { select: { id: true, status: true } } },
+    include: {
+      designStages: { select: { id: true, status: true } },
+      feeClaims: { select: { id: true, claimedAmount: true, approvedAmount: true, status: true } },
+    },
   });
   res.json(projects);
 });
@@ -26,6 +33,8 @@ router.get("/:id", async (req, res) => {
       designStages: { orderBy: { sortOrder: "asc" } },
       drawings: { orderBy: { drawingNumber: "asc" }, include: { revisions: { orderBy: { issuedDate: "desc" } } } },
       designReviews: { orderBy: { reviewDate: "desc" } },
+      feeClaims: { orderBy: { createdAt: "desc" } },
+      meetingMinutes: { orderBy: { meetingDate: "desc" } },
     },
   });
   if (!project) return res.status(404).json({ error: "Project not found" });

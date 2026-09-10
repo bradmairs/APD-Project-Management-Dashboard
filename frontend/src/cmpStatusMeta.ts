@@ -1,4 +1,10 @@
-import { CmpProjectStatus, DesignStageName, DesignStageStatus, DrawingStatus } from "./cmpTypes";
+import {
+  CmpProjectStatus,
+  DesignStageName,
+  DesignStageStatus,
+  DrawingStatus,
+  FeeClaimStatus,
+} from "./cmpTypes";
 
 export const CMP_PROJECT_STATUSES: CmpProjectStatus[] = [
   "ENQUIRY",
@@ -73,4 +79,20 @@ export const DRAWING_STATUS_LABELS: Record<DrawingStatus, string> = {
   ISSUED_FOR_REVIEW: "Issued for Review",
   ISSUED_FOR_CONSTRUCTION: "Issued for Construction",
   SUPERSEDED: "Superseded",
+};
+
+export const FEE_CLAIM_STATUSES: FeeClaimStatus[] = ["DRAFT", "SUBMITTED", "APPROVED", "PAID"];
+
+export const FEE_CLAIM_STATUS_LABELS: Record<FeeClaimStatus, string> = {
+  DRAFT: "Draft",
+  SUBMITTED: "Submitted",
+  APPROVED: "Approved",
+  PAID: "Paid",
+};
+
+export const FEE_CLAIM_STATUS_COLORS: Record<FeeClaimStatus, string> = {
+  DRAFT: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
+  SUBMITTED: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  APPROVED: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+  PAID: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
 };

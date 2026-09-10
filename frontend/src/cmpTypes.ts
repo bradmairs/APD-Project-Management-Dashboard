@@ -53,6 +53,8 @@ export interface CmpProject {
   designStages?: DesignStage[];
   drawings?: Drawing[];
   designReviews?: DesignReview[];
+  feeClaims?: FeeClaim[];
+  meetingMinutes?: CmpMeetingMinutes[];
 }
 
 export type CmpProjectInput = Omit<
@@ -65,6 +67,8 @@ export type CmpProjectInput = Omit<
   | "designStages"
   | "drawings"
   | "designReviews"
+  | "feeClaims"
+  | "meetingMinutes"
 >;
 
 export interface DesignStage {
@@ -141,6 +145,53 @@ export interface DesignReview {
 export type DesignReviewInput = Omit<
   DesignReview,
   "id" | "projectId" | "createdById" | "createdByName" | "createdAt" | "updatedAt"
+>;
+
+export type FeeClaimStatus = "DRAFT" | "SUBMITTED" | "APPROVED" | "PAID";
+
+export interface FeeClaim {
+  id: string;
+  projectId: string;
+  claimNumber: string;
+  stage: DesignStageName | null;
+  periodEnding: string | null;
+  claimedAmount: number;
+  approvedAmount: number | null;
+  status: FeeClaimStatus;
+  dateSubmitted: string | null;
+  dateApproved: string | null;
+  datePaid: string | null;
+  notes: string | null;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type FeeClaimInput = Omit<
+  FeeClaim,
+  "id" | "projectId" | "createdById" | "createdByName" | "createdAt" | "updatedAt"
+>;
+
+export interface CmpMeetingMinutes {
+  id: string;
+  projectId: string;
+  meetingDate: string;
+  meetingType: string | null;
+  location: string | null;
+  attendees: string | null;
+  summary: string | null;
+  nextMeetingDate: string | null;
+  notes: string | null;
+  recordedById: string | null;
+  recordedByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CmpMeetingMinutesInput = Omit<
+  CmpMeetingMinutes,
+  "id" | "projectId" | "recordedById" | "recordedByName" | "createdAt" | "updatedAt"
 >;
 
 export interface CmpActivityLogEntry {
