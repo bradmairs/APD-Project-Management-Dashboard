@@ -377,6 +377,17 @@ export type TenderMethod = "OPEN" | "SELECTIVE" | "DIRECT_ENGAGE" | "EXPRESSION_
 
 export type TenderStatus = "PLANNED" | "ISSUED" | "EVALUATION" | "AWARDED" | "CANCELLED";
 
+export interface SearchResult {
+  type: string;
+  typeLabel: string;
+  id: string;
+  projectId: string;
+  projectName: string;
+  title: string;
+  subtitle: string | null;
+  date: string | null;
+}
+
 export interface SqeRecord {
   id: string;
   projectId: string;

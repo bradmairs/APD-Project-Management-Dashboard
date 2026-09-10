@@ -44,6 +44,7 @@ import {
   Role,
   SafetyInspection,
   SafetyInspectionInput,
+  SearchResult,
   SiteVisit,
   SiteVisitInput,
   SiteVisitPhoto,
@@ -1280,4 +1281,8 @@ export function askPortfolioAi(question: string): Promise<{ answer: string }> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question }),
   }).then((res) => handle(res));
+}
+
+export function searchAll(query: string): Promise<{ query: string; results: SearchResult[] }> {
+  return fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`).then((res) => handle(res));
 }
