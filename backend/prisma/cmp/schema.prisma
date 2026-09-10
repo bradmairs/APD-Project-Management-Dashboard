@@ -1,0 +1,266 @@
+// CMP's own database — a design consultancy's project data, physically
+// separate from GVW's (backend/prisma/schema.prisma). CMP tracks the design
+// phase of a commission (stages, drawings, QA reviews), not construction
+// delivery, so its models are deliberately not a relabelled copy of GVW's
+// Project/Milestone/DocumentRecord — they're shaped around what a design
+// consultancy's PM actually tracks. There is no organizationId column
+// anywhere here: this whole database *is* CMP's data, the same way GVW's
+// existing database implicitly belongs to GVW. Shared identity (User,
+// Organization, OrganizationMembership) lives only in GVW's database — see
+// the note on CmpProject.createdByName below for how that plays out here.
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../src/generated/cmp-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("CMP_DATABASE_URL")
+}
+
+enum CmpProjectStatus {
+  ENQUIRY
+  PROPOSAL
+  ACTIVE
+  ON_HOLD
+  COMPLETE
+  CANCELLED
+}
+
+enum DesignStageName {
+  CONCEPT_DESIGN
+  PRELIMINARY_DESIGN
+  DETAILED_DESIGN
+  TENDER_DOCUMENTATION
+  CONSTRUCTION_ISSUE
+  AS_BUILT
+}
+
+enum DesignStageStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  ISSUED_FOR_REVIEW
+  APPROVED
+  COMPLETE
+}
+
+enum DrawingStatus {
+  DRAFT
+  ISSUED_FOR_REVIEW
+  ISSUED_FOR_CONSTRUCTION
+  SUPERSEDED
+}
+
+enum DesignReviewOutcome {
+  APPROVED
+  APPROVED_WITH_COMMENTS
+  REJECTED
+}
+
+enum FeeClaimStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  PAID
+}
+
+// A design commission — CMP's unit of work, the counterpart to GVW's
+// Project but scoped to design rather than construction delivery: no
+// contractor, contract value, or completion date, since CMP doesn't
+// deliver the build. feeBudget/hoursBudget are the commission's own fee
+// proposal figures; DesignStage carries the same split per stage so spend
+// can be tracked stage-by-stage as well as in aggregate.
+model CmpProject {
+  id              String           @id @default(cuid())
+  name            String
+  clientName      String
+  projectNumber   String?
+  description     String?
+  discipline      String?
+  status          CmpProjectStatus @default(ENQUIRY)
+  projectLead     String?
+  feeBudget       Decimal?         @db.Decimal(14, 2)
+  hoursBudget     Int?
+  startDate       DateTime?
+  targetIssueDate DateTime?
+  // No relation to GVW's User model — that table lives in a different
+  // database, so cross-database foreign keys aren't possible. createdByName
+  // is captured at write time, the same denormalization ActivityLog already
+  // relies on in the GVW schema for a record that must stay meaningful even
+  // if the user who made it is later removed.
+  createdById   String?
+  createdByName String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  designStages   DesignStage[]
+  drawings       Drawing[]
+  designReviews  DesignReview[]
+  feeClaims      FeeClaim[]
+  meetingMinutes CmpMeetingMinutes[]
+  activityLogs   CmpActivityLog[]
+}
+
+// A stage-gate tracker entry — CMP's counterpart to GVW's Milestone, but
+// against the fixed design-stage sequence (Concept -> Preliminary ->
+// Detailed -> Tender Documentation -> Construction Issue -> As-Built)
+// rather than a freeform WBS list, since every CMP commission moves
+// through the same design lifecycle. feeAllocated/hoursAllocated split the
+// project's overall budget across stages; hoursSpent is entered as the
+// stage progresses, giving a hours-vs-budget view per stage the same way
+// GVW's Cash Flow gives actual-vs-forecast per month.
+model DesignStage {
+  id              String            @id @default(cuid())
+  project         CmpProject        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  stage           DesignStageName
+  status          DesignStageStatus @default(NOT_STARTED)
+  percentComplete Int               @default(0)
+  targetDate      DateTime?
+  actualDate      DateTime?
+  feeAllocated    Decimal?          @db.Decimal(14, 2)
+  hoursAllocated  Int?
+  hoursSpent      Int?
+  notes           String?
+  sortOrder       Int               @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([projectId])
+}
+
+// A controlled drawing in CMP's drawing register — the design-consultancy
+// counterpart to GVW's DocumentRecord, but drawing-specific and always
+// paired with its own revision history (DrawingRevision) rather than a
+// single revision field, since a drawing register's whole point is being
+// able to see every revision a drawing has been through, not just the
+// latest. currentRevision is a denormalized convenience for list views,
+// kept in sync whenever a new DrawingRevision is added.
+model Drawing {
+  id              String            @id @default(cuid())
+  project         CmpProject        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  drawingNumber   String
+  title           String
+  discipline      String?
+  currentRevision String?
+  status          DrawingStatus     @default(DRAFT)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  revisions       DrawingRevision[]
+
+  @@index([projectId])
+}
+
+// One issued revision of a Drawing — append-only, never edited or deleted
+// once issued, since a drawing register's value is in a complete,
+// trustworthy history of what was issued when and to whom.
+model DrawingRevision {
+  id           String   @id @default(cuid())
+  drawing      Drawing  @relation(fields: [drawingId], references: [id], onDelete: Cascade)
+  drawingId    String
+  revision     String
+  description  String?
+  issuedFor    String?
+  issuedById   String?
+  issuedByName String
+  issuedDate   DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([drawingId])
+}
+
+// An internal QA/design review checkpoint — distinct from a client-facing
+// stage sign-off (DesignStage.status reaching APPROVED): this is CMP's own
+// review of its design output before it goes out the door, the design-firm
+// counterpart to GVW's SqeRecord in spirit (a quality checkpoint) though
+// shaped around a review event rather than an incident.
+model DesignReview {
+  id            String              @id @default(cuid())
+  project       CmpProject          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  stage         DesignStageName?
+  reviewDate    DateTime
+  reviewerName  String
+  outcome       DesignReviewOutcome
+  comments      String?
+  createdById   String?
+  createdByName String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([projectId])
+}
+
+// A progress claim CMP raises against a project's fee budget — the
+// consultancy-fee counterpart to GVW's Cash Flow entries/PaymentClaim, but
+// shaped around billing a fee-for-service commission rather than
+// certifying a contractor's construction claim: claimedAmount is what CMP
+// invoices for; approvedAmount is what the client actually agrees to pay
+// (occasionally less, e.g. a disputed line item), kept separate rather
+// than overwriting claimedAmount in place, the same reasoning GVW's
+// PaymentClaim keeps claimed and certified amounts distinct. stage is
+// optional since a claim might cover work spanning more than one design
+// stage.
+model FeeClaim {
+  id             String         @id @default(cuid())
+  project        CmpProject     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  claimNumber    String
+  stage          DesignStageName?
+  periodEnding   DateTime?
+  claimedAmount  Decimal        @db.Decimal(14, 2)
+  approvedAmount Decimal?       @db.Decimal(14, 2)
+  status         FeeClaimStatus @default(DRAFT)
+  dateSubmitted  DateTime?
+  dateApproved   DateTime?
+  datePaid       DateTime?
+  notes          String?
+  createdById    String?
+  createdByName  String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([projectId])
+}
+
+// A record of a client or internal design meeting — mirrors GVW's
+// MeetingMinutes (a simple log, not a status workflow): attendees and a
+// summary rather than a full transcript, with nextMeetingDate carried
+// forward so the next one is never lost between records.
+model CmpMeetingMinutes {
+  id              String    @id @default(cuid())
+  project         CmpProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  meetingDate     DateTime
+  meetingType     String?
+  location        String?
+  attendees       String?
+  summary         String?
+  nextMeetingDate DateTime?
+  notes           String?
+  recordedById    String?
+  recordedByName  String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// Append-only audit trail, mirroring GVW's ActivityLog — projectName/
+// userName are snapshots taken at write time for the same reason: an entry
+// should stay meaningful even after its project is gone or (since there's
+// no cross-database relation here) regardless of what happens to the user
+// in GVW's own database.
+model CmpActivityLog {
+  id          String      @id @default(cuid())
+  project     CmpProject? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId   String?
+  projectName String
+  userId      String?
+  userName    String
+  action      String
+  createdAt   DateTime    @default(now())
+
+  @@index([projectId])
+  @@index([createdAt])
+}

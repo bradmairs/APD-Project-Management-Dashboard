@@ -39,8 +39,17 @@ import { aiRouter } from "./routes/ai";
 import activityRouter from "./routes/activity";
 import attachmentsRouter from "./routes/attachments";
 import usersRouter from "./routes/users";
+import organizationsRouter from "./routes/organizations";
+import cmpProjectsRouter from "./routes/cmp/projects";
+import { designStagesRouter } from "./routes/cmp/designStages";
+import { drawingsRouter } from "./routes/cmp/drawings";
+import { designReviewsRouter } from "./routes/cmp/designReviews";
+import { feeClaimsRouter } from "./routes/cmp/feeClaims";
+import { meetingMinutesRouter as cmpMeetingMinutesRouter } from "./routes/cmp/meetingMinutes";
+import cmpActivityRouter from "./routes/cmp/activity";
 import { requireAuth } from "./middleware/requireAuth";
 import { requireAdmin } from "./middleware/requireAdmin";
+import { requireOrgMembership } from "./middleware/requireOrgMembership";
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
@@ -90,6 +99,16 @@ app.use("/api/ai", requireAuth, aiRouter);
 app.use("/api/activity", requireAuth, activityRouter);
 app.use("/api/attachments", requireAuth, attachmentsRouter);
 app.use("/api/users", requireAuth, requireAdmin, usersRouter);
+app.use("/api/organizations", requireAuth, organizationsRouter);
+
+const requireCmpAccess = [requireAuth, requireOrgMembership("cmp")];
+app.use("/api/cmp/projects", requireCmpAccess, cmpProjectsRouter);
+app.use("/api/cmp/design-stages", requireCmpAccess, designStagesRouter);
+app.use("/api/cmp/drawings", requireCmpAccess, drawingsRouter);
+app.use("/api/cmp/design-reviews", requireCmpAccess, designReviewsRouter);
+app.use("/api/cmp/fee-claims", requireCmpAccess, feeClaimsRouter);
+app.use("/api/cmp/meeting-minutes", requireCmpAccess, cmpMeetingMinutesRouter);
+app.use("/api/cmp/activity", requireCmpAccess, cmpActivityRouter);
 
 // Catches multer's file-size/file-type rejections (thrown before any route
 // handler runs) and reports them as clean JSON instead of Express's default

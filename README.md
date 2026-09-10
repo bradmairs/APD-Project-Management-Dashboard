@@ -229,6 +229,96 @@ password) alongside the three `MEMBER` accounts, and assigns each seeded
 project to the user matching its project manager, so the permission model
 has something real to demonstrate out of the box.
 
+## Multi-Organization Architecture
+
+This app serves more than one company/agency from one deployment — today,
+**GVW** (Goulburn Valley Water, a water authority tracking asset delivery
+by its consultants and contractors — everything described elsewhere in
+this README) and **CMP** (a design consultancy tracking its own design
+work: stages, drawings, QA reviews). They share one login and one user
+directory, but their project data is **completely separate** — a deliberate
+choice, not an oversight, made for two reasons: CMP's domain is genuinely
+different (design phases, not construction delivery), and physically
+separating the data rules out any possibility of one organization's query
+ever leaking into the other's.
+
+**How the separation works:**
+
+- **Shared identity, separate data.** `User`, `Organization`, and
+  `OrganizationMembership` live in GVW's own database (`schema.prisma`) —
+  the same database this whole README otherwise describes, now understood
+  as "GVW's database plus the shared login directory." A membership row
+  says which organizations a user can open and their role in each; a user
+  with no membership row for an organization can't see it, full stop.
+- **CMP has its own database**, `apd_cmp`, with its own Prisma schema
+  (`backend/prisma/cmp/schema.prisma`), its own migrations, and its own
+  generated client (`backend/src/generated/cmp-client`, via
+  `backend/src/cmpPrisma.ts`). Its models — `CmpProject`, `DesignStage`,
+  `Drawing`/`DrawingRevision`, `DesignReview`, `CmpActivityLog` — are not a
+  relabelling of GVW's `Project`/`Milestone`/`DocumentRecord`; they're
+  shaped around a design consultancy's actual workflow (a fixed
+  Concept → Preliminary → Detailed → Tender Documentation → Construction
+  Issue → As-Built stage sequence, a drawing register with full revision
+  history, internal QA review checkpoints). Because the two databases are
+  physically separate, CMP's records can't hold a Prisma relation back to
+  GVW's `User` table — `createdByName` is captured as plain text at write
+  time instead, the same denormalization `ActivityLog.userName` already
+  relies on for a record that must outlive the user who made it.
+- **Backend routing.** GVW's ~40 registers are untouched, still served at
+  their existing `/api/...` paths. CMP's routes live under `/api/cmp/...`,
+  gated by `requireAuth` plus a `requireOrgMembership("cmp")` check against
+  `OrganizationMembership` — membership is checked on every request rather
+  than baked into the session, so revoking access takes effect immediately
+  (the same reasoning `requireAuth` already applies to `User.active`).
+- **Frontend.** GVW's dashboard is unchanged at `/`. CMP gets its own
+  section at `/cmp` (`CmpDashboardPage`, `CmpProjectDetailPage`) with its
+  own accent color and its own logo (`CmpLogo.tsx`, `assets/cmp-logo.png`),
+  the same `<img>` pattern GVW's own logo uses. An **org switcher** appears in the
+  header (`OrgSwitcher.tsx`) only for a user with two or more memberships —
+  for everyone else it's simply not there, since there's nothing to switch
+  between.
+- **Adding a third organization** later means: a new `Organization` row,
+  membership rows for whoever should see it, a new Prisma schema + database
+  for its own data model, its own route file(s) behind
+  `requireOrgMembership`, and its own frontend section — GVW and CMP's code
+  stay untouched either way.
+
+Seeded demo data gives the `admin@example.com` account membership in both
+organizations (so logging in as Admin demonstrates the org switcher), plus
+two demo CMP projects (see `backend/prisma/cmp/seed.ts`) — one active
+commission partway through Detailed Design, one still at Proposal stage.
+
+### CMP: Fee Claims, Meeting Minutes, and the portfolio dashboard
+
+CMP's accent color is **red**, not GVW's blue — a deliberate visual cue
+that you're in a different organization's data, matching the CMP
+Consulting Group logo. This is a brand-accent change only: buttons, links,
+progress bars, and decorative status pills moved from emerald to red, but
+*semantic* status colors (a design review outcome of "Approved", a fee
+claim of "Paid") stay green — recoloring those would remove meaningful
+at-a-glance signal.
+
+Two more registers round out CMP's project detail page, both scoped to a
+design consultancy's actual workflow rather than construction delivery:
+
+- **Fee Claims** (`FeeClaim`) — the consultancy-fee counterpart to GVW's
+  Cash Flow/Payment Claims: progress billing raised against a project's
+  fee budget, with a claim number, optional design stage, claimed vs.
+  approved amount, and a Draft → Submitted → Approved → Paid status. The
+  project header shows running "Fee Claimed to Date" and "Fee Approved to
+  Date" totals alongside the existing Fee Budget tile.
+- **Meeting Minutes** (`CmpMeetingMinutes`) — a simpler, CMP-scoped sibling
+  of GVW's `MeetingMinutes` (no linked attachments or action items, since
+  CMP has neither register): date, type, location, attendees, summary,
+  and next-meeting date.
+
+The CMP dashboard (`/cmp`) also gained the same shape GVW's dashboard
+already has: **stat cards** (Total Projects, Active Projects, Total Fee
+Budget, Fee Claimed/Approved to date — summed across every project's fee
+claims), a **status filter** (pills above the project table, same pattern
+as GVW's), and a **Recent Activity** feed reading `CmpActivityLog` via
+`GET /api/cmp/activity/recent`.
+
 ## Charts
 
 The dashboard shows a **Spend vs Budget Over Time — All Projects** chart
