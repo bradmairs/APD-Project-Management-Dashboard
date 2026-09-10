@@ -1,5 +1,16 @@
 export type Role = "ADMIN" | "MEMBER";
 
+// One organization (GVW, CMP, ...) the current user can switch into — see
+// the "Multi-Organization Architecture" section of the README. Each
+// organization's actual project/register data lives in its own database
+// and its own types module (this app's own types.ts for GVW, cmpTypes.ts
+// for CMP); this shape only carries what the org switcher needs to know.
+export interface OrganizationMembership {
+  slug: string;
+  name: string;
+  role: "ADMIN" | "MEMBER";
+}
+
 export interface User {
   id: string;
   name: string;

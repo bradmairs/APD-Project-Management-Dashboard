@@ -1,14 +1,17 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import ChangePasswordModal from "./ChangePasswordModal";
 import GlobalSearch from "./GlobalSearch";
 import NotificationBell from "./NotificationBell";
+import OrgSwitcher from "./OrgSwitcher";
 import ThemeToggle from "./ThemeToggle";
 
 export default function UserMenu() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isCmp = location.pathname.startsWith("/cmp");
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
@@ -21,9 +24,10 @@ export default function UserMenu() {
 
   return (
     <div className="flex flex-wrap items-center gap-3 text-sm">
-      <GlobalSearch />
+      <OrgSwitcher />
+      {!isCmp && <GlobalSearch />}
       <ThemeToggle />
-      <NotificationBell />
+      {!isCmp && <NotificationBell />}
 
       <div className="relative">
         <button

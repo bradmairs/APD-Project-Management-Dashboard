@@ -14,17 +14,38 @@ services:
       timeout: 5s
       retries: 10
 
+  # CMP's own, physically separate database — see the README's
+  # "Multi-Organization Architecture" section for why GVW and CMP don't
+  # share tables (or even a server-side database) despite sharing one login.
+  db-cmp:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-apd}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apd}
+      POSTGRES_DB: ${POSTGRES_CMP_DB:-apd_cmp}
+    volumes:
+      - db_cmp_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-apd}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build: ./backend
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-apd}:${POSTGRES_PASSWORD:-apd}@db:5432/${POSTGRES_DB:-apd_dashboard}
+      CMP_DATABASE_URL: postgresql://${POSTGRES_USER:-apd}:${POSTGRES_PASSWORD:-apd}@db-cmp:5432/${POSTGRES_CMP_DB:-apd_cmp}
       PORT: 4000
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1}
     depends_on:
       db:
+        condition: service_healthy
+      db-cmp:
         condition: service_healthy
     ports:
       - "4000:4000"
@@ -46,4 +67,5 @@ services:
 
 volumes:
   db_data:
+  db_cmp_data:
   uploads_data:

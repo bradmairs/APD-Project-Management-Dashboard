@@ -36,8 +36,54 @@ async function seedUsers(): Promise<Record<string, string>> {
   return Object.fromEntries(users.map((u) => [u.name, u.id]));
 }
 
+// GVW is this database's own organization — every Project/register row here
+// belongs to it implicitly, with no organizationId column, since GVW's data
+// lives in a database of its own (see backend/prisma/cmp for CMP's). This
+// row and its memberships exist purely so GVW and CMP users can share one
+// login and one org switcher.
+async function seedOrganizations(userIdByName: Record<string, string>) {
+  const gvw = await prisma.organization.upsert({
+    where: { slug: "gvw" },
+    update: {},
+    create: { slug: "gvw", name: "Goulburn Valley Water" },
+  });
+  const cmp = await prisma.organization.upsert({
+    where: { slug: "cmp" },
+    update: {},
+    create: { slug: "cmp", name: "CMP" },
+  });
+
+  for (const name of Object.keys(userIdByName)) {
+    await prisma.organizationMembership.upsert({
+      where: {
+        userId_organizationId: { userId: userIdByName[name], organizationId: gvw.id },
+      },
+      update: {},
+      create: {
+        userId: userIdByName[name],
+        organizationId: gvw.id,
+        role: name === "Admin" ? "ADMIN" : "MEMBER",
+      },
+    });
+  }
+
+  // Admin also gets into CMP, so one login can demonstrate switching between
+  // both dashboards; CMP's own demo users are seeded separately (see
+  // prisma/cmp/seed.ts) since they only need to exist in CMP's database.
+  await prisma.organizationMembership.upsert({
+    where: {
+      userId_organizationId: { userId: userIdByName["Admin"], organizationId: cmp.id },
+    },
+    update: {},
+    create: { userId: userIdByName["Admin"], organizationId: cmp.id, role: "ADMIN" },
+  });
+
+  console.log("Seeded organizations: Goulburn Valley Water (gvw), CMP (cmp).");
+}
+
 async function main() {
   const userIdByName = await seedUsers();
+  await seedOrganizations(userIdByName);
 
   const count = await prisma.project.count();
   if (count > 0) {

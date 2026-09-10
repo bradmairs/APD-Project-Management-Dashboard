@@ -63,6 +63,7 @@ import {
   ToolboxTalkInput,
   TrainingRecord,
   TrainingRecordInput,
+  OrganizationMembership,
   User,
   Variation,
   VariationInput,
@@ -95,6 +96,10 @@ export function logout(): Promise<void> {
 
 export function getMe(): Promise<User> {
   return fetch(`${API_BASE}/auth/me`).then((res) => handle(res));
+}
+
+export function getMyOrganizations(): Promise<OrganizationMembership[]> {
+  return fetch(`${API_BASE}/organizations/me`).then((res) => handle(res));
 }
 
 export function changePassword(

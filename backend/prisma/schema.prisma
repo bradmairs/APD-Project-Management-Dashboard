@@ -29,6 +29,11 @@ enum Role {
   MEMBER
 }
 
+enum OrgRole {
+  ADMIN
+  MEMBER
+}
+
 enum RagStatus {
   GREEN
   AMBER
@@ -267,6 +272,42 @@ model User {
   environmentalMonitoringRecords EnvironmentalMonitoringRecord[]
   safetyInspections              SafetyInspection[]
   tenderPackages                 TenderPackage[]
+  memberships                    OrganizationMembership[]
+}
+
+// One of the separate companies/agencies this tool serves — e.g. Goulburn
+// Valley Water (a water authority tracking asset delivery by its
+// consultants and contractors) versus CMP (a design consultancy tracking
+// its own design work). Each organization's project/register data lives in
+// its own physically separate database (see backend/prisma/cmp/schema.prisma
+// for CMP's), never in shared tables here — this model and
+// OrganizationMembership exist only so the two can share one login and one
+// user directory. A user with no membership row for an organization simply
+// can't see it; there is no implicit access.
+model Organization {
+  id          String                   @id @default(cuid())
+  slug        String                   @unique
+  name        String
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  memberships OrganizationMembership[]
+}
+
+// Grants one User access to one Organization's dashboard. role is scoped to
+// that organization alone (distinct from User.role, which today only gates
+// the GVW-side admin screens) since a person could plausibly be an admin of
+// one organization's data and just a member of another's.
+model OrganizationMembership {
+  id             String       @id @default(cuid())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  role           OrgRole      @default(MEMBER)
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
 }
 
 model Project {
