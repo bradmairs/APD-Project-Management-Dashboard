@@ -373,6 +373,10 @@ export type LimitType = "MAX" | "MIN";
 
 export type SafetyInspectionStatus = "OPEN" | "IN_PROGRESS" | "CLOSED";
 
+export type TenderMethod = "OPEN" | "SELECTIVE" | "DIRECT_ENGAGE" | "EXPRESSION_OF_INTEREST";
+
+export type TenderStatus = "PLANNED" | "ISSUED" | "EVALUATION" | "AWARDED" | "CANCELLED";
+
 export interface SqeRecord {
   id: string;
   projectId: string;
@@ -905,6 +909,41 @@ export type SafetyInspectionInput = Omit<
   | "dateClosed"
   | "recordedById"
   | "recordedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
+
+export interface TenderPackage {
+  id: string;
+  projectId: string;
+  packageNumber: string | null;
+  title: string;
+  description: string | null;
+  method: TenderMethod;
+  status: TenderStatus;
+  dateIssued: string | null;
+  closingDate: string | null;
+  submissionsReceived: number | null;
+  estimatedValue: number | null;
+  awardedTo: string | null;
+  awardedValue: number | null;
+  dateAwarded: string | null;
+  managedById: string | null;
+  managedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type TenderPackageInput = Omit<
+  TenderPackage,
+  | "id"
+  | "projectId"
+  | "dateAwarded"
+  | "managedById"
+  | "managedByName"
   | "createdAt"
   | "updatedAt"
   | "project"

@@ -55,6 +55,8 @@ import {
   SubcontractorInput,
   Task,
   TaskInput,
+  TenderPackage,
+  TenderPackageInput,
   ToolboxTalk,
   ToolboxTalkInput,
   TrainingRecord,
@@ -1224,6 +1226,42 @@ export function updateSafetyInspection(
 
 export function deleteSafetyInspection(id: string): Promise<void> {
   return fetch(`${API_BASE}/safety-inspections/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getTenderPackages(projectId: string): Promise<TenderPackage[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/tender-packages`).then((res) => handle(res));
+}
+
+export function getAllTenderPackages(): Promise<TenderPackage[]> {
+  return fetch(`${API_BASE}/tender-packages`).then((res) => handle(res));
+}
+
+export function createTenderPackage(
+  projectId: string,
+  data: Partial<TenderPackageInput>
+): Promise<TenderPackage> {
+  return fetch(`${API_BASE}/projects/${projectId}/tender-packages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateTenderPackage(
+  id: string,
+  data: Partial<TenderPackageInput>
+): Promise<TenderPackage> {
+  return fetch(`${API_BASE}/tender-packages/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteTenderPackage(id: string): Promise<void> {
+  return fetch(`${API_BASE}/tender-packages/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }

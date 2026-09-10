@@ -1112,6 +1112,32 @@ Ollama is only reachable from trusted hosts (e.g. not exposed directly
 to the internet). If the backend can't reach Ollama, the Assistant shows
 a clear error in place of an answer rather than failing silently.
 
+## Procurement & Tenders
+
+Each project has a **Procurement & Tenders** register tracking the
+process of sourcing a consultant or contractor for a package of work —
+distinct from **Subcontractors**, which tracks a trade contractor
+*already engaged*: this register is the process that precedes and
+eventually produces an engagement, and not every package results in one
+(some are cancelled before award). A tender package has an optional
+Package Number, a Title and Description, a Method (Open Tender,
+Selective Tender, Direct Engagement, or Expression of Interest), Date
+Issued, Closing Date, Submissions Received, an Estimated Value, and a
+status of Planned/Issued/Evaluation/Awarded/Cancelled. Once a package is
+marked Awarded it also records who it was Awarded To and the Awarded
+Value.
+
+`dateAwarded` stamps automatically the moment status becomes Awarded,
+the same pattern the EOT register uses for `dateDecided`. The panel
+sorts packages currently Issued or under Evaluation first (they need
+attention soonest), then Planned, with Awarded/Cancelled packages —
+nothing left to do — last.
+
+The Dashboard has a portfolio-wide **Active Tenders** panel listing
+every package currently Issued or under Evaluation across every
+project, soonest-closing first, linking back to its project. Open to
+any logged-in user to edit.
+
 ## Tabbed Navigation
 
 Both the Dashboard and a project's detail page had grown into one long

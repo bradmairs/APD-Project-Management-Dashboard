@@ -23,6 +23,7 @@ import {
   PerformanceReview,
   Subcontractor,
   Task,
+  TenderPackage,
   ToolboxTalk,
   TrainingRecord,
   Variation,
@@ -474,4 +475,25 @@ export function describeSafetyInspectionUpdate(
     return `marked the safety inspection "${before.inspectionType}" as ${label}`;
   }
   return `updated the safety inspection "${before.inspectionType}"`;
+}
+
+const TENDER_STATUS_LABELS: Record<string, string> = {
+  PLANNED: "Planned",
+  ISSUED: "Issued",
+  EVALUATION: "Evaluation",
+  AWARDED: "Awarded",
+  CANCELLED: "Cancelled",
+};
+
+export function describeTenderPackageUpdate(
+  before: TenderPackage,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = TENDER_STATUS_LABELS[body.status as string] ?? String(body.status);
+    const awardNote =
+      body.status === "AWARDED" && body.awardedTo ? ` to "${body.awardedTo}"` : "";
+    return `marked tender package "${before.title}" as ${label}${awardNote}`;
+  }
+  return `updated tender package "${before.title}"`;
 }

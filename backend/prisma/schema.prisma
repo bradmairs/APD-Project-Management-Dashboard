@@ -214,6 +214,21 @@ enum SafetyInspectionStatus {
   CLOSED
 }
 
+enum TenderMethod {
+  OPEN
+  SELECTIVE
+  DIRECT_ENGAGE
+  EXPRESSION_OF_INTEREST
+}
+
+enum TenderStatus {
+  PLANNED
+  ISSUED
+  EVALUATION
+  AWARDED
+  CANCELLED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -251,6 +266,7 @@ model User {
   toolboxTalks ToolboxTalk[]
   environmentalMonitoringRecords EnvironmentalMonitoringRecord[]
   safetyInspections SafetyInspection[]
+  tenderPackages TenderPackage[]
 }
 
 model Project {
@@ -305,6 +321,7 @@ model Project {
   toolboxTalks           ToolboxTalk[]
   environmentalMonitoringRecords EnvironmentalMonitoringRecord[]
   safetyInspections      SafetyInspection[]
+  tenderPackages         TenderPackage[]
 }
 
 model Task {
@@ -1166,6 +1183,41 @@ model SafetyInspection {
   notes           String?
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
+
+  @@index([projectId])
+}
+
+// A tender/procurement package raised to source a consultant or contractor
+// for a project — distinct from Subcontractor, which tracks a trade
+// contractor already engaged: this is the process that precedes and
+// eventually produces an engagement. awardedTo is freeform text (the
+// winning bidder's name) rather than a Subcontractor relation, since not
+// every awarded package results in a Subcontractor record being created,
+// and a package can be cancelled before award. dateAwarded is set once the
+// status moves to AWARDED, the same pattern EotClaim.dateDecided uses for
+// SUBMITTED -> APPROVED/REJECTED.
+model TenderPackage {
+  id                  String       @id @default(cuid())
+  project             Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId           String
+  packageNumber       String?
+  title               String
+  description         String?
+  method              TenderMethod @default(OPEN)
+  status              TenderStatus @default(PLANNED)
+  dateIssued          DateTime?
+  closingDate         DateTime?
+  submissionsReceived Int?
+  estimatedValue      Decimal?     @db.Decimal(14, 2)
+  awardedTo           String?
+  awardedValue        Decimal?     @db.Decimal(14, 2)
+  dateAwarded         DateTime?
+  managedBy           User?        @relation(fields: [managedById], references: [id], onDelete: SetNull)
+  managedById         String?
+  managedByName       String
+  notes               String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
 
   @@index([projectId])
 }
