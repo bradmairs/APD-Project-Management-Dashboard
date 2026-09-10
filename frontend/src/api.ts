@@ -1227,3 +1227,19 @@ export function deleteSafetyInspection(id: string): Promise<void> {
     handle(res)
   );
 }
+
+export function askProjectAi(projectId: string, question: string): Promise<{ answer: string }> {
+  return fetch(`${API_BASE}/projects/${projectId}/ai/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  }).then((res) => handle(res));
+}
+
+export function askPortfolioAi(question: string): Promise<{ answer: string }> {
+  return fetch(`${API_BASE}/ai/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  }).then((res) => handle(res));
+}

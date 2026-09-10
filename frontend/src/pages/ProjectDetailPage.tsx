@@ -73,6 +73,7 @@ import {
   createEnvironmentalMonitoring,
   createEotClaim,
   createSafetyInspection,
+  askProjectAi,
   createInsuranceWarranty,
   createLessonLearned,
   createMeetingMinutes,
@@ -207,6 +208,7 @@ import MeetingMinutesPanel from "../components/MeetingMinutesPanel";
 import SqePanel from "../components/SqePanel";
 import EnvironmentalMonitoringPanel from "../components/EnvironmentalMonitoringPanel";
 import SafetyInspectionsPanel from "../components/SafetyInspectionsPanel";
+import AiAssistantPanel from "../components/AiAssistantPanel";
 import EotPanel from "../components/EotPanel";
 import ChecklistPanel from "../components/ChecklistPanel";
 import DefectsPanel from "../components/DefectsPanel";
@@ -228,7 +230,7 @@ import UserMenu from "../components/UserMenu";
 import { useAuth } from "../auth/AuthContext";
 import gvwLogo from "../assets/gvw-logo.png";
 
-type ProjectTabId = "overview" | "schedule" | "budget" | "quality" | "site";
+type ProjectTabId = "overview" | "schedule" | "budget" | "quality" | "site" | "ai";
 
 const PROJECT_TABS: { id: ProjectTabId; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -236,6 +238,7 @@ const PROJECT_TABS: { id: ProjectTabId; label: string }[] = [
   { id: "budget", label: "Budget & Contract" },
   { id: "quality", label: "Quality & Risk" },
   { id: "site", label: "Site & Records" },
+  { id: "ai", label: "AI Assistant" },
 ];
 
 export default function ProjectDetailPage() {
@@ -1321,6 +1324,15 @@ export default function ProjectDetailPage() {
                 onDelete={handleDeleteToolboxTalk}
               />
             </>
+          )}
+
+          {activeTab === "ai" && project && (
+            <AiAssistantPanel
+              title="AI Assistant"
+              description="Ask questions about this project — its budget, schedule, risks, and open items across every register. Powered by a locally-hosted Ollama model."
+              suggestedQuestion="Summarize this project's health and its most pressing open items"
+              onAsk={(question) => askProjectAi(project.id, question)}
+            />
           )}
         </div>
       </main>

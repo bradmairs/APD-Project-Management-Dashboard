@@ -21,6 +21,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-apd}:${POSTGRES_PASSWORD:-apd}@db:5432/${POSTGRES_DB:-apd_dashboard}
       PORT: 4000
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1}
     depends_on:
       db:
         condition: service_healthy
@@ -28,6 +30,11 @@ services:
       - "4000:4000"
     volumes:
       - uploads_data:/app/uploads
+    # Lets the backend container reach Ollama running on the Docker host via
+    # host.docker.internal — resolved out of the box on Docker Desktop, but
+    # needs this mapping on Linux hosts.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   frontend:
     build: ./frontend
