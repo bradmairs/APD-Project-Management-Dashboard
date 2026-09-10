@@ -11,6 +11,7 @@ import {
   EnvironmentalMonitoringRecord,
   EotClaim,
   InsuranceWarranty,
+  SafetyInspection,
   PaymentClaim,
   Permit,
   Project,
@@ -35,6 +36,7 @@ import {
   getAllDefects,
   getAllEnvironmentalMonitoring,
   getAllEotClaims,
+  getAllSafetyInspections,
   getAllInsuranceWarranties,
   getAllPaymentClaims,
   getAllPermits,
@@ -60,6 +62,7 @@ import ExpiringPermitsPanel from "../components/ExpiringPermitsPanel";
 import ExpiringInsuranceWarrantiesPanel from "../components/ExpiringInsuranceWarrantiesPanel";
 import OpenSqePanel from "../components/OpenSqePanel";
 import EnvironmentalExceedancesPanel from "../components/EnvironmentalExceedancesPanel";
+import OpenSafetyInspectionsPanel from "../components/OpenSafetyInspectionsPanel";
 import OpenDefectsPanel from "../components/OpenDefectsPanel";
 import OpenPaymentClaimsPanel from "../components/OpenPaymentClaimsPanel";
 import OpenRfisPanel from "../components/OpenRfisPanel";
@@ -116,6 +119,7 @@ export default function DashboardPage() {
   const [environmentalMonitoring, setEnvironmentalMonitoring] = useState<
     EnvironmentalMonitoringRecord[]
   >([]);
+  const [safetyInspections, setSafetyInspections] = useState<SafetyInspection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -151,6 +155,7 @@ export default function DashboardPage() {
         trainingRecordData,
         performanceReviewData,
         environmentalMonitoringData,
+        safetyInspectionData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -172,6 +177,7 @@ export default function DashboardPage() {
         getAllTrainingRecords(),
         getAllPerformanceReviews(),
         getAllEnvironmentalMonitoring(),
+        getAllSafetyInspections(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -193,6 +199,7 @@ export default function DashboardPage() {
       setTrainingRecords(trainingRecordData);
       setPerformanceReviews(performanceReviewData);
       setEnvironmentalMonitoring(environmentalMonitoringData);
+      setSafetyInspections(safetyInspectionData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -381,6 +388,7 @@ export default function DashboardPage() {
             <ExpiringPermitsPanel permits={permits} />
             <OpenSqePanel records={sqeRecords} />
             <EnvironmentalExceedancesPanel records={environmentalMonitoring} />
+            <OpenSafetyInspectionsPanel inspections={safetyInspections} />
             <OpenDefectsPanel defects={defects} />
             <OpenPaymentClaimsPanel claims={paymentClaims} />
             <ExpiringInsuranceWarrantiesPanel items={insuranceWarranties} />

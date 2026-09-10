@@ -1044,6 +1044,29 @@ The Dashboard has a portfolio-wide **Environmental Exceedances** panel
 listing every exceedance across every project, most recent first. Open
 to any logged-in user to edit.
 
+## Site Safety Inspections
+
+Each project has a **Site Safety Inspections** register — scheduled or
+ad-hoc compliance walks and audits of site conditions and contractor
+practices, distinct from the **Safety, Quality & Environment** register
+(a one-off incident that already happened, not a proactive assessment)
+and **Toolbox Talks** (a briefing delivered to workers, not an
+inspection of the site). An inspection has an Inspection Type (freeform,
+with suggestions), Date, who Conducted it, Location, an optional
+compliance Score (0-100), Findings, Corrective Action, and a status of
+Open/In Progress/Closed for tracking any corrective action through to
+completion.
+
+`dateClosed` stamps automatically the moment status becomes Closed, the
+same pattern the SQE register uses for its own closing date. The panel
+sorts open/in-progress inspections first, then lowest score first within
+each group.
+
+The Dashboard has a portfolio-wide **Open Safety Inspections** panel
+listing every open or in-progress inspection across every project,
+lowest score first, linking back to its project. Open to any logged-in
+user to edit.
+
 ## Tabbed Navigation
 
 Both the Dashboard and a project's detail page had grown into one long

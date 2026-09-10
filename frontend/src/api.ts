@@ -42,6 +42,8 @@ import {
   Risk,
   RiskInput,
   Role,
+  SafetyInspection,
+  SafetyInspectionInput,
   SiteVisit,
   SiteVisitInput,
   SiteVisitPhoto,
@@ -1186,6 +1188,42 @@ export function updateEnvironmentalMonitoring(
 
 export function deleteEnvironmentalMonitoring(id: string): Promise<void> {
   return fetch(`${API_BASE}/environmental-monitoring/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function getSafetyInspections(projectId: string): Promise<SafetyInspection[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/safety-inspections`).then((res) => handle(res));
+}
+
+export function getAllSafetyInspections(): Promise<SafetyInspection[]> {
+  return fetch(`${API_BASE}/safety-inspections`).then((res) => handle(res));
+}
+
+export function createSafetyInspection(
+  projectId: string,
+  data: Partial<SafetyInspectionInput>
+): Promise<SafetyInspection> {
+  return fetch(`${API_BASE}/projects/${projectId}/safety-inspections`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateSafetyInspection(
+  id: string,
+  data: Partial<SafetyInspectionInput>
+): Promise<SafetyInspection> {
+  return fetch(`${API_BASE}/safety-inspections/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteSafetyInspection(id: string): Promise<void> {
+  return fetch(`${API_BASE}/safety-inspections/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
 }

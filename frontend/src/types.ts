@@ -371,6 +371,8 @@ export type SqeStatus = "OPEN" | "IN_PROGRESS" | "CLOSED";
 
 export type LimitType = "MAX" | "MIN";
 
+export type SafetyInspectionStatus = "OPEN" | "IN_PROGRESS" | "CLOSED";
+
 export interface SqeRecord {
   id: string;
   projectId: string;
@@ -871,6 +873,38 @@ export type EnvironmentalMonitoringRecordInput = Omit<
   | "projectId"
   | "monitoredById"
   | "monitoredByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
+
+export interface SafetyInspection {
+  id: string;
+  projectId: string;
+  inspectionDate: string;
+  inspectionType: string;
+  location: string | null;
+  conductedBy: string;
+  score: number | null;
+  findings: string | null;
+  correctiveAction: string | null;
+  status: SafetyInspectionStatus;
+  dateClosed: string | null;
+  recordedById: string | null;
+  recordedByName: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type SafetyInspectionInput = Omit<
+  SafetyInspection,
+  | "id"
+  | "projectId"
+  | "dateClosed"
+  | "recordedById"
+  | "recordedByName"
   | "createdAt"
   | "updatedAt"
   | "project"
