@@ -230,98 +230,98 @@ enum TenderStatus {
 }
 
 model User {
-  id             String        @id @default(cuid())
-  name           String
-  email          String        @unique
-  passwordHash   String
-  role           Role          @default(MEMBER)
-  active         Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  activityLogs   ActivityLog[]
-  attachments    Attachment[]
-  createdProjects Project[]
-  monthlyReports MonthlyReport[]
-  siteVisits     SiteVisit[]
-  siteVisitPhotos SiteVisitPhoto[]
-  variations     Variation[]
-  risks          Risk[]
-  actionItems    ActionItem[]
-  permits        Permit[]
-  lessonsLearned LessonLearned[]
-  sqeRecords     SqeRecord[]
-  eotClaims      EotClaim[]
-  checklistItems ChecklistItem[]
-  defectItems    DefectItem[]
-  paymentClaims  PaymentClaim[]
-  insuranceWarranties InsuranceWarranty[]
-  rfis           Rfi[]
-  documents      DocumentRecord[]
-  communityEnquiries CommunityEnquiry[]
-  subcontractors Subcontractor[]
-  meetingMinutes MeetingMinutes[]
-  correspondence Correspondence[]
-  trainingRecords TrainingRecord[]
-  performanceReviews PerformanceReview[]
-  toolboxTalks ToolboxTalk[]
+  id                             String                          @id @default(cuid())
+  name                           String
+  email                          String                          @unique
+  passwordHash                   String
+  role                           Role                            @default(MEMBER)
+  active                         Boolean                         @default(true)
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
+  activityLogs                   ActivityLog[]
+  attachments                    Attachment[]
+  createdProjects                Project[]
+  monthlyReports                 MonthlyReport[]
+  siteVisits                     SiteVisit[]
+  siteVisitPhotos                SiteVisitPhoto[]
+  variations                     Variation[]
+  risks                          Risk[]
+  actionItems                    ActionItem[]
+  permits                        Permit[]
+  lessonsLearned                 LessonLearned[]
+  sqeRecords                     SqeRecord[]
+  eotClaims                      EotClaim[]
+  checklistItems                 ChecklistItem[]
+  defectItems                    DefectItem[]
+  paymentClaims                  PaymentClaim[]
+  insuranceWarranties            InsuranceWarranty[]
+  rfis                           Rfi[]
+  documents                      DocumentRecord[]
+  communityEnquiries             CommunityEnquiry[]
+  subcontractors                 Subcontractor[]
+  meetingMinutes                 MeetingMinutes[]
+  correspondence                 Correspondence[]
+  trainingRecords                TrainingRecord[]
+  performanceReviews             PerformanceReview[]
+  toolboxTalks                   ToolboxTalk[]
   environmentalMonitoringRecords EnvironmentalMonitoringRecord[]
-  safetyInspections SafetyInspection[]
-  tenderPackages TenderPackage[]
+  safetyInspections              SafetyInspection[]
+  tenderPackages                 TenderPackage[]
 }
 
 model Project {
-  id                     String        @id @default(cuid())
-  name                   String
-  description            String?
-  assetType              String?
-  status                 ProjectStatus @default(PLANNING)
-  bpRefNo                String?
-  projectManager         String?
-  projectDirector        String?
-  projectSponsor         String?
-  location               String?
-  contractor             String?
-  budget                 Decimal?      @db.Decimal(14, 2)
-  contingency            Decimal?      @db.Decimal(14, 2)
-  contractValue          Decimal?      @db.Decimal(14, 2)
-  startDate              DateTime?
-  targetCompletionDate   DateTime?
-  actualCompletionDate   DateTime?
-  createdById            String?
-  createdBy              User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt              DateTime      @default(now())
-  updatedAt              DateTime      @updatedAt
-  tasks                  Task[]
-  activityLogs           ActivityLog[]
-  attachments            Attachment[]
-  monthlyReports         MonthlyReport[]
-  milestones             Milestone[]
-  cashFlowEntries        CashFlowEntry[]
-  siteVisits             SiteVisit[]
-  variations             Variation[]
-  risks                  Risk[]
-  actionItems            ActionItem[]
-  stakeholders           Stakeholder[]
-  permits                Permit[]
-  lessonsLearned         LessonLearned[]
-  sqeRecords             SqeRecord[]
-  eotClaims              EotClaim[]
-  checklistItems         ChecklistItem[]
-  defectItems            DefectItem[]
-  paymentClaims          PaymentClaim[]
-  insuranceWarranties    InsuranceWarranty[]
-  rfis                   Rfi[]
-  documents              DocumentRecord[]
-  communityEnquiries     CommunityEnquiry[]
-  subcontractors         Subcontractor[]
-  meetingMinutes         MeetingMinutes[]
-  correspondence         Correspondence[]
-  trainingRecords        TrainingRecord[]
-  performanceReviews     PerformanceReview[]
-  toolboxTalks           ToolboxTalk[]
+  id                             String                          @id @default(cuid())
+  name                           String
+  description                    String?
+  assetType                      String?
+  status                         ProjectStatus                   @default(PLANNING)
+  bpRefNo                        String?
+  projectManager                 String?
+  projectDirector                String?
+  projectSponsor                 String?
+  location                       String?
+  contractor                     String?
+  budget                         Decimal?                        @db.Decimal(14, 2)
+  contingency                    Decimal?                        @db.Decimal(14, 2)
+  contractValue                  Decimal?                        @db.Decimal(14, 2)
+  startDate                      DateTime?
+  targetCompletionDate           DateTime?
+  actualCompletionDate           DateTime?
+  createdById                    String?
+  createdBy                      User?                           @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt                      DateTime                        @default(now())
+  updatedAt                      DateTime                        @updatedAt
+  tasks                          Task[]
+  activityLogs                   ActivityLog[]
+  attachments                    Attachment[]
+  monthlyReports                 MonthlyReport[]
+  milestones                     Milestone[]
+  cashFlowEntries                CashFlowEntry[]
+  siteVisits                     SiteVisit[]
+  variations                     Variation[]
+  risks                          Risk[]
+  actionItems                    ActionItem[]
+  stakeholders                   Stakeholder[]
+  permits                        Permit[]
+  lessonsLearned                 LessonLearned[]
+  sqeRecords                     SqeRecord[]
+  eotClaims                      EotClaim[]
+  checklistItems                 ChecklistItem[]
+  defectItems                    DefectItem[]
+  paymentClaims                  PaymentClaim[]
+  insuranceWarranties            InsuranceWarranty[]
+  rfis                           Rfi[]
+  documents                      DocumentRecord[]
+  communityEnquiries             CommunityEnquiry[]
+  subcontractors                 Subcontractor[]
+  meetingMinutes                 MeetingMinutes[]
+  correspondence                 Correspondence[]
+  trainingRecords                TrainingRecord[]
+  performanceReviews             PerformanceReview[]
+  toolboxTalks                   ToolboxTalk[]
   environmentalMonitoringRecords EnvironmentalMonitoringRecord[]
-  safetyInspections      SafetyInspection[]
-  tenderPackages         TenderPackage[]
+  safetyInspections              SafetyInspection[]
+  tenderPackages                 TenderPackage[]
 }
 
 model Task {
@@ -343,19 +343,26 @@ model Task {
 // disk is deleted at the same time — there's nothing left for the row to
 // document once that happens.
 model Attachment {
-  id             String   @id @default(cuid())
-  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId      String
-  storedFilename String
-  originalName   String
-  mimeType       String
-  size           Int
-  uploadedBy     User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
-  uploadedById   String?
-  uploadedByName String
-  createdAt      DateTime @default(now())
+  id               String          @id @default(cuid())
+  project          Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  storedFilename   String
+  originalName     String
+  mimeType         String
+  size             Int
+  // Optional: a file attached to a specific meeting's minutes (the signed
+  // PDF, a slide deck) rather than the project's general Attachments list.
+  // Cascades with its meeting, unlike uploadedBy below, since the file has
+  // no purpose once the meeting it documents is gone.
+  meetingMinutes   MeetingMinutes? @relation(fields: [meetingMinutesId], references: [id], onDelete: Cascade)
+  meetingMinutesId String?
+  uploadedBy       User?           @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedById     String?
+  uploadedByName   String
+  createdAt        DateTime        @default(now())
 
   @@index([projectId])
+  @@index([meetingMinutesId])
 }
 
 // A major project deliverable from the WBS schedule table in the monthly
@@ -446,18 +453,18 @@ model MonthlyReport {
 // month, so there's naturally many per month rather than one. Cascades with
 // its project since a visit log only makes sense in that project's context.
 model SiteVisit {
-  id              String    @id @default(cuid())
-  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id              String           @id @default(cuid())
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId       String
   visitDate       DateTime
   location        String
   notes           String?
   discussionNotes String?
-  visitedBy       User?     @relation(fields: [visitedById], references: [id], onDelete: SetNull)
+  visitedBy       User?            @relation(fields: [visitedById], references: [id], onDelete: SetNull)
   visitedById     String?
   visitedByName   String
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
   photos          SiteVisitPhoto[]
 
   @@index([projectId])
@@ -536,26 +543,26 @@ model Variation {
 // with its project like Milestone/Variation — a risk only makes sense in
 // that project's context.
 model Risk {
-  id                   String           @id @default(cuid())
-  project              Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId            String
-  type                 RiskType         @default(RISK)
-  title                String
-  description          String?
-  category             String?
-  inherentLikelihood   RiskLikelihood
-  inherentConsequence  RiskConsequence
-  residualLikelihood   RiskLikelihood?
-  residualConsequence  RiskConsequence?
-  mitigation           String?
-  ownerName            String?
-  dueDate              DateTime?
-  status               RiskStatus       @default(OPEN)
-  createdBy            User?            @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdById          String?
-  createdByName        String
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
+  id                  String           @id @default(cuid())
+  project             Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId           String
+  type                RiskType         @default(RISK)
+  title               String
+  description         String?
+  category            String?
+  inherentLikelihood  RiskLikelihood
+  inherentConsequence RiskConsequence
+  residualLikelihood  RiskLikelihood?
+  residualConsequence RiskConsequence?
+  mitigation          String?
+  ownerName           String?
+  dueDate             DateTime?
+  status              RiskStatus       @default(OPEN)
+  createdBy           User?            @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById         String?
+  createdByName       String
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   @@index([projectId])
 }
@@ -570,26 +577,33 @@ model Risk {
 // same way Variation.dateDecided stamps on leaving PROPOSED. Cascades
 // with its project like Variation/Risk.
 model ActionItem {
-  id           String           @id @default(cuid())
-  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId    String
-  type         ActionType       @default(ACTION)
-  title        String
-  description  String?
-  category     String?
-  ownerName    String?
-  dueDate      DateTime?
-  status       ActionItemStatus @default(OPEN)
-  dateRaised   DateTime
-  dateClosed   DateTime?
-  raisedBy     User?            @relation(fields: [raisedById], references: [id], onDelete: SetNull)
-  raisedById   String?
-  raisedByName String
-  notes        String?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  id               String           @id @default(cuid())
+  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  type             ActionType       @default(ACTION)
+  title            String
+  description      String?
+  category         String?
+  ownerName        String?
+  dueDate          DateTime?
+  status           ActionItemStatus @default(OPEN)
+  dateRaised       DateTime
+  dateClosed       DateTime?
+  raisedBy         User?            @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById       String?
+  raisedByName     String
+  notes            String?
+  // Optional: the meeting this action arose from — unlike raisedBy/project,
+  // this unlinks (SetNull) rather than cascades on delete, since an action
+  // remains real work to track even after the meeting record documenting
+  // it is gone.
+  meetingMinutes   MeetingMinutes?  @relation(fields: [meetingMinutesId], references: [id], onDelete: SetNull)
+  meetingMinutesId String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@index([projectId])
+  @@index([meetingMinutesId])
 }
 
 // A person or organization with a stake in a project — a landholder, a
@@ -623,23 +637,23 @@ model Stakeholder {
 // application's own outcome (Pending/Approved/Rejected). Cascades with
 // its project like the other registers.
 model Permit {
-  id                String       @id @default(cuid())
-  project           Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId         String
-  title             String
-  category          String?
-  referenceNumber   String?
-  issuingAuthority  String?
-  status            PermitStatus @default(PENDING)
-  dateApplied       DateTime?
-  dateApproved      DateTime?
-  expiryDate        DateTime?
-  notes             String?
-  createdBy         User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdById       String?
-  createdByName     String
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  id               String       @id @default(cuid())
+  project          Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  title            String
+  category         String?
+  referenceNumber  String?
+  issuingAuthority String?
+  status           PermitStatus @default(PENDING)
+  dateApplied      DateTime?
+  dateApproved     DateTime?
+  expiryDate       DateTime?
+  notes            String?
+  createdBy        User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById      String?
+  createdByName    String
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
   @@index([projectId])
 }
@@ -714,24 +728,24 @@ model SqeRecord {
 // for schedule that frontend/src/variations.ts's revisedBudget plays for
 // cost. Cascades with its project like the other registers.
 model EotClaim {
-  id           String    @id @default(cuid())
-  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId    String
-  reference    String?
-  title        String
-  cause        String?
-  description  String?
-  daysClaimed  Int
-  daysGranted  Int?
-  status       EotStatus @default(SUBMITTED)
+  id            String    @id @default(cuid())
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  reference     String?
+  title         String
+  cause         String?
+  description   String?
+  daysClaimed   Int
+  daysGranted   Int?
+  status        EotStatus @default(SUBMITTED)
   dateSubmitted DateTime
-  dateDecided  DateTime?
-  raisedBy     User?     @relation(fields: [raisedById], references: [id], onDelete: SetNull)
-  raisedById   String?
-  raisedByName String
-  notes        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  dateDecided   DateTime?
+  raisedBy      User?     @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById    String?
+  raisedByName  String
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([projectId])
 }
@@ -820,23 +834,23 @@ model DefectItem {
 // necessarily happen together. Cascades with its project like the
 // other registers.
 model PaymentClaim {
-  id               String             @id @default(cuid())
-  project          Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId        String
-  claimNumber      String
-  periodEnding     DateTime?
-  claimedAmount    Decimal            @db.Decimal(14, 2)
-  certifiedAmount  Decimal?           @db.Decimal(14, 2)
-  status           PaymentClaimStatus @default(SUBMITTED)
-  dateSubmitted    DateTime
-  dateCertified    DateTime?
-  datePaid         DateTime?
-  raisedBy         User?              @relation(fields: [raisedById], references: [id], onDelete: SetNull)
-  raisedById       String?
-  raisedByName     String
-  notes            String?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  id              String             @id @default(cuid())
+  project         Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  claimNumber     String
+  periodEnding    DateTime?
+  claimedAmount   Decimal            @db.Decimal(14, 2)
+  certifiedAmount Decimal?           @db.Decimal(14, 2)
+  status          PaymentClaimStatus @default(SUBMITTED)
+  dateSubmitted   DateTime
+  dateCertified   DateTime?
+  datePaid        DateTime?
+  raisedBy        User?              @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById      String?
+  raisedByName    String
+  notes           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
 
   @@index([projectId])
 }
@@ -854,22 +868,22 @@ model PaymentClaim {
 // Permit's isPermitExpired/isPermitExpiringSoon. Cascades with its
 // project like the other registers.
 model InsuranceWarranty {
-  id               String                @id @default(cuid())
-  project          Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId        String
-  type             InsuranceWarrantyType
-  title            String
-  provider         String?
-  referenceNumber  String?
-  coverageDetails  String?
-  startDate        DateTime?
-  expiryDate       DateTime?
-  notes            String?
-  createdBy        User?                 @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdById      String?
-  createdByName    String
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
+  id              String                @id @default(cuid())
+  project         Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  type            InsuranceWarrantyType
+  title           String
+  provider        String?
+  referenceNumber String?
+  coverageDetails String?
+  startDate       DateTime?
+  expiryDate      DateTime?
+  notes           String?
+  createdBy       User?                 @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById     String?
+  createdByName   String
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
 
   @@index([projectId])
 }
@@ -887,24 +901,24 @@ model InsuranceWarranty {
 // clears if moved back to OPEN. Cascades with its project like the
 // other registers.
 model Rfi {
-  id            String    @id @default(cuid())
-  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId     String
-  rfiNumber     String
-  subject       String
-  question      String
-  response      String?
-  raisedTo      String?
-  status        RfiStatus @default(OPEN)
-  dateRaised    DateTime
-  dateRequired  DateTime?
-  dateAnswered  DateTime?
-  raisedBy      User?     @relation(fields: [raisedById], references: [id], onDelete: SetNull)
-  raisedById    String?
-  raisedByName  String
-  notes         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    String
+  rfiNumber    String
+  subject      String
+  question     String
+  response     String?
+  raisedTo     String?
+  status       RfiStatus @default(OPEN)
+  dateRaised   DateTime
+  dateRequired DateTime?
+  dateAnswered DateTime?
+  raisedBy     User?     @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById   String?
+  raisedByName String
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([projectId])
 }
@@ -994,8 +1008,8 @@ model Subcontractor {
 // distinct from ActionItem (a single decision/action, not a full meeting
 // record with attendees and a summary).
 model MeetingMinutes {
-  id              String    @id @default(cuid())
-  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id              String       @id @default(cuid())
+  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId       String
   meetingDate     DateTime
   meetingType     String?
@@ -1004,11 +1018,13 @@ model MeetingMinutes {
   summary         String?
   nextMeetingDate DateTime?
   notes           String?
-  recordedBy      User?     @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  recordedBy      User?        @relation(fields: [recordedById], references: [id], onDelete: SetNull)
   recordedById    String?
   recordedByName  String
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  attachments     Attachment[]
+  actionItems     ActionItem[]
 
   @@index([projectId])
 }
@@ -1022,24 +1038,24 @@ model MeetingMinutes {
 // pattern Rfi's dateAnswered uses, since Correspondence has only one
 // closing state.
 model Correspondence {
-  id               String                  @id @default(cuid())
-  project          Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId        String
-  reference        String?
-  direction        CorrespondenceDirection
-  correspondent    String
-  subject          String
-  summary          String?
-  dateSent         DateTime
-  responseDueDate  DateTime?
-  status           CorrespondenceStatus    @default(OPEN)
-  dateClosed       DateTime?
-  notes            String?
-  loggedBy         User?                   @relation(fields: [loggedById], references: [id], onDelete: SetNull)
-  loggedById       String?
-  loggedByName     String
-  createdAt        DateTime                @default(now())
-  updatedAt        DateTime                @updatedAt
+  id              String                  @id @default(cuid())
+  project         Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  reference       String?
+  direction       CorrespondenceDirection
+  correspondent   String
+  subject         String
+  summary         String?
+  dateSent        DateTime
+  responseDueDate DateTime?
+  status          CorrespondenceStatus    @default(OPEN)
+  dateClosed      DateTime?
+  notes           String?
+  loggedBy        User?                   @relation(fields: [loggedById], references: [id], onDelete: SetNull)
+  loggedById      String?
+  loggedByName    String
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
 
   @@index([projectId])
 }
@@ -1054,21 +1070,21 @@ model Correspondence {
 // computed-not-stored expiry pattern as InsuranceWarranty — no status
 // field, the frontend just compares the date against "now".
 model TrainingRecord {
-  id               String    @id @default(cuid())
-  project          Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId        String
-  personName       String
-  company          String?
-  trainingType     String
-  completionDate   DateTime
-  expiryDate       DateTime?
+  id                String    @id @default(cuid())
+  project           Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId         String
+  personName        String
+  company           String?
+  trainingType      String
+  completionDate    DateTime
+  expiryDate        DateTime?
   certificateNumber String?
-  notes            String?
-  recordedBy       User?     @relation(fields: [recordedById], references: [id], onDelete: SetNull)
-  recordedById     String?
-  recordedByName   String
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  notes             String?
+  recordedBy        User?     @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  recordedById      String?
+  recordedByName    String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@index([projectId])
 }
@@ -1165,24 +1181,24 @@ model EnvironmentalMonitoringRecord {
 // stamps automatically the moment status becomes Closed, the same
 // pattern SqeRecord/ActionItem use for their own closing dates.
 model SafetyInspection {
-  id              String                 @id @default(cuid())
-  project         Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId       String
-  inspectionDate  DateTime
-  inspectionType  String
-  location        String?
-  conductedBy     String
-  score           Int?
-  findings        String?
+  id               String                 @id @default(cuid())
+  project          Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  inspectionDate   DateTime
+  inspectionType   String
+  location         String?
+  conductedBy      String
+  score            Int?
+  findings         String?
   correctiveAction String?
-  status          SafetyInspectionStatus @default(OPEN)
-  dateClosed      DateTime?
-  recordedBy      User?                  @relation(fields: [recordedById], references: [id], onDelete: SetNull)
-  recordedById    String?
-  recordedByName  String
-  notes           String?
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
+  status           SafetyInspectionStatus @default(OPEN)
+  dateClosed       DateTime?
+  recordedBy       User?                  @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  recordedById     String?
+  recordedByName   String
+  notes            String?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
 
   @@index([projectId])
 }

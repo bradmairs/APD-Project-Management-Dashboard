@@ -48,6 +48,7 @@ projectActionItemsRouter.post(
       status,
       dateRaised,
       notes,
+      meetingMinutesId,
     } = req.body as Record<string, unknown>;
 
     if (typeof title !== "string" || !title.trim()) {
@@ -83,6 +84,7 @@ projectActionItemsRouter.post(
         dateRaised: parsedDateRaised,
         dateClosed: resolvedStatus === "DONE" ? new Date() : null,
         notes: (notes as string) || null,
+        meetingMinutesId: (meetingMinutesId as string) || null,
         raisedById: req.user!.sub,
         raisedByName: req.user!.name,
       },
@@ -130,6 +132,7 @@ actionItemsRouter.put("/:id", async (req, res) => {
     dateRaised,
     dateClosed,
     notes,
+    meetingMinutesId,
   } = req.body as Record<string, unknown>;
 
   const data: Record<string, unknown> = {};
@@ -165,6 +168,7 @@ actionItemsRouter.put("/:id", async (req, res) => {
   const closed = parseDate(dateClosed);
   if (closed !== undefined) data.dateClosed = closed;
   if (notes !== undefined) data.notes = notes || null;
+  if (meetingMinutesId !== undefined) data.meetingMinutesId = meetingMinutesId || null;
 
   try {
     const actionItem = await prisma.actionItem.update({

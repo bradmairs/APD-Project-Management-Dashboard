@@ -644,6 +644,30 @@ Like Site Visits, this is a plain log with no status workflow — nothing
 to mark open or closed, just a record of what happened. The panel sorts
 by meeting date, most recent first. Open to any logged-in user to edit.
 
+Expanding a meeting reveals two linked sub-sections:
+
+- **Attachments** — files (the signed PDF, a slide deck) uploaded against
+  that specific meeting rather than the project's general Attachments
+  list. Reuses the same upload infrastructure with an optional
+  `meetingMinutesId` tag; deleting the meeting deletes its attachments
+  too (cascade), since the files have no purpose without it.
+- **Actions from this meeting** — Action Items (from the Actions &
+  Decisions register) tagged with the meeting they arose from, via an
+  optional `meetingMinutesId` on `ActionItem`. Unlike attachments, an
+  action is unlinked rather than deleted if its meeting is removed (a
+  follow-up task is still real work to track even without the meeting
+  record). Add one with the quick-add field, or generate a first draft
+  with **AI: Suggest Actions from Notes**.
+
+That button sends the meeting's summary and notes to the same
+self-hosted Ollama model the AI Assistant uses (see below), asking it to
+extract a list of candidate follow-up items — each with a title and,
+where the notes say so, an owner and a due-date hint. Nothing is created
+automatically: the suggestions appear as a checklist (all pre-selected)
+for you to review, deselect, and add. If Ollama can't be reached, the
+button shows the same clear inline error as the AI Assistant rather than
+failing silently.
+
 ## Correspondence
 
 Each project has a **Correspondence Register** — a log of formal letters

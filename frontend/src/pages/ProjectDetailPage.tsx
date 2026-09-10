@@ -56,6 +56,7 @@ import {
   SqeRecordInput,
   Subcontractor,
   SubcontractorInput,
+  SuggestedAction,
   Task,
   TaskStatus,
   TenderPackage,
@@ -105,6 +106,7 @@ import {
   deleteDocument,
   deleteEnvironmentalMonitoring,
   deleteEotClaim,
+  extractMeetingActions,
   deleteSafetyInspection,
   deleteInsuranceWarranty,
   deleteLessonLearned,
@@ -977,6 +979,17 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleUploadMeetingAttachment(meetingId: string, file: File) {
+    if (!project) return;
+    await uploadAttachment(project.id, file, meetingId);
+    await load();
+  }
+
+  async function handleExtractMeetingActions(meetingId: string): Promise<SuggestedAction[]> {
+    const { actions } = await extractMeetingActions(meetingId);
+    return actions;
+  }
+
   const revisedTargetCompletion = useMemo(
     () => (project ? revisedCompletionDate(project, eotClaims) : null),
     [project, eotClaims]
@@ -1138,9 +1151,15 @@ export default function ProjectDetailPage() {
 
               <MeetingMinutesPanel
                 meetings={meetingMinutes}
+                attachments={attachments}
+                actionItems={actionItems}
                 onCreate={handleCreateMeetingMinutes}
                 onUpdate={handleUpdateMeetingMinutes}
                 onDelete={handleDeleteMeetingMinutes}
+                onUploadAttachment={handleUploadMeetingAttachment}
+                onDeleteAttachment={handleDeleteAttachment}
+                onCreateAction={handleCreateActionItem}
+                onExtractActions={handleExtractMeetingActions}
               />
 
               <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">

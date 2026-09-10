@@ -84,6 +84,7 @@ export interface Attachment {
   originalName: string;
   mimeType: string;
   size: number;
+  meetingMinutesId: string | null;
   uploadedById: string | null;
   uploadedByName: string;
   createdAt: string;
@@ -280,6 +281,7 @@ export interface ActionItem {
   raisedById: string | null;
   raisedByName: string;
   notes: string | null;
+  meetingMinutesId: string | null;
   createdAt: string;
   updatedAt: string;
   project?: { id: string; name: string };
@@ -296,6 +298,12 @@ export type ActionItemInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+export interface SuggestedAction {
+  title: string;
+  ownerName: string | null;
+  dueDateHint: string | null;
+}
 
 export interface Stakeholder {
   id: string;

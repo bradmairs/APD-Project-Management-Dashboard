@@ -52,6 +52,7 @@ import {
   SqeRecordInput,
   Stakeholder,
   StakeholderInput,
+  SuggestedAction,
   Subcontractor,
   SubcontractorInput,
   Task,
@@ -190,10 +191,12 @@ export function getAttachments(projectId: string): Promise<Attachment[]> {
 
 export function uploadAttachment(
   projectId: string,
-  file: File
+  file: File,
+  meetingMinutesId?: string
 ): Promise<Attachment> {
   const formData = new FormData();
   formData.append("file", file);
+  if (meetingMinutesId) formData.append("meetingMinutesId", meetingMinutesId);
   return fetch(`${API_BASE}/projects/${projectId}/attachments`, {
     method: "POST",
     body: formData,
@@ -1013,6 +1016,14 @@ export function deleteMeetingMinutes(id: string): Promise<void> {
   return fetch(`${API_BASE}/meeting-minutes/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
+}
+
+export function extractMeetingActions(
+  meetingId: string
+): Promise<{ actions: SuggestedAction[] }> {
+  return fetch(`${API_BASE}/meeting-minutes/${meetingId}/ai/extract-actions`, {
+    method: "POST",
+  }).then((res) => handle(res));
 }
 
 export function getCorrespondence(projectId: string): Promise<Correspondence[]> {

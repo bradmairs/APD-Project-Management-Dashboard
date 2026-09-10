@@ -1,20 +1,325 @@
-import { useState } from "react";
-import { MeetingMinutes, MeetingMinutesInput } from "../types";
-import { formatDate } from "../format";
+import { FormEvent, useRef, useState } from "react";
+import {
+  ActionItem,
+  ActionItemInput,
+  Attachment,
+  MeetingMinutes,
+  MeetingMinutesInput,
+  SuggestedAction,
+} from "../types";
+import { formatDate, formatFileSize } from "../format";
+import { attachmentDownloadUrl } from "../api";
+import { ACTION_STATUS_COLORS, ACTION_STATUS_LABELS } from "../actionItemMeta";
 import MeetingMinutesFormModal from "./MeetingMinutesFormModal";
 
 interface Props {
   meetings: MeetingMinutes[];
+  attachments: Attachment[];
+  actionItems: ActionItem[];
   onCreate: (data: Partial<MeetingMinutesInput>) => Promise<void>;
   onUpdate: (meeting: MeetingMinutes, data: Partial<MeetingMinutesInput>) => Promise<void>;
   onDelete: (meeting: MeetingMinutes) => Promise<void>;
+  onUploadAttachment: (meetingId: string, file: File) => Promise<void>;
+  onDeleteAttachment: (attachment: Attachment) => Promise<void>;
+  onCreateAction: (data: Partial<ActionItemInput>) => Promise<void>;
+  onExtractActions: (meetingId: string) => Promise<SuggestedAction[]>;
+}
+
+// The attachments/actions sub-sections below are the "attach the record,
+// track what it produced" half of this panel — filtered client-side from
+// the project's full attachments/actionItems lists (already loaded for
+// AttachmentsPanel/ActionsPanel) rather than fetched separately per
+// meeting, since the project only ever has a handful of each.
+function MeetingAttachments({
+  meetingId,
+  attachments,
+  onUpload,
+  onDelete,
+}: {
+  meetingId: string;
+  attachments: Attachment[];
+  onUpload: (meetingId: string, file: File) => Promise<void>;
+  onDelete: (attachment: Attachment) => Promise<void>;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const linked = attachments.filter((a) => a.meetingMinutesId === meetingId);
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      await onUpload(meetingId, file);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Attachments
+        </div>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+        >
+          {uploading ? "Uploading…" : "+ Attach file"}
+        </button>
+        <input ref={fileInputRef} type="file" onChange={handleFileSelected} className="hidden" />
+      </div>
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded p-2 mb-1">
+          {error}
+        </div>
+      )}
+      {linked.length === 0 ? (
+        <p className="text-xs text-slate-400 dark:text-slate-500">No files attached.</p>
+      ) : (
+        <ul className="space-y-1">
+          {linked.map((a) => (
+            <li key={a.id} className="flex items-center justify-between text-xs">
+              <a
+                href={attachmentDownloadUrl(a.id)}
+                className="text-blue-600 dark:text-blue-400 hover:underline truncate"
+              >
+                {a.originalName}
+              </a>
+              <span className="flex items-center gap-2 shrink-0 ml-2">
+                <span className="text-slate-400 dark:text-slate-500">
+                  {formatFileSize(a.size)}
+                </span>
+                <button
+                  onClick={() => onDelete(a)}
+                  className="text-red-600 dark:text-red-400 hover:underline"
+                >
+                  Delete
+                </button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function MeetingActions({
+  meeting,
+  actionItems,
+  onCreateAction,
+  onExtractActions,
+}: {
+  meeting: MeetingMinutes;
+  actionItems: ActionItem[];
+  onCreateAction: (data: Partial<ActionItemInput>) => Promise<void>;
+  onExtractActions: (meetingId: string) => Promise<SuggestedAction[]>;
+}) {
+  const [quickTitle, setQuickTitle] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestions, setSuggestions] = useState<SuggestedAction[] | null>(null);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [addingSelected, setAddingSelected] = useState(false);
+
+  const linked = actionItems.filter((a) => a.meetingMinutesId === meeting.id);
+
+  async function handleQuickAdd(e: FormEvent) {
+    e.preventDefault();
+    if (!quickTitle.trim()) return;
+    setAdding(true);
+    try {
+      await onCreateAction({
+        title: quickTitle.trim(),
+        type: "ACTION",
+        status: "OPEN",
+        dateRaised: meeting.meetingDate,
+        meetingMinutesId: meeting.id,
+      });
+      setQuickTitle("");
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleSuggest() {
+    setSuggesting(true);
+    setAiError(null);
+    setSuggestions(null);
+    try {
+      const result = await onExtractActions(meeting.id);
+      setSuggestions(result);
+      setSelected(new Set(result.map((_, i) => i)));
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Failed to extract actions");
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
+  async function handleAddSelected() {
+    if (!suggestions) return;
+    setAddingSelected(true);
+    try {
+      for (let i = 0; i < suggestions.length; i++) {
+        if (!selected.has(i)) continue;
+        const s = suggestions[i];
+        await onCreateAction({
+          title: s.title,
+          type: "ACTION",
+          status: "OPEN",
+          dateRaised: meeting.meetingDate,
+          ownerName: s.ownerName,
+          notes: s.dueDateHint ? `Suggested due: ${s.dueDateHint}` : null,
+          meetingMinutesId: meeting.id,
+        });
+      }
+      setSuggestions(null);
+    } finally {
+      setAddingSelected(false);
+    }
+  }
+
+  function toggleSelected(i: number) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Actions from this meeting
+        </div>
+        <button
+          onClick={handleSuggest}
+          disabled={suggesting}
+          className="text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+        >
+          {suggesting ? "Thinking…" : "AI: Suggest Actions from Notes"}
+        </button>
+      </div>
+
+      {aiError && (
+        <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded p-2 mb-2">
+          {aiError}
+        </div>
+      )}
+
+      {suggestions && (
+        <div className="border border-slate-200 dark:border-slate-600 rounded p-2 mb-2 space-y-1.5">
+          {suggestions.length === 0 ? (
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              No follow-up items found in this meeting's notes.
+            </p>
+          ) : (
+            <>
+              {suggestions.map((s, i) => (
+                <label key={i} className="flex items-start gap-2 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(i)}
+                    onChange={() => toggleSelected(i)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="text-slate-700 dark:text-slate-300">{s.title}</span>
+                    {(s.ownerName || s.dueDateHint) && (
+                      <span className="text-slate-400 dark:text-slate-500">
+                        {" "}
+                        ({[s.ownerName, s.dueDateHint].filter(Boolean).join(", ")})
+                      </span>
+                    )}
+                  </span>
+                </label>
+              ))}
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  onClick={handleAddSelected}
+                  disabled={addingSelected || selected.size === 0}
+                  className="text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {addingSelected ? "Adding…" : `Add ${selected.size} selected`}
+                </button>
+                <button
+                  onClick={() => setSuggestions(null)}
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:underline"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {linked.length === 0 ? (
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
+          No actions recorded from this meeting yet.
+        </p>
+      ) : (
+        <ul className="space-y-1 mb-2">
+          {linked.map((a) => (
+            <li key={a.id} className="flex items-center gap-2 text-xs">
+              <span
+                className={`px-1.5 py-0.5 rounded-full shrink-0 ${ACTION_STATUS_COLORS[a.status]}`}
+              >
+                {ACTION_STATUS_LABELS[a.status]}
+              </span>
+              <span className="text-slate-700 dark:text-slate-300 truncate">{a.title}</span>
+              {a.ownerName && (
+                <span className="text-slate-400 dark:text-slate-500 shrink-0">
+                  · {a.ownerName}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <form onSubmit={handleQuickAdd} className="flex gap-2">
+        <input
+          value={quickTitle}
+          onChange={(e) => setQuickTitle(e.target.value)}
+          placeholder="Quick-add an action…"
+          className="flex-1 min-w-0 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1 text-xs"
+        />
+        <button
+          type="submit"
+          disabled={adding || !quickTitle.trim()}
+          className="text-xs px-2 py-1 rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 shrink-0"
+        >
+          + Add
+        </button>
+      </form>
+    </div>
+  );
 }
 
 export default function MeetingMinutesPanel({
   meetings,
+  attachments,
+  actionItems,
   onCreate,
   onUpdate,
   onDelete,
+  onUploadAttachment,
+  onDeleteAttachment,
+  onCreateAction,
+  onExtractActions,
 }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<MeetingMinutes | null>(null);
@@ -41,7 +346,12 @@ export default function MeetingMinutesPanel({
   }
 
   async function handleDelete(meeting: MeetingMinutes) {
-    if (!confirm("Delete these meeting minutes? This cannot be undone.")) return;
+    if (
+      !confirm(
+        "Delete these meeting minutes? Any attached files will be deleted too (linked actions are kept). This cannot be undone."
+      )
+    )
+      return;
     await onDelete(meeting);
   }
 
@@ -152,6 +462,21 @@ export default function MeetingMinutesPanel({
                         </p>
                       </div>
                     )}
+
+                    <MeetingAttachments
+                      meetingId={meeting.id}
+                      attachments={attachments}
+                      onUpload={onUploadAttachment}
+                      onDelete={onDeleteAttachment}
+                    />
+
+                    <MeetingActions
+                      meeting={meeting}
+                      actionItems={actionItems}
+                      onCreateAction={onCreateAction}
+                      onExtractActions={onExtractActions}
+                    />
+
                     <div className="text-xs text-slate-400 dark:text-slate-500">
                       Recorded by {meeting.recordedByName}
                       {meeting.nextMeetingDate &&

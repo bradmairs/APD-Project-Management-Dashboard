@@ -124,6 +124,11 @@ router.post(
       return res.status(400).json({ error: "No file uploaded" });
     }
 
+    const meetingMinutesId =
+      typeof req.body.meetingMinutesId === "string" && req.body.meetingMinutesId
+        ? req.body.meetingMinutesId
+        : null;
+
     const attachment = await prisma.attachment.create({
       data: {
         projectId: req.params.id,
@@ -131,6 +136,7 @@ router.post(
         originalName: req.file.originalname,
         mimeType: req.file.mimetype,
         size: req.file.size,
+        meetingMinutesId,
         uploadedById: req.user!.sub,
         uploadedByName: req.user!.name,
       },
