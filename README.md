@@ -272,9 +272,8 @@ ever leaking into the other's.
   (the same reasoning `requireAuth` already applies to `User.active`).
 - **Frontend.** GVW's dashboard is unchanged at `/`. CMP gets its own
   section at `/cmp` (`CmpDashboardPage`, `CmpProjectDetailPage`) with its
-  own accent color and a text-based "CMP" wordmark (`CmpLogo.tsx`) — there's
-  no real CMP brand asset to work with yet, unlike GVW's actual logo file;
-  swap it for an `<img>` once one exists. An **org switcher** appears in the
+  own accent color and its own logo (`CmpLogo.tsx`, `assets/cmp-logo.png`),
+  the same `<img>` pattern GVW's own logo uses. An **org switcher** appears in the
   header (`OrgSwitcher.tsx`) only for a user with two or more memberships —
   for everyone else it's simply not there, since there's nothing to switch
   between.
