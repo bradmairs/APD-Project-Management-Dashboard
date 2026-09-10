@@ -863,8 +863,12 @@ computed live from the entries, matching the "(formula)" cells in the
 source report:
 
 - **Expenditure to Date** — the sum of all Actual entries
-- **Forecast Total** — Expenditure to Date plus the sum of all Forecast
-  entries
+- **Forecast Total** — the Estimate at Completion: every month's Actual
+  once one exists, plus Forecast for the months that don't have one yet.
+  A month with both an Actual and a leftover Forecast (normal, since
+  entering an Actual doesn't delete that month's earlier Forecast) counts
+  once, using the Actual — Forecast and Actual are never summed together
+  for the same month
 - **Variance** — the project's current budget (Approved Budget, revised
   by any Approved variations — see Variations above) minus Forecast
   Total, shown in red if the project is forecast to run over
