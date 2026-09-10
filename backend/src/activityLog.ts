@@ -16,6 +16,7 @@ import {
   Project,
   Rfi,
   Risk,
+  SafetyInspection,
   SiteVisit,
   SqeRecord,
   Stakeholder,
@@ -455,4 +456,22 @@ export function describeEnvironmentalMonitoringUpdate(
   before: EnvironmentalMonitoringRecord
 ): string {
   return `updated the environmental monitoring reading for "${before.parameter}"`;
+}
+
+const SAFETY_INSPECTION_STATUS_LABELS: Record<string, string> = {
+  OPEN: "Open",
+  IN_PROGRESS: "In Progress",
+  CLOSED: "Closed",
+};
+
+export function describeSafetyInspectionUpdate(
+  before: SafetyInspection,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label =
+      SAFETY_INSPECTION_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked the safety inspection "${before.inspectionType}" as ${label}`;
+  }
+  return `updated the safety inspection "${before.inspectionType}"`;
 }

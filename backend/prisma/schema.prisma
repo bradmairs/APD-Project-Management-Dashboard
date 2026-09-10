@@ -208,6 +208,12 @@ enum LimitType {
   MIN
 }
 
+enum SafetyInspectionStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
 model User {
   id             String        @id @default(cuid())
   name           String
@@ -244,6 +250,7 @@ model User {
   performanceReviews PerformanceReview[]
   toolboxTalks ToolboxTalk[]
   environmentalMonitoringRecords EnvironmentalMonitoringRecord[]
+  safetyInspections SafetyInspection[]
 }
 
 model Project {
@@ -297,6 +304,7 @@ model Project {
   performanceReviews     PerformanceReview[]
   toolboxTalks           ToolboxTalk[]
   environmentalMonitoringRecords EnvironmentalMonitoringRecord[]
+  safetyInspections      SafetyInspection[]
 }
 
 model Task {
@@ -1127,6 +1135,37 @@ model EnvironmentalMonitoringRecord {
   monitoredByName  String
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// A scheduled or ad-hoc site safety inspection/audit — distinct from
+// SqeRecord (a one-off incident that already happened, not a proactive
+// compliance walk) and ToolboxTalk (a briefing delivered to workers, not
+// an assessment of site conditions). Produces an optional compliance
+// score plus findings that may need corrective action, tracked through
+// the same OPEN/IN_PROGRESS/CLOSED workflow as SqeRecord. dateClosed
+// stamps automatically the moment status becomes Closed, the same
+// pattern SqeRecord/ActionItem use for their own closing dates.
+model SafetyInspection {
+  id              String                 @id @default(cuid())
+  project         Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
+  inspectionDate  DateTime
+  inspectionType  String
+  location        String?
+  conductedBy     String
+  score           Int?
+  findings        String?
+  correctiveAction String?
+  status          SafetyInspectionStatus @default(OPEN)
+  dateClosed      DateTime?
+  recordedBy      User?                  @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+  recordedById    String?
+  recordedByName  String
+  notes           String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
 
   @@index([projectId])
 }

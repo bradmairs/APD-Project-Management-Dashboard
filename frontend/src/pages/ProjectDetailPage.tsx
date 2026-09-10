@@ -25,6 +25,8 @@ import {
   EnvironmentalMonitoringRecordInput,
   EotClaim,
   EotClaimInput,
+  SafetyInspection,
+  SafetyInspectionInput,
   InsuranceWarranty,
   InsuranceWarrantyInput,
   LessonLearned,
@@ -70,6 +72,7 @@ import {
   createDocument,
   createEnvironmentalMonitoring,
   createEotClaim,
+  createSafetyInspection,
   createInsuranceWarranty,
   createLessonLearned,
   createMeetingMinutes,
@@ -98,6 +101,7 @@ import {
   deleteDocument,
   deleteEnvironmentalMonitoring,
   deleteEotClaim,
+  deleteSafetyInspection,
   deleteInsuranceWarranty,
   deleteLessonLearned,
   deleteMeetingMinutes,
@@ -128,6 +132,7 @@ import {
   getDocuments,
   getEnvironmentalMonitoring,
   getEotClaims,
+  getSafetyInspections,
   getInsuranceWarranties,
   getLessonsLearned,
   getMeetingMinutes,
@@ -157,6 +162,7 @@ import {
   updateDocument,
   updateEnvironmentalMonitoring,
   updateEotClaim,
+  updateSafetyInspection,
   updateInsuranceWarranty,
   updateLessonLearned,
   updateMeetingMinutes,
@@ -200,6 +206,7 @@ import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
 import MeetingMinutesPanel from "../components/MeetingMinutesPanel";
 import SqePanel from "../components/SqePanel";
 import EnvironmentalMonitoringPanel from "../components/EnvironmentalMonitoringPanel";
+import SafetyInspectionsPanel from "../components/SafetyInspectionsPanel";
 import EotPanel from "../components/EotPanel";
 import ChecklistPanel from "../components/ChecklistPanel";
 import DefectsPanel from "../components/DefectsPanel";
@@ -267,6 +274,7 @@ export default function ProjectDetailPage() {
   const [environmentalMonitoring, setEnvironmentalMonitoring] = useState<
     EnvironmentalMonitoringRecord[]
   >([]);
+  const [safetyInspections, setSafetyInspections] = useState<SafetyInspection[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -308,6 +316,7 @@ export default function ProjectDetailPage() {
         performanceReviewData,
         toolboxTalkData,
         environmentalMonitoringData,
+        safetyInspectionData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -339,6 +348,7 @@ export default function ProjectDetailPage() {
         getPerformanceReviews(id),
         getToolboxTalks(id),
         getEnvironmentalMonitoring(id),
+        getSafetyInspections(id),
       ]);
       setProject(data);
       setActivity(activityData);
@@ -370,6 +380,7 @@ export default function ProjectDetailPage() {
       setPerformanceReviews(performanceReviewData);
       setToolboxTalks(toolboxTalkData);
       setEnvironmentalMonitoring(environmentalMonitoringData);
+      setSafetyInspections(safetyInspectionData);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load project"
@@ -660,6 +671,25 @@ export default function ProjectDetailPage() {
 
   async function handleDeleteEnvironmentalMonitoring(record: EnvironmentalMonitoringRecord) {
     await deleteEnvironmentalMonitoring(record.id);
+    await load();
+  }
+
+  async function handleCreateSafetyInspection(data: Partial<SafetyInspectionInput>) {
+    if (!project) return;
+    await createSafetyInspection(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateSafetyInspection(
+    inspection: SafetyInspection,
+    data: Partial<SafetyInspectionInput>
+  ) {
+    await updateSafetyInspection(inspection.id, data);
+    await load();
+  }
+
+  async function handleDeleteSafetyInspection(inspection: SafetyInspection) {
+    await deleteSafetyInspection(inspection.id);
     await load();
   }
 
@@ -1197,6 +1227,13 @@ export default function ProjectDetailPage() {
                 onCreate={handleCreateEnvironmentalMonitoring}
                 onUpdate={handleUpdateEnvironmentalMonitoring}
                 onDelete={handleDeleteEnvironmentalMonitoring}
+              />
+
+              <SafetyInspectionsPanel
+                inspections={safetyInspections}
+                onCreate={handleCreateSafetyInspection}
+                onUpdate={handleUpdateSafetyInspection}
+                onDelete={handleDeleteSafetyInspection}
               />
 
               <DefectsPanel
