@@ -41,7 +41,7 @@ export default function LoginPage() {
         <div className="flex flex-col items-center mb-6">
           <AppLogo className="h-16 mb-3" />
           <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            Project Dashboard
+            Siris Project Management
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Sign in to continue
