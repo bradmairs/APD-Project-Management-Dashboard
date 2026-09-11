@@ -2,7 +2,7 @@ import { FormEvent, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
-import gvwLogo from "../assets/gvw-logo.png";
+import GvwLogo from "../components/GvwLogo";
 
 export default function LoginPage() {
   const { user, loading, login } = useAuth();
@@ -39,9 +39,9 @@ export default function LoginPage() {
       </div>
       <div className="w-full max-w-sm bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-6">
         <div className="flex flex-col items-center mb-6">
-          <img src={gvwLogo} alt="Goulburn Valley Water" className="h-16 w-auto mb-3" />
+          <GvwLogo className="h-16 mb-3" />
           <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            APD Project Dashboard
+            GVW Dashboard
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Sign in to continue

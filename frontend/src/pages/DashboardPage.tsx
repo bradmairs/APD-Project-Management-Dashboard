@@ -87,7 +87,7 @@ import NeedsAttentionPanel from "../components/NeedsAttentionPanel";
 import UserMenu from "../components/UserMenu";
 import Tabs from "../components/Tabs";
 import { useAuth } from "../auth/AuthContext";
-import gvwLogo from "../assets/gvw-logo.png";
+import GvwLogo from "../components/GvwLogo";
 
 type DashboardTabId = "projects" | "alerts" | "charts" | "activity" | "ai";
 
@@ -293,13 +293,13 @@ export default function DashboardPage() {
       <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-wrap items-center justify-between gap-y-3">
           <div className="flex items-center gap-4">
-            <img src={gvwLogo} alt="Goulburn Valley Water" className="h-16 w-auto" />
+            <GvwLogo className="h-16" />
             <div>
               <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                APD Project Dashboard
+                GVW Dashboard
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Asset &amp; Project Delivery
+                Water Authority
               </p>
             </div>
           </div>

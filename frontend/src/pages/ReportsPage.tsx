@@ -10,7 +10,7 @@ import { SEQUENTIAL_BLUE, chartColor } from "../charts/palette";
 import { useTheme } from "../theme/ThemeContext";
 import ChartCard from "../components/ChartCard";
 import UserMenu from "../components/UserMenu";
-import gvwLogo from "../assets/gvw-logo.png";
+import GvwLogo from "../components/GvwLogo";
 
 export default function ReportsPage() {
   const { theme } = useTheme();
@@ -79,7 +79,7 @@ export default function ReportsPage() {
           </Link>
           <div className="flex flex-wrap items-center justify-between gap-y-3 mt-2">
             <div className="flex items-center gap-4">
-              <img src={gvwLogo} alt="Goulburn Valley Water" className="h-14 w-auto" />
+              <GvwLogo className="h-14" />
               <div>
                 <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                   Reports

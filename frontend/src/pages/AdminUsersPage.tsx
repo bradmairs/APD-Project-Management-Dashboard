@@ -6,7 +6,7 @@ import { formatDate } from "../format";
 import { useAuth } from "../auth/AuthContext";
 import CreateUserModal from "../components/CreateUserModal";
 import UserMenu from "../components/UserMenu";
-import gvwLogo from "../assets/gvw-logo.png";
+import GvwLogo from "../components/GvwLogo";
 
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuth();
@@ -63,7 +63,7 @@ export default function AdminUsersPage() {
           </Link>
           <div className="flex flex-wrap items-center justify-between gap-y-3 mt-2">
             <div className="flex items-center gap-4">
-              <img src={gvwLogo} alt="Goulburn Valley Water" className="h-14 w-auto" />
+              <GvwLogo className="h-14" />
               <div>
                 <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                   Users
