@@ -12,12 +12,6 @@ function daysFromNow(days: number): Date {
 const DEMO_PASSWORD = "ChangeMe123!";
 
 async function seedUsers(): Promise<Record<string, string>> {
-  const existing = await prisma.user.findMany({ select: { id: true, name: true } });
-  if (existing.length > 0) {
-    console.log("Users already exist, skipping user seed.");
-    return Object.fromEntries(existing.map((u) => [u.name, u.id]));
-  }
-
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
   const users = await Promise.all(
     [
@@ -30,7 +24,12 @@ async function seedUsers(): Promise<Record<string, string>> {
         passwordHash,
         role: "ADMIN" as const,
       },
-    ].map((data) => prisma.user.create({ data }))
+      // Upsert by email rather than skipping wholesale when any user exists —
+      // otherwise a demo user added here later (like Admin was) never gets
+      // created against a database seeded before that addition.
+    ].map((data) =>
+      prisma.user.upsert({ where: { email: data.email }, update: {}, create: data })
+    )
   );
   console.log(`Seeded ${users.length} demo users (password: ${DEMO_PASSWORD}).`);
   return Object.fromEntries(users.map((u) => [u.name, u.id]));
