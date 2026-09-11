@@ -288,6 +288,17 @@ organizations (so logging in as Admin demonstrates the org switcher), plus
 two demo CMP projects (see `backend/prisma/cmp/seed.ts`) — one active
 commission partway through Detailed Design, one still at Proposal stage.
 
+**Creating and promoting admins.** `POST /api/users` (the Admin Users page's
+"add user" action) automatically grants MEMBER access to GVW to every new
+user, and ADMIN access to every organization that exists (GVW and CMP
+today) when the new user's role is ADMIN — otherwise a fresh admin would
+have no memberships at all and the org switcher would simply never appear
+for them. Promoting an existing user to ADMIN via `PUT /api/users/:id` does
+the same. Accounts created before this behavior existed can be fixed with
+a one-time backfill: `npx ts-node backend/scripts/backfillAdminOrgMembership.ts`
+grants every existing ADMIN user membership in every organization (safe to
+re-run; every write is an upsert).
+
 ### CMP: Fee Claims, Meeting Minutes, and the portfolio dashboard
 
 CMP's accent color is **red**, not GVW's blue — a deliberate visual cue
