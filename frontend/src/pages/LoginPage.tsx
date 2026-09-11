@@ -2,7 +2,7 @@ import { FormEvent, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
-import GvwLogo from "../components/GvwLogo";
+import AppLogo from "../components/AppLogo";
 
 export default function LoginPage() {
   const { user, loading, login } = useAuth();
@@ -39,9 +39,9 @@ export default function LoginPage() {
       </div>
       <div className="w-full max-w-sm bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-6">
         <div className="flex flex-col items-center mb-6">
-          <GvwLogo className="h-16 mb-3" />
+          <AppLogo className="h-16 mb-3" />
           <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            GVW Dashboard
+            Project Dashboard
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Sign in to continue
