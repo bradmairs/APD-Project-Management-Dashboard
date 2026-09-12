@@ -16,6 +16,7 @@ import {
   FeeClaimInput,
 } from "../cmpTypes";
 import {
+  askCmpProjectAi,
   createCmpMeetingMinutes,
   createDesignReview,
   createDesignStage,
@@ -45,6 +46,7 @@ import DrawingRegisterPanel from "../components/DrawingRegisterPanel";
 import DesignReviewsPanel from "../components/DesignReviewsPanel";
 import FeeClaimsPanel from "../components/FeeClaimsPanel";
 import CmpMeetingMinutesPanel from "../components/CmpMeetingMinutesPanel";
+import AiAssistantPanel from "../components/AiAssistantPanel";
 import UserMenu from "../components/UserMenu";
 
 export default function CmpProjectDetailPage() {
@@ -317,6 +319,13 @@ export default function CmpProjectDetailPage() {
           onCreate={handleCreateMeeting}
           onUpdate={handleUpdateMeeting}
           onDelete={handleDeleteMeeting}
+        />
+
+        <AiAssistantPanel
+          title="AI Assistant"
+          description="Ask questions about this commission — its design stages, drawings, fee claims, and open items. Powered by a locally-hosted Ollama model."
+          suggestedQuestion="Summarize this project's status and its most pressing open items"
+          onAsk={(question) => askCmpProjectAi(project!.id, question)}
         />
       </main>
 

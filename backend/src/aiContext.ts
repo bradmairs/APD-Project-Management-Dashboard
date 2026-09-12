@@ -7,9 +7,43 @@ import { prisma } from "./prisma";
 // Dashboard's own panels use, so the assistant reasons from the same
 // signals a PM already sees in the UI.
 
-function fmtDate(d: Date | null | undefined): string {
+// A small local model (this talks to a self-hosted Ollama model — see
+// ollama.ts) is unreliable at date arithmetic: asked "what needs
+// attention," it has called a target date over a year away "overdue."
+// Rather than hand it a bare ISO date and a system-prompt claim about
+// "today" and trust it to subtract correctly, every date below is
+// pre-annotated with the actual relative day count — the model only has
+// to read that number, not compute it.
+function fmtDate(d: Date | null | undefined, now: Date = new Date()): string {
   if (!d) return "—";
-  return d.toISOString().substring(0, 10);
+  const date = new Date(d);
+  const iso = date.toISOString().substring(0, 10);
+  const days = Math.round((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  if (days === 0) return `${iso} (today)`;
+  if (days > 0) return `${iso} (in ${days} day${days === 1 ? "" : "s"})`;
+  const past = Math.abs(days);
+  return `${iso} (${past} day${past === 1 ? "" : "s"} ago)`;
+}
+
+// Statuses where passing the target completion date is expected, not
+// late — mirrors frontend/src/statusMeta.ts's STATUSES_EXEMPT_FROM_OVERDUE;
+// duplicated rather than shared since the frontend module isn't reachable
+// from the backend build.
+const STATUSES_EXEMPT_FROM_OVERDUE = ["DEFECTS_LIABILITY", "COMPLETE", "CANCELLED"];
+
+function fmtTargetCompletion(
+  project: { targetCompletionDate: Date | null; status: string },
+  now: Date = new Date()
+): string {
+  const base = fmtDate(project.targetCompletionDate, now);
+  if (
+    !project.targetCompletionDate ||
+    STATUSES_EXEMPT_FROM_OVERDUE.includes(project.status) ||
+    new Date(project.targetCompletionDate) >= now
+  ) {
+    return base;
+  }
+  return `${base} — OVERDUE`;
 }
 
 function fmtMoney(d: number | null | undefined): string {
@@ -96,15 +130,16 @@ export async function buildProjectContext(projectId: string): Promise<string | n
   });
 
   const lines: string[] = [];
+  lines.push(`Today's date: ${now.toISOString().substring(0, 10)}`);
   lines.push(`Project: ${project.name}`);
   lines.push(`Status: ${project.status}`);
   if (project.assetType) lines.push(`Asset type: ${project.assetType}`);
   if (project.location) lines.push(`Location: ${project.location}`);
   if (project.contractor) lines.push(`Contractor: ${project.contractor}`);
   if (project.description) lines.push(`Description: ${project.description}`);
-  lines.push(`Start date: ${fmtDate(project.startDate)}`);
-  lines.push(`Target completion: ${fmtDate(project.targetCompletionDate)}`);
-  lines.push(`Actual completion: ${fmtDate(project.actualCompletionDate)}`);
+  lines.push(`Start date: ${fmtDate(project.startDate, now)}`);
+  lines.push(`Target completion: ${fmtTargetCompletion(project, now)}`);
+  lines.push(`Actual completion: ${fmtDate(project.actualCompletionDate, now)}`);
   lines.push(`Budget: ${fmtMoney(project.budget ? Number(project.budget) : null)}`);
   lines.push(
     `Contract value: ${fmtMoney(project.contractValue ? Number(project.contractValue) : null)}`
@@ -128,19 +163,19 @@ export async function buildProjectContext(projectId: string): Promise<string | n
 
   section(
     "Open risks",
-    openRisks.map((r) => `${r.title} (due ${fmtDate(r.dueDate)})`)
+    openRisks.map((r) => `${r.title} (due ${fmtDate(r.dueDate, now)})`)
   );
   section(
     "Open actions/decisions",
-    openActions.map((a) => `${a.title} (due ${fmtDate(a.dueDate)})`)
+    openActions.map((a) => `${a.title} (due ${fmtDate(a.dueDate, now)})`)
   );
   section(
     "Open defects",
-    openDefects.map((d) => `${d.title} (due ${fmtDate(d.dueDate)})`)
+    openDefects.map((d) => `${d.title} (due ${fmtDate(d.dueDate, now)})`)
   );
   section(
     "Open RFIs",
-    openRfis.map((r) => `${r.subject} (required ${fmtDate(r.dateRequired)})`)
+    openRfis.map((r) => `${r.subject} (required ${fmtDate(r.dateRequired, now)})`)
   );
   section(
     "Open safety/quality/environment issues",
@@ -158,19 +193,19 @@ export async function buildProjectContext(projectId: string): Promise<string | n
   );
   section(
     "Expired permits",
-    expiredPermits.map((p) => `${p.title} (expired ${fmtDate(p.expiryDate)})`)
+    expiredPermits.map((p) => `${p.title} (expired ${fmtDate(p.expiryDate, now)})`)
   );
   section(
     "Expired insurance/warranties",
-    expiredInsurance.map((i) => `${i.title} (expired ${fmtDate(i.expiryDate)})`)
+    expiredInsurance.map((i) => `${i.title} (expired ${fmtDate(i.expiryDate, now)})`)
   );
   section(
     "Expired training/inductions",
-    expiredTraining.map((t) => `${t.personName} — ${t.trainingType} (expired ${fmtDate(t.expiryDate)})`)
+    expiredTraining.map((t) => `${t.personName} — ${t.trainingType} (expired ${fmtDate(t.expiryDate, now)})`)
   );
   section(
     "Low-scoring performance reviews",
-    lowScoringReviews.map((r) => `${r.revieweeName} (${fmtDate(r.reviewDate)})`)
+    lowScoringReviews.map((r) => `${r.revieweeName} (${fmtDate(r.reviewDate, now)})`)
   );
 
   return lines.join("\n");
@@ -230,7 +265,9 @@ export async function buildPortfolioContext(): Promise<string> {
   const totalBudget = projects.reduce((sum, p) => sum + (p.budget ? Number(p.budget) : 0), 0);
   const totalSpend = Array.from(spendByProject.values()).reduce((sum, v) => sum + v, 0);
 
+  const now = new Date();
   const lines: string[] = [];
+  lines.push(`Today's date: ${now.toISOString().substring(0, 10)}`);
   lines.push(`Portfolio: ${projects.length} projects`);
   lines.push(
     "By status: " + Array.from(statusCounts.entries()).map(([s, c]) => `${s}=${c}`).join(", ")
@@ -255,7 +292,7 @@ export async function buildPortfolioContext(): Promise<string> {
     if (lowInspections) flags.push(`${lowInspections} low-scoring safety inspections`);
     const spend = spendByProject.get(p.id) ?? 0;
     lines.push(
-      `- ${p.name} [${p.status}]: budget ${fmtMoney(p.budget ? Number(p.budget) : null)}, spend ${fmtMoney(spend)}, target completion ${fmtDate(p.targetCompletionDate)}${flags.length ? ` — ${flags.join(", ")}` : ""}`
+      `- ${p.name} [${p.status}]: budget ${fmtMoney(p.budget ? Number(p.budget) : null)}, spend ${fmtMoney(spend)}, target completion ${fmtTargetCompletion(p, now)}${flags.length ? ` — ${flags.join(", ")}` : ""}`
     );
   });
 

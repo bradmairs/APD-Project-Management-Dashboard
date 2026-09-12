@@ -8,14 +8,15 @@ interface Props {
   healthByProjectId: Record<string, ProjectHealth>;
 }
 
-// Which dimension(s) explain a project's overall rating — the worst-rated
-// dimensions first, so "Budget" only shows for an Amber overall if nothing
-// is Red.
-function flaggedDimensions(health: ProjectHealth): string[] {
+// Which dimension(s) explain a project's overall rating, and why — the
+// worst-rated dimensions first, so "Budget" only shows for an Amber overall
+// if nothing is Red — paired with the same reason text the detailed badge's
+// tooltip shows, so this panel doesn't need a hover to be useful.
+function flaggedReasons(health: ProjectHealth): string[] {
   const atLevel = (level: ProjectHealth["overall"]) =>
     (["schedule", "budget", "risk"] as const)
       .filter((dim) => health[dim] === level)
-      .map((dim) => dim[0].toUpperCase() + dim.slice(1));
+      .map((dim) => `${dim[0].toUpperCase()}${dim.slice(1)} — ${health.reasons[dim]}`);
 
   const red = atLevel("RED");
   return red.length > 0 ? red : atLevel("AMBER");
@@ -58,7 +59,7 @@ export default function NeedsAttentionPanel({ projects, healthByProjectId }: Pro
                   {project.name}
                 </Link>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Flagged: {flaggedDimensions(health).join(", ")}
+                  {flaggedReasons(health).join(" · ")}
                 </div>
               </div>
               <span

@@ -184,3 +184,16 @@ export function deleteCmpMeetingMinutes(id: string): Promise<void> {
 export function getCmpRecentActivity(): Promise<CmpActivityLogEntry[]> {
   return fetch(`${API_BASE}/activity/recent`).then((res) => handle(res));
 }
+
+export function askCmpProjectAi(
+  projectId: string,
+  question: string
+): Promise<{ answer: string }> {
+  return fetch(`${API_BASE}/projects/${projectId}/ai/ask`, jsonRequest("POST", { question })).then(
+    (res) => handle(res)
+  );
+}
+
+export function askCmpPortfolioAi(question: string): Promise<{ answer: string }> {
+  return fetch(`${API_BASE}/ai/ask`, jsonRequest("POST", { question })).then((res) => handle(res));
+}

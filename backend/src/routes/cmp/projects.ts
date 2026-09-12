@@ -6,6 +6,7 @@ import projectDrawingsRouter from "./drawings";
 import projectDesignReviewsRouter from "./designReviews";
 import projectFeeClaimsRouter from "./feeClaims";
 import projectMeetingMinutesRouter from "./meetingMinutes";
+import cmpProjectAiRouter from "./ai";
 
 const router = Router();
 
@@ -14,6 +15,7 @@ router.use("/:id/drawings", projectDrawingsRouter);
 router.use("/:id/design-reviews", projectDesignReviewsRouter);
 router.use("/:id/fee-claims", projectFeeClaimsRouter);
 router.use("/:id/meeting-minutes", projectMeetingMinutesRouter);
+router.use("/:id/ai", cmpProjectAiRouter);
 
 router.get("/", async (_req, res) => {
   const projects = await cmpPrisma.cmpProject.findMany({

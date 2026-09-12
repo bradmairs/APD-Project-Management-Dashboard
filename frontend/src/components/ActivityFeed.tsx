@@ -6,12 +6,16 @@ interface Props {
   entries: ActivityLogEntry[];
   showProjectLink?: boolean;
   emptyMessage?: string;
+  // Defaults to GVW's own project route — CMP reuses this component with
+  // projectHref={(id) => `/cmp/projects/${id}`} rather than forking it.
+  projectHref?: (projectId: string) => string;
 }
 
 export default function ActivityFeed({
   entries,
   showProjectLink = false,
   emptyMessage = "No activity yet.",
+  projectHref = (id) => `/projects/${id}`,
 }: Props) {
   if (entries.length === 0) {
     return (
@@ -36,7 +40,7 @@ export default function ActivityFeed({
                   {" "}
                   on{" "}
                   <Link
-                    to={`/projects/${entry.projectId}`}
+                    to={projectHref(entry.projectId)}
                     className="text-blue-600 dark:text-blue-400 hover:underline"
                   >
                     {entry.projectName}

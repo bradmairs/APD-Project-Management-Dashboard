@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { CmpActivityLogEntry, CmpProject, CmpProjectInput, CmpProjectStatus } from "../cmpTypes";
-import { createCmpProject, getCmpProjects, getCmpRecentActivity } from "../cmpApi";
+import { askCmpPortfolioAi, createCmpProject, getCmpProjects, getCmpRecentActivity } from "../cmpApi";
 import { CMP_PROJECT_STATUSES, CMP_PROJECT_STATUS_COLORS, CMP_PROJECT_STATUS_LABELS } from "../cmpStatusMeta";
-import { formatCurrency, formatDate, formatRelativeTime } from "../format";
+import { formatCurrency, formatDate } from "../format";
 import CmpLogo from "../components/CmpLogo";
 import CmpProjectFormModal from "../components/CmpProjectFormModal";
 import UserMenu from "../components/UserMenu";
+import Tabs from "../components/Tabs";
+import ActivityFeed from "../components/ActivityFeed";
+import AiAssistantPanel from "../components/AiAssistantPanel";
+import ChartCard from "../components/ChartCard";
+import HorizontalBarChart, { BarDatum } from "../charts/HorizontalBarChart";
+import { SEQUENTIAL_BLUE, chartColor } from "../charts/palette";
+import { useTheme } from "../theme/ThemeContext";
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
@@ -17,14 +24,27 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
+const cmpProjectHref = (id: string) => `/cmp/projects/${id}`;
+
+type CmpDashboardTabId = "projects" | "charts" | "activity" | "ai";
+
+const CMP_DASHBOARD_TABS: { id: CmpDashboardTabId; label: string }[] = [
+  { id: "projects", label: "Projects" },
+  { id: "charts", label: "Charts" },
+  { id: "activity", label: "Activity" },
+  { id: "ai", label: "AI Assistant" },
+];
+
 export default function CmpDashboardPage() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [projects, setProjects] = useState<CmpProject[]>([]);
   const [activity, setActivity] = useState<CmpActivityLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<CmpProjectStatus | "ALL">("ALL");
+  const [activeTab, setActiveTab] = useState<CmpDashboardTabId>("projects");
 
   async function loadAll() {
     try {
@@ -65,6 +85,15 @@ export default function CmpDashboardPage() {
     );
     return { activeCount, totalFeeBudget, feeClaimed, feeApproved };
   }, [projects]);
+
+  const statusData: BarDatum[] = useMemo(
+    () =>
+      CMP_PROJECT_STATUSES.map((status) => ({
+        label: CMP_PROJECT_STATUS_LABELS[status],
+        value: projects.filter((p) => p.status === status).length,
+      })),
+    [projects]
+  );
 
   const filteredProjects = useMemo(() => {
     if (statusFilter === "ALL") return projects;
@@ -115,8 +144,10 @@ export default function CmpDashboardPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
+        <Tabs tabs={CMP_DASHBOARD_TABS} active={activeTab} onChange={setActiveTab} />
+
+        {activeTab === "projects" && (
+          <div className="space-y-4">
             <div className="flex gap-2 flex-wrap">
               <button
                 onClick={() => setStatusFilter("ALL")}
@@ -219,49 +250,35 @@ export default function CmpDashboardPage() {
               </div>
             )}
           </div>
+        )}
 
-          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4 h-fit">
+        {activeTab === "charts" && !loading && projects.length > 0 && (
+          <ChartCard title="Projects by Status">
+            <HorizontalBarChart
+              data={statusData}
+              color={chartColor(SEQUENTIAL_BLUE, theme)}
+              formatValue={(v) => String(v)}
+            />
+          </ChartCard>
+        )}
+
+        {activeTab === "activity" && (
+          <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
               Recent Activity
             </h2>
-            {activity.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400 py-2">No activity yet.</p>
-            ) : (
-              <ul className="divide-y divide-slate-100 dark:divide-slate-700">
-                {activity.map((entry) => (
-                  <li key={entry.id} className="py-2 text-sm">
-                    <div className="text-slate-700 dark:text-slate-300">
-                      <span className="font-medium text-slate-900 dark:text-slate-100">
-                        {entry.userName}
-                      </span>{" "}
-                      {entry.action}
-                      {entry.projectId ? (
-                        <>
-                          {" "}
-                          on{" "}
-                          <Link
-                            to={`/cmp/projects/${entry.projectId}`}
-                            className="text-red-600 dark:text-red-400 hover:underline"
-                          >
-                            {entry.projectName}
-                          </Link>
-                        </>
-                      ) : (
-                        <span className="text-slate-500 dark:text-slate-400">
-                          {" "}
-                          on {entry.projectName}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-slate-400 dark:text-slate-500">
-                      {formatRelativeTime(entry.createdAt)}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ActivityFeed entries={activity} showProjectLink projectHref={cmpProjectHref} />
           </div>
-        </div>
+        )}
+
+        {activeTab === "ai" && (
+          <AiAssistantPanel
+            title="AI Assistant"
+            description="Ask questions across the whole CMP portfolio — fee budgets, design stages, drawings, and open items across every commission. Powered by a locally-hosted Ollama model."
+            suggestedQuestion="Which commissions need attention right now, and why?"
+            onAsk={askCmpPortfolioAi}
+          />
+        )}
       </main>
 
       {showModal && (
