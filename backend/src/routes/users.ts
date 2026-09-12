@@ -4,6 +4,28 @@ import { prisma } from "../prisma";
 
 const router = Router();
 
+// Every user gets MEMBER access to GVW (the "home" org all seeded users
+// belong to); an ADMIN additionally gets ADMIN access to every other
+// organization (CMP included, and any future one) so promoting or creating
+// an admin always leaves them able to switch dashboards, mirroring what the
+// seed script does for its own "Admin" account.
+async function grantDefaultOrgMembership(userId: string, role: "ADMIN" | "MEMBER") {
+  const organizations = await prisma.organization.findMany();
+  const gvw = organizations.find((o) => o.slug === "gvw");
+  const targets =
+    role === "ADMIN"
+      ? organizations
+      : organizations.filter((o) => o.id === gvw?.id);
+
+  for (const org of targets) {
+    await prisma.organizationMembership.upsert({
+      where: { userId_organizationId: { userId, organizationId: org.id } },
+      update: role === "ADMIN" ? { role: "ADMIN" } : {},
+      create: { userId, organizationId: org.id, role },
+    });
+  }
+}
+
 router.get("/", async (_req, res) => {
   const users = await prisma.user.findMany({
     select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
@@ -31,10 +53,12 @@ router.post("/", async (req, res) => {
 
   const passwordHash = await bcrypt.hash(password, 10);
   try {
+    const resolvedRole = role || "MEMBER";
     const user = await prisma.user.create({
-      data: { name, email: email.toLowerCase(), passwordHash, role: role || "MEMBER" },
+      data: { name, email: email.toLowerCase(), passwordHash, role: resolvedRole },
       select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
     });
+    await grantDefaultOrgMembership(user.id, resolvedRole);
     res.status(201).json(user);
   } catch (err) {
     res.status(409).json({ error: "A user with that email already exists" });
@@ -74,6 +98,9 @@ router.put("/:id", async (req, res) => {
       data,
       select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
     });
+    if (role === "ADMIN") {
+      await grantDefaultOrgMembership(user.id, "ADMIN");
+    }
     res.json(user);
   } catch (err) {
     res.status(404).json({ error: "User not found" });
