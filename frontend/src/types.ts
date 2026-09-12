@@ -194,6 +194,33 @@ export interface SiteVisitPhoto {
   uploadedByName: string;
   createdAt: string;
   siteVisit?: { id: string; location: string; visitDate: string };
+  archiveMediaId: string | null;
+  archiveSyncedAt: string | null;
+  archiveSyncError: string | null;
+}
+
+export type ArchiveItemType = "ASSET" | "MEDIA" | "FILE";
+
+export interface ArchiveLink {
+  id: string;
+  projectId: string;
+  archiveType: ArchiveItemType;
+  archiveId: string;
+  label: string;
+  url: string;
+  createdById: string | null;
+  createdByName: string;
+  createdAt: string;
+}
+
+// Shapes returned by the Engineering Archive's own /api/search, proxied
+// through this backend at /api/archive-search — only the fields the search
+// UI actually displays, not every column the Archive's database has.
+export interface ArchiveSearchResult {
+  query: string;
+  assets: Array<{ id: string; name: string; description: string | null }>;
+  media: Array<{ id: string; fileName: string; kind: "PHOTO" | "VIDEO"; locationName: string | null }>;
+  files: Array<{ id: string; fileName: string; category: string | null }>;
 }
 
 export type VariationStatus = "PROPOSED" | "APPROVED" | "REJECTED";

@@ -6,13 +6,24 @@ interface Props {
   photos: SiteVisitPhoto[];
   onUpload: (files: File[]) => Promise<void>;
   onDelete: (photo: SiteVisitPhoto) => Promise<void>;
+  onSyncToArchive: (photoId: string) => Promise<void>;
 }
 
-export default function SiteVisitPhotoGrid({ photos, onUpload, onDelete }: Props) {
+export default function SiteVisitPhotoGrid({ photos, onUpload, onDelete, onSyncToArchive }: Props) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+
+  async function handleRetrySync(photo: SiteVisitPhoto) {
+    setSyncingId(photo.id);
+    try {
+      await onSyncToArchive(photo.id);
+    } finally {
+      setSyncingId(null);
+    }
+  }
 
   async function handleFiles(e: ChangeEvent<HTMLInputElement>) {
     const files = e.target.files ? Array.from(e.target.files) : [];
@@ -108,6 +119,25 @@ export default function SiteVisitPhotoGrid({ photos, onUpload, onDelete }: Props
                 >
                   no GPS
                 </span>
+              )}
+              {photo.archiveSyncedAt && (
+                <span
+                  className="absolute top-0.5 left-0.5 w-4 h-4 flex items-center justify-center text-[9px] leading-none bg-emerald-600/90 text-white rounded-full"
+                  title="Synced to the Engineering Archive"
+                >
+                  ✓
+                </span>
+              )}
+              {photo.archiveSyncError && (
+                <button
+                  type="button"
+                  onClick={() => handleRetrySync(photo)}
+                  disabled={syncingId === photo.id}
+                  className="absolute top-0.5 left-0.5 w-4 h-4 flex items-center justify-center text-[9px] leading-none bg-red-600/90 text-white rounded-full disabled:opacity-50"
+                  title={`Failed to export to the Engineering Archive: ${photo.archiveSyncError}. Click to retry.`}
+                >
+                  {syncingId === photo.id ? "…" : "!"}
+                </button>
               )}
               <button
                 type="button"

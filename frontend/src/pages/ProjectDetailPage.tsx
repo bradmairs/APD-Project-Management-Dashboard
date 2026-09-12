@@ -4,6 +4,8 @@ import {
   ActionItem,
   ActionItemInput,
   ActivityLogEntry,
+  ArchiveItemType,
+  ArchiveLink,
   Attachment,
   CashFlowEntry,
   CashFlowEntryInput,
@@ -68,6 +70,7 @@ import {
 } from "../types";
 import {
   createActionItem,
+  createArchiveLink,
   createChecklistItem,
   createCommunityEnquiry,
   createCorrespondence,
@@ -97,6 +100,7 @@ import {
   createTrainingRecord,
   createVariation,
   deleteActionItem,
+  deleteArchiveLink,
   deleteAttachment,
   deleteCashFlowEntry,
   deleteChecklistItem,
@@ -120,6 +124,7 @@ import {
   deleteRisk,
   deleteSiteVisit,
   deleteSiteVisitPhoto,
+  syncSiteVisitPhotoToArchive,
   deleteSqeRecord,
   deleteStakeholder,
   deleteSubcontractor,
@@ -130,6 +135,7 @@ import {
   deleteTrainingRecord,
   deleteVariation,
   getActionItems,
+  getArchiveLinks,
   getAttachments,
   getCashFlowEntries,
   getChecklistItems,
@@ -199,6 +205,7 @@ import ProjectFormModal from "../components/ProjectFormModal";
 import TaskList from "../components/TaskList";
 import ActivityFeed from "../components/ActivityFeed";
 import AttachmentsPanel from "../components/AttachmentsPanel";
+import ArchiveLinksPanel from "../components/ArchiveLinksPanel";
 import MonthlyReportsPanel from "../components/MonthlyReportsPanel";
 import MilestonesPanel from "../components/MilestonesPanel";
 import CashFlowPanel from "../components/CashFlowPanel";
@@ -257,6 +264,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [activity, setActivity] = useState<ActivityLogEntry[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [archiveLinks, setArchiveLinks] = useState<ArchiveLink[]>([]);
   const [reports, setReports] = useState<MonthlyReport[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
@@ -302,6 +310,7 @@ export default function ProjectDetailPage() {
         data,
         activityData,
         attachmentData,
+        archiveLinkData,
         reportData,
         milestoneData,
         cashFlowData,
@@ -335,6 +344,7 @@ export default function ProjectDetailPage() {
         getProject(id),
         getProjectActivity(id),
         getAttachments(id),
+        getArchiveLinks(id),
         getMonthlyReports(id),
         getMilestones(id),
         getCashFlowEntries(id),
@@ -368,6 +378,7 @@ export default function ProjectDetailPage() {
       setProject(data);
       setActivity(activityData);
       setAttachments(attachmentData);
+      setArchiveLinks(archiveLinkData);
       setReports(reportData);
       setMilestones(milestoneData);
       setCashFlowEntries(cashFlowData);
@@ -453,6 +464,27 @@ export default function ProjectDetailPage() {
   async function handleDeleteAttachment(attachment: Attachment) {
     if (!confirm(`Delete "${attachment.originalName}"? This cannot be undone.`)) return;
     await deleteAttachment(attachment.id);
+    await load();
+  }
+
+  async function handleCreateArchiveLink(data: {
+    archiveType: ArchiveItemType;
+    archiveId: string;
+    label: string;
+  }) {
+    if (!project) return;
+    await createArchiveLink(project.id, data);
+    await load();
+  }
+
+  async function handleDeleteArchiveLink(link: ArchiveLink) {
+    if (!confirm(`Remove the link to "${link.label}"? This only removes the link, not the item itself in the Archive.`)) return;
+    await deleteArchiveLink(link.id);
+    await load();
+  }
+
+  async function handleSyncPhotoToArchive(photoId: string) {
+    await syncSiteVisitPhotoToArchive(photoId);
     await load();
   }
 
@@ -1336,6 +1368,7 @@ export default function ProjectDetailPage() {
                 onDelete={handleDeleteSiteVisit}
                 onUploadPhotos={handleUploadSiteVisitPhotos}
                 onDeletePhoto={handleDeleteSiteVisitPhoto}
+                onSyncPhotoToArchive={handleSyncPhotoToArchive}
               />
 
               <EnquiriesPanel
@@ -1349,6 +1382,12 @@ export default function ProjectDetailPage() {
                 attachments={attachments}
                 onUpload={handleUploadAttachment}
                 onDelete={handleDeleteAttachment}
+              />
+
+              <ArchiveLinksPanel
+                links={archiveLinks}
+                onCreate={handleCreateArchiveLink}
+                onDelete={handleDeleteArchiveLink}
               />
 
               <MonthlyReportsPanel

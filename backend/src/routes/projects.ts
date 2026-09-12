@@ -32,6 +32,7 @@ import projectEnvironmentalMonitoringRouter from "./environmentalMonitoring";
 import projectSafetyInspectionsRouter from "./safetyInspections";
 import projectTenderPackagesRouter from "./tenderPackages";
 import projectAiRouter from "./ai";
+import projectArchiveLinksRouter from "./archiveLinks";
 import { describeProjectChanges, logActivity } from "../activityLog";
 import { projectUploadDir, upload } from "../upload";
 import { canModifyProject } from "../permissions";
@@ -69,6 +70,7 @@ router.use("/:id/environmental-monitoring", projectEnvironmentalMonitoringRouter
 router.use("/:id/safety-inspections", projectSafetyInspectionsRouter);
 router.use("/:id/tender-packages", projectTenderPackagesRouter);
 router.use("/:id/ai", projectAiRouter);
+router.use("/:id/archive-links", projectArchiveLinksRouter);
 
 router.get("/", async (_req, res) => {
   const projects = await prisma.project.findMany({

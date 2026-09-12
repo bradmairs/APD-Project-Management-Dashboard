@@ -2,6 +2,9 @@ import {
   ActionItem,
   ActionItemInput,
   ActivityLogEntry,
+  ArchiveItemType,
+  ArchiveLink,
+  ArchiveSearchResult,
   Attachment,
   CashFlowEntry,
   CashFlowEntryInput,
@@ -427,6 +430,39 @@ export function deleteSiteVisitPhoto(id: string): Promise<void> {
 
 export function siteVisitPhotoFileUrl(id: string): string {
   return `${API_BASE}/site-visit-photos/${id}/file`;
+}
+
+export function syncSiteVisitPhotoToArchive(id: string): Promise<SiteVisitPhoto> {
+  return fetch(`${API_BASE}/site-visit-photos/${id}/sync-to-archive`, { method: "POST" }).then(
+    (res) => handle(res)
+  );
+}
+
+export function getArchiveLinks(projectId: string): Promise<ArchiveLink[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/archive-links`).then((res) => handle(res));
+}
+
+export function createArchiveLink(
+  projectId: string,
+  data: { archiveType: ArchiveItemType; archiveId: string; label: string }
+): Promise<ArchiveLink> {
+  return fetch(`${API_BASE}/projects/${projectId}/archive-links`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteArchiveLink(id: string): Promise<void> {
+  return fetch(`${API_BASE}/archive-links/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function searchArchive(query: string): Promise<ArchiveSearchResult> {
+  return fetch(`${API_BASE}/archive-search?q=${encodeURIComponent(query)}`).then((res) =>
+    handle(res)
+  );
 }
 
 export function getVariations(projectId: string): Promise<Variation[]> {

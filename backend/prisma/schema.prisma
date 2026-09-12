@@ -273,6 +273,7 @@ model User {
   safetyInspections              SafetyInspection[]
   tenderPackages                 TenderPackage[]
   memberships                    OrganizationMembership[]
+  archiveLinks                   ArchiveLink[]
 }
 
 // One of the separate companies/agencies this tool serves — e.g. Goulburn
@@ -363,6 +364,7 @@ model Project {
   environmentalMonitoringRecords EnvironmentalMonitoringRecord[]
   safetyInspections              SafetyInspection[]
   tenderPackages                 TenderPackage[]
+  archiveLinks                   ArchiveLink[]
 }
 
 model Task {
@@ -535,7 +537,47 @@ model SiteVisitPhoto {
   uploadedByName String
   createdAt      DateTime  @default(now())
 
+  // Export status to the Engineering Archive (a separate self-hosted app —
+  // see backend/src/engineeringArchive.ts). archiveMediaId is that app's own
+  // MediaItem id, set once the push succeeds; archiveSyncError holds the
+  // last failure message so a failed push is visible and retriable rather
+  // than silently dropped. All three stay null until a push is attempted.
+  archiveMediaId   String?
+  archiveSyncedAt  DateTime?
+  archiveSyncError String?
+
   @@index([siteVisitId])
+}
+
+// A reference from a GVW project to an item that actually lives in the
+// Engineering Archive (an asset, a photo/video, or a general file) — this
+// table never stores the file itself, just enough to show and link to it.
+// label is a snapshot of the archive item's name at link time (the same
+// denormalization ActivityLog.userName relies on) so the link stays
+// meaningful even if that item is later renamed or removed on the archive
+// side; url is likewise computed once at link time from
+// ENGINEERING_ARCHIVE_PUBLIC_URL rather than built fresh by the frontend,
+// so the frontend needs no archive-specific configuration of its own.
+model ArchiveLink {
+  id             String      @id @default(cuid())
+  project        Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId      String
+  archiveType    ArchiveItemType
+  archiveId      String
+  label          String
+  url            String
+  createdBy      User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdByName  String
+  createdAt      DateTime    @default(now())
+
+  @@index([projectId])
+}
+
+enum ArchiveItemType {
+  ASSET
+  MEDIA
+  FILE
 }
 
 // A contract variation (scope/cost/time change) raised against a project.

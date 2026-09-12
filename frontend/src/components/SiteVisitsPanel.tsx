@@ -15,6 +15,7 @@ interface Props {
   onDelete: (siteVisit: SiteVisit) => Promise<void>;
   onUploadPhotos: (siteVisit: SiteVisit, files: File[]) => Promise<void>;
   onDeletePhoto: (photo: SiteVisitPhoto) => Promise<void>;
+  onSyncPhotoToArchive: (photoId: string) => Promise<void>;
 }
 
 export default function SiteVisitsPanel({
@@ -26,6 +27,7 @@ export default function SiteVisitsPanel({
   onDelete,
   onUploadPhotos,
   onDeletePhoto,
+  onSyncPhotoToArchive,
 }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<SiteVisit | null>(null);
@@ -186,6 +188,7 @@ export default function SiteVisitsPanel({
                       photos={photos}
                       onUpload={(files) => onUploadPhotos(siteVisit, files)}
                       onDelete={onDeletePhoto}
+                      onSyncToArchive={onSyncPhotoToArchive}
                     />
                   </div>
                 )}
