@@ -12,6 +12,8 @@ import {
   ChecklistItemInput,
   CommunityEnquiry,
   CommunityEnquiryInput,
+  ContractRecord,
+  ContractRecordInput,
   DefectItem,
   DefectItemInput,
   DocumentRecord,
@@ -1025,6 +1027,36 @@ export function deleteSubcontractor(id: string): Promise<void> {
   return fetch(`${API_BASE}/subcontractors/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
+}
+
+export function getContracts(projectId: string): Promise<ContractRecord[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/contracts`).then((res) => handle(res));
+}
+
+export function createContract(
+  projectId: string,
+  data: Partial<ContractRecordInput>
+): Promise<ContractRecord> {
+  return fetch(`${API_BASE}/projects/${projectId}/contracts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateContract(
+  id: string,
+  data: Partial<ContractRecordInput>
+): Promise<ContractRecord> {
+  return fetch(`${API_BASE}/contracts/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteContract(id: string): Promise<void> {
+  return fetch(`${API_BASE}/contracts/${id}`, { method: "DELETE" }).then((res) => handle(res));
 }
 
 export function getMeetingMinutes(projectId: string): Promise<MeetingMinutes[]> {

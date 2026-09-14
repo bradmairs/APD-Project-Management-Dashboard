@@ -5,6 +5,7 @@ export const STATUS_LABELS: Record<ProjectStatus, string> = {
   DESIGN: "Design",
   TENDER: "Tender",
   CONSTRUCTION: "Construction",
+  PROJECT_COMPLETION: "Project Completion",
   DEFECTS_LIABILITY: "Defects Liability",
   COMPLETE: "Complete",
   ON_HOLD: "On Hold",
@@ -16,6 +17,7 @@ export const STATUS_COLORS: Record<ProjectStatus, string> = {
   DESIGN: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300",
   TENDER: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
   CONSTRUCTION: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  PROJECT_COMPLETION: "bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300",
   DEFECTS_LIABILITY:
     "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
   COMPLETE: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
@@ -28,6 +30,7 @@ export const ALL_STATUSES: ProjectStatus[] = [
   "DESIGN",
   "TENDER",
   "CONSTRUCTION",
+  "PROJECT_COMPLETION",
   "DEFECTS_LIABILITY",
   "COMPLETE",
   "ON_HOLD",
@@ -35,9 +38,11 @@ export const ALL_STATUSES: ProjectStatus[] = [
 ];
 
 // A project is only "overdue" while it's still working toward its target
-// completion date. Once construction is done (Defects Liability, Complete)
-// or the project is Cancelled, passing that original date is expected, not late.
+// completion date. Once construction's main works are done (Project
+// Completion, Defects Liability, Complete) or the project is Cancelled,
+// passing that original date is expected, not late.
 export const STATUSES_EXEMPT_FROM_OVERDUE: ProjectStatus[] = [
+  "PROJECT_COMPLETION",
   "DEFECTS_LIABILITY",
   "COMPLETE",
   "CANCELLED",

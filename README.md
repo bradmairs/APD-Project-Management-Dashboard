@@ -54,17 +54,20 @@ so `npm run dev` talks to your local backend out of the box.
 Each **Project** tracks:
 
 - Name, description, asset type (e.g. Pipeline, Pump Station, Treatment Plant)
-- Status: Planning → Design → Tender → Construction → Defects Liability → Complete
-  (plus On Hold / Cancelled)
+- Status: Planning → Design → Tender → Construction → Project Completion →
+  Defects Liability → Complete (plus On Hold / Cancelled). Project
+  Completion sits between Construction and Defects Liability — practical
+  completion/handover has been reached, the defects liability period is
+  about to start, but the project isn't administratively closed out yet
 - BP Ref. No., Project Manager, Project Director, Project Sponsor
 - Location, contractor
 - Budget vs. contract value
 - Start date, target completion date, actual completion date
 
 A project marked "overdue" on the dashboard means its target completion date
-has passed while it's still actively in progress — Defects Liability,
-Complete, and Cancelled projects are excluded, since passing that date is
-expected by then.
+has passed while it's still actively in progress — Project Completion,
+Defects Liability, Complete, and Cancelled projects are excluded, since
+passing that date is expected by then.
 
 Each project also has a list of **Tasks** (visible on its detail page, opened
 by clicking a row): title, status (To Do / In Progress / Done), and an
@@ -851,6 +854,23 @@ sinking to the bottom. The Dashboard's Alerts tab has a portfolio-wide
 subcontractor across every project, soonest first. Open to any logged-in
 user to edit.
 
+## Contracts
+
+Each project has a **Contracts** register — the formal agreements that
+sit above Subcontractors' trade-level engagements: a design consultant's
+consultancy agreement or the head contractor's construction contract. A
+contract has a Party Type (Consultant or Contractor), Party Name,
+Discipline/Scope (e.g. "Structural Design"), an optional Contract Number
+and Contract Form (free text, with suggestions like "AS4000-1997" or
+"NEC4"), Contract Value, Retention (%), a Defects Liability Period in
+months, Execution/Start/Completion dates, a Status of
+Active/Complete/Terminated (changeable inline), and Notes. This is
+distinct from `Project.contractor`/`Project.contractValue` (a single
+freeform pair of fields kept on the project itself for a quick-glance
+summary) — a project can have any number of Contracts records, e.g. one
+per design consultant plus the head construction contract. Open to any
+logged-in user to edit.
+
 ## Performance Reviews
 
 Each project has a **Performance Reviews** register — periodic scorecards
@@ -926,21 +946,27 @@ cash flow, and risk register currently say, so a project that's drifted
 off track shows up immediately rather than waiting for the next report.
 
 `frontend/src/health.ts` rates three dimensions independently, then takes
-the worst of the three as the overall rating:
+the worst of the three as the overall rating. Schedule and Budget share one
+percentage scale — Amber from 95% up to and including 115%, Red beyond
+115%, Green below 95% — so a project a little over its timeframe or budget
+isn't yet the same signal as one running materially over:
 
-- **Schedule** — Red if the project is past its *revised* completion
-  date (Target Completion plus any approved EOT claims' granted days —
-  see Extension of Time Claims above) and it isn't Defects
-  Liability/Complete/Cancelled; Amber if that revised date is within the
-  next 30 days; Green otherwise. This is deliberately different from the
+- **Schedule** — the percentage is elapsed time (project Start Date to
+  today) over the planned duration (Start Date to the *revised* completion
+  date — Target Completion plus any approved EOT claims' granted days, see
+  Extension of Time Claims above), so a short project and a long one are
+  judged on the same scale relative to their own timeframe rather than a
+  fixed days-until-target countdown. Always Green if the project is
+  Project Completion/Defects Liability/Complete/Cancelled, or is missing a
+  start or target date. This is deliberately different from the
   dashboard's "Overdue" stat and the project table, which always reflect
   the literal contractual date rather than the revised one
-- **Budget** — Red if the Forecast Total (from Cash Flow) exceeds the
-  project's current budget (revised by any approved Variations); Amber
-  once it passes 90% of that budget; Green otherwise, and Green when
-  there's no cash flow data yet rather than guessing
+- **Budget** — the percentage is the Forecast Total (from Cash Flow) over
+  the project's current budget (revised by any approved Variations);
+  Green when there's no cash flow data yet rather than guessing
 - **Risk** — Red if any open Risk (not an Opportunity, not Closed) has a
-  Critical inherent score; Amber for High; Green otherwise
+  Critical inherent score; Amber for High; Green otherwise. Unlike
+  Schedule and Budget, Risk isn't on the percentage scale above
 
 The dashboard's **Needs Attention** panel lists every project rated
 Amber or Red portfolio-wide, naming which dimension(s) triggered it and

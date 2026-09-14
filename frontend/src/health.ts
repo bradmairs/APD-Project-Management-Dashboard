@@ -34,7 +34,20 @@ function worstOf(statuses: RagStatus[]): RagStatus {
   );
 }
 
-const DUE_SOON_DAYS = 30;
+// Both schedule and budget health are read off the same percentage scale:
+// GREEN below 95%, AMBER from 95% up to and including 115%, RED beyond
+// 115%. AMBER deliberately straddles 100% — a project a little over its
+// planned timeframe or budget isn't yet the same signal as one running
+// materially over, which is what pushes it to RED.
+const AMBER_THRESHOLD = 0.95;
+const RED_THRESHOLD = 1.15;
+
+function ragForPercentOf(actual: number, planned: number): RagStatus {
+  const percent = actual / planned;
+  if (percent > RED_THRESHOLD) return "RED";
+  if (percent >= AMBER_THRESHOLD) return "AMBER";
+  return "GREEN";
+}
 
 interface RagResult {
   status: RagStatus;
@@ -49,9 +62,16 @@ interface RagResult {
 // original contractual date; Health is the exception-surfacing signal
 // that should account for a schedule already agreed to be revised, while
 // "Overdue" stays a literal reading of the contract.
+//
+// The percentage itself is elapsed time (project start to today) over the
+// planned duration (project start to the effective target) — not a
+// days-until-target countdown — so a short project and a long one are
+// judged on the same scale relative to their own timeframe.
 function scheduleHealth(project: Project, eotClaims: EotClaim[]): RagResult {
   const effectiveTarget = revisedCompletionDate(project, eotClaims);
-  if (!effectiveTarget) return { status: "GREEN", reason: "No target completion date set." };
+  if (!effectiveTarget || !project.startDate) {
+    return { status: "GREEN", reason: "No target completion date set." };
+  }
   if (STATUSES_EXEMPT_FROM_OVERDUE.includes(project.status)) {
     return {
       status: "GREEN",
@@ -59,26 +79,19 @@ function scheduleHealth(project: Project, eotClaims: EotClaim[]): RagResult {
     };
   }
 
-  const daysUntilTarget = Math.round(
-    (new Date(effectiveTarget).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-  );
+  const start = new Date(project.startDate).getTime();
+  const target = new Date(effectiveTarget).getTime();
+  const plannedDuration = target - start;
+  if (plannedDuration <= 0) {
+    return { status: "GREEN", reason: "Planned timeframe is not set correctly." };
+  }
+
+  const elapsed = Date.now() - start;
+  const pctElapsed = Math.round((elapsed / plannedDuration) * 100);
   const dateLabel = formatDate(effectiveTarget);
-  if (daysUntilTarget < 0) {
-    const daysPast = Math.abs(daysUntilTarget);
-    return {
-      status: "RED",
-      reason: `${daysPast} day${daysPast === 1 ? "" : "s"} past target completion (${dateLabel}).`,
-    };
-  }
-  if (daysUntilTarget <= DUE_SOON_DAYS) {
-    return {
-      status: "AMBER",
-      reason: `${daysUntilTarget} day${daysUntilTarget === 1 ? "" : "s"} until target completion (${dateLabel}).`,
-    };
-  }
   return {
-    status: "GREEN",
-    reason: `${daysUntilTarget} days until target completion (${dateLabel}).`,
+    status: ragForPercentOf(elapsed, plannedDuration),
+    reason: `${pctElapsed}% of the planned timeframe elapsed, against a target completion of ${dateLabel}.`,
   };
 }
 
@@ -88,18 +101,19 @@ function budgetHealth(
   variations: Variation[]
 ): RagResult {
   const budget = revisedBudget(project, variations);
-  if (budget === null) return { status: "GREEN", reason: "No approved budget set." };
+  if (budget === null || budget <= 0) {
+    return { status: "GREEN", reason: "No approved budget set." };
+  }
   if (entries.length === 0) {
     return { status: "GREEN", reason: "No cash flow entries recorded yet." };
   }
 
   const forecastTotal = forecastAtCompletion(entries);
   const pctOfBudget = Math.round((forecastTotal / budget) * 100);
-  const reason = `Forecast total ${formatCurrency(forecastTotal)} is ${pctOfBudget}% of the approved budget (${formatCurrency(budget)}).`;
-
-  if (forecastTotal > budget) return { status: "RED", reason };
-  if (forecastTotal > budget * 0.9) return { status: "AMBER", reason };
-  return { status: "GREEN", reason };
+  return {
+    status: ragForPercentOf(forecastTotal, budget),
+    reason: `Forecast total ${formatCurrency(forecastTotal)} is ${pctOfBudget}% of the approved budget (${formatCurrency(budget)}).`,
+  };
 }
 
 function riskHealth(risks: Risk[]): RagResult {
