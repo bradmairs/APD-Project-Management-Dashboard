@@ -25,6 +25,7 @@ export type ProjectStatus =
   | "DESIGN"
   | "TENDER"
   | "CONSTRUCTION"
+  | "PROJECT_COMPLETION"
   | "DEFECTS_LIABILITY"
   | "COMPLETE"
   | "ON_HOLD"
@@ -759,6 +760,43 @@ export interface Subcontractor {
 
 export type SubcontractorInput = Omit<
   Subcontractor,
+  | "id"
+  | "projectId"
+  | "addedById"
+  | "addedByName"
+  | "createdAt"
+  | "updatedAt"
+  | "project"
+>;
+
+export type ContractPartyType = "CONSULTANT" | "CONTRACTOR";
+export type ContractStatus = "ACTIVE" | "COMPLETE" | "TERMINATED";
+
+export interface ContractRecord {
+  id: string;
+  projectId: string;
+  partyType: ContractPartyType;
+  partyName: string;
+  discipline: string | null;
+  contractNumber: string | null;
+  contractForm: string | null;
+  contractValue: string | null;
+  retentionPercent: string | null;
+  defectsLiabilityMonths: number | null;
+  executionDate: string | null;
+  startDate: string | null;
+  completionDate: string | null;
+  status: ContractStatus;
+  notes: string | null;
+  addedById: string | null;
+  addedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  project?: { id: string; name: string };
+}
+
+export type ContractRecordInput = Omit<
+  ContractRecord,
   | "id"
   | "projectId"
   | "addedById"

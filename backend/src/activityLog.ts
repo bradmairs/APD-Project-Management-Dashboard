@@ -2,6 +2,7 @@ import {
   ActionItem,
   ChecklistItem,
   CommunityEnquiry,
+  ContractRecord,
   Correspondence,
   DefectItem,
   DocumentRecord,
@@ -422,6 +423,24 @@ export function describeSubcontractorUpdate(
     return `marked subcontractor "${before.companyName}" as ${label}`;
   }
   return `updated subcontractor "${before.companyName}"`;
+}
+
+const CONTRACT_STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "Active",
+  COMPLETE: "Complete",
+  TERMINATED: "Terminated",
+};
+
+export function describeContractUpdate(
+  before: ContractRecord,
+  body: Record<string, unknown>
+): string {
+  const noun = before.partyType === "CONSULTANT" ? "consultant contract" : "contractor contract";
+  if ("status" in body && body.status !== before.status) {
+    const label = CONTRACT_STATUS_LABELS[body.status as string] ?? String(body.status);
+    return `marked ${noun} "${before.partyName}" as ${label}`;
+  }
+  return `updated ${noun} "${before.partyName}"`;
 }
 
 export function describeMeetingMinutesUpdate(before: MeetingMinutes): string {

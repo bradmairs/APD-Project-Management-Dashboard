@@ -58,6 +58,8 @@ import {
   SqeRecordInput,
   Subcontractor,
   SubcontractorInput,
+  ContractRecord,
+  ContractRecordInput,
   SuggestedAction,
   Task,
   TaskStatus,
@@ -93,6 +95,7 @@ import {
   createSqeRecord,
   createStakeholder,
   createSubcontractor,
+  createContract,
   createTask,
   createTenderPackage,
   createPerformanceReview,
@@ -128,6 +131,7 @@ import {
   deleteSqeRecord,
   deleteStakeholder,
   deleteSubcontractor,
+  deleteContract,
   deleteTask,
   deleteTenderPackage,
   deletePerformanceReview,
@@ -162,6 +166,7 @@ import {
   getSqeRecords,
   getStakeholders,
   getSubcontractors,
+  getContracts,
   getTenderPackages,
   getPerformanceReviews,
   getToolboxTalks,
@@ -191,6 +196,7 @@ import {
   updateSqeRecord,
   updateStakeholder,
   updateSubcontractor,
+  updateContract,
   updateTask,
   updateTenderPackage,
   updatePerformanceReview,
@@ -216,6 +222,7 @@ import RfisPanel from "../components/RfisPanel";
 import ActionsPanel from "../components/ActionsPanel";
 import StakeholdersPanel from "../components/StakeholdersPanel";
 import SubcontractorsPanel from "../components/SubcontractorsPanel";
+import ContractsPanel from "../components/ContractsPanel";
 import PermitsPanel from "../components/PermitsPanel";
 import InsuranceWarrantiesPanel from "../components/InsuranceWarrantiesPanel";
 import LessonsLearnedPanel from "../components/LessonsLearnedPanel";
@@ -286,6 +293,7 @@ export default function ProjectDetailPage() {
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [communityEnquiries, setCommunityEnquiries] = useState<CommunityEnquiry[]>([]);
   const [subcontractors, setSubcontractors] = useState<Subcontractor[]>([]);
+  const [contracts, setContracts] = useState<ContractRecord[]>([]);
   const [meetingMinutes, setMeetingMinutes] = useState<MeetingMinutes[]>([]);
   const [correspondence, setCorrespondence] = useState<Correspondence[]>([]);
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
@@ -332,6 +340,7 @@ export default function ProjectDetailPage() {
         documentData,
         communityEnquiryData,
         subcontractorData,
+        contractData,
         meetingMinutesData,
         correspondenceData,
         trainingRecordData,
@@ -366,6 +375,7 @@ export default function ProjectDetailPage() {
         getDocuments(id),
         getCommunityEnquiries(id),
         getSubcontractors(id),
+        getContracts(id),
         getMeetingMinutes(id),
         getCorrespondence(id),
         getTrainingRecords(id),
@@ -400,6 +410,7 @@ export default function ProjectDetailPage() {
       setDocuments(documentData);
       setCommunityEnquiries(communityEnquiryData);
       setSubcontractors(subcontractorData);
+      setContracts(contractData);
       setMeetingMinutes(meetingMinutesData);
       setCorrespondence(correspondenceData);
       setTrainingRecords(trainingRecordData);
@@ -992,6 +1003,25 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  async function handleCreateContract(data: Partial<ContractRecordInput>) {
+    if (!project) return;
+    await createContract(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateContract(
+    contract: ContractRecord,
+    data: Partial<ContractRecordInput>
+  ) {
+    await updateContract(contract.id, data);
+    await load();
+  }
+
+  async function handleDeleteContract(contract: ContractRecord) {
+    await deleteContract(contract.id);
+    await load();
+  }
+
   async function handleCreateMeetingMinutes(data: Partial<MeetingMinutesInput>) {
     if (!project) return;
     await createMeetingMinutes(project.id, data);
@@ -1238,6 +1268,13 @@ export default function ProjectDetailPage() {
 
           {activeTab === "budget" && (
             <>
+              <ContractsPanel
+                contracts={contracts}
+                onCreate={handleCreateContract}
+                onUpdate={handleUpdateContract}
+                onDelete={handleDeleteContract}
+              />
+
               <CashFlowPanel
                 project={project}
                 entries={cashFlowEntries}

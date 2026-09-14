@@ -12,6 +12,11 @@ enum ProjectStatus {
   DESIGN
   TENDER
   CONSTRUCTION
+  // Practical completion/handover reached — the main works are done and
+  // in the client's hands, but the project isn't administratively closed
+  // out yet. Sits between Construction and Defects Liability, which starts
+  // running from this point.
+  PROJECT_COMPLETION
   DEFECTS_LIABILITY
   COMPLETE
   ON_HOLD
@@ -198,6 +203,17 @@ enum SubcontractorStatus {
   TERMINATED
 }
 
+enum ContractPartyType {
+  CONSULTANT
+  CONTRACTOR
+}
+
+enum ContractStatus {
+  ACTIVE
+  COMPLETE
+  TERMINATED
+}
+
 enum CorrespondenceDirection {
   INCOMING
   OUTGOING
@@ -264,6 +280,7 @@ model User {
   documents                      DocumentRecord[]
   communityEnquiries             CommunityEnquiry[]
   subcontractors                 Subcontractor[]
+  contracts                      ContractRecord[]
   meetingMinutes                 MeetingMinutes[]
   correspondence                 Correspondence[]
   trainingRecords                TrainingRecord[]
@@ -356,6 +373,7 @@ model Project {
   documents                      DocumentRecord[]
   communityEnquiries             CommunityEnquiry[]
   subcontractors                 Subcontractor[]
+  contracts                      ContractRecord[]
   meetingMinutes                 MeetingMinutes[]
   correspondence                 Correspondence[]
   trainingRecords                TrainingRecord[]
@@ -1082,6 +1100,40 @@ model Subcontractor {
   addedByName     String
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
+
+  @@index([projectId])
+}
+
+// A design consultant's or head contractor's contract on the project —
+// distinct from Subcontractor (a trade contractor engaged under the head
+// contract) and from Project.contractor/contractValue (a single freeform
+// summary field kept for quick reference on the project form). partyType
+// distinguishes a consultancy agreement from a construction contract
+// rather than splitting them into two models, since both share the same
+// shape: who, under what contract number/form, for how much, with what
+// retention and defects liability tail, over what dates.
+model ContractRecord {
+  id                     String            @id @default(cuid())
+  project                Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId              String
+  partyType              ContractPartyType
+  partyName              String
+  discipline             String?
+  contractNumber         String?
+  contractForm           String?
+  contractValue          Decimal?          @db.Decimal(14, 2)
+  retentionPercent       Decimal?          @db.Decimal(5, 2)
+  defectsLiabilityMonths Int?
+  executionDate          DateTime?
+  startDate              DateTime?
+  completionDate         DateTime?
+  status                 ContractStatus    @default(ACTIVE)
+  notes                  String?
+  addedBy                User?             @relation(fields: [addedById], references: [id], onDelete: SetNull)
+  addedById              String?
+  addedByName            String
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
 
   @@index([projectId])
 }
