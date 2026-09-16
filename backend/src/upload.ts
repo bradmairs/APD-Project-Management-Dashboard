@@ -125,3 +125,58 @@ export const photoUpload = multer({
     cb(null, true);
   },
 });
+
+// A file that isn't scoped to any project — see PortfolioDocument. Stored
+// under its own subdirectory rather than mixed into a projectId-keyed one,
+// since there's no project to key it by.
+export function portfolioDocumentUploadDir(): string {
+  return path.join(UPLOAD_DIR, "portfolio-documents");
+}
+
+export function portfolioDocumentFilePath(storedFilename: string): string {
+  return path.join(portfolioDocumentUploadDir(), storedFilename);
+}
+
+const portfolioDocumentStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const dir = portfolioDocumentUploadDir();
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${crypto.randomUUID()}${ALLOWED_EXTENSIONS.has(ext) ? ext : ""}`);
+  },
+});
+
+export const portfolioDocumentUpload = multer({
+  storage: portfolioDocumentStorage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      cb(new Error(`File type "${ext || "unknown"}" is not allowed`));
+      return;
+    }
+    cb(null, true);
+  },
+});
+
+// A transcript upload (.txt/.docx/.pdf, or a photo of handwritten notes for
+// the vision model) that only exists in memory long enough to extract its
+// text — nothing is persisted to disk, unlike every other upload above.
+const TRANSCRIPT_EXTENSIONS = new Set([".txt", ".docx", ".pdf", ".png", ".jpg", ".jpeg"]);
+const MAX_TRANSCRIPT_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
+export const transcriptUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_TRANSCRIPT_FILE_SIZE },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!TRANSCRIPT_EXTENSIONS.has(ext)) {
+      cb(new Error(`File type "${ext || "unknown"}" is not supported for transcripts`));
+      return;
+    }
+    cb(null, true);
+  },
+});

@@ -40,6 +40,7 @@ import { aiRouter } from "./routes/ai";
 import { archiveLinksRouter, archiveSearchRouter } from "./routes/archiveLinks";
 import activityRouter from "./routes/activity";
 import attachmentsRouter from "./routes/attachments";
+import portfolioDocumentsRouter from "./routes/portfolioDocuments";
 import usersRouter from "./routes/users";
 import organizationsRouter from "./routes/organizations";
 import cmpProjectsRouter from "./routes/cmp/projects";
@@ -104,6 +105,7 @@ app.use("/api/archive-links", requireAuth, archiveLinksRouter);
 app.use("/api/archive-search", requireAuth, archiveSearchRouter);
 app.use("/api/activity", requireAuth, activityRouter);
 app.use("/api/attachments", requireAuth, attachmentsRouter);
+app.use("/api/portfolio-documents", requireAuth, portfolioDocumentsRouter);
 app.use("/api/users", requireAuth, requireAdmin, usersRouter);
 app.use("/api/organizations", requireAuth, organizationsRouter);
 

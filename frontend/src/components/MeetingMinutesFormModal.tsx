@@ -1,10 +1,18 @@
 import { FormEvent, useState } from "react";
-import { MeetingMinutes, MeetingMinutesInput } from "../types";
+import {
+  ActionItemInput,
+  MeetingMinutes,
+  MeetingMinutesDraft,
+  MeetingMinutesInput,
+  SuggestedAction,
+} from "../types";
 
 interface Props {
   meeting: MeetingMinutes | null;
   onClose: () => void;
-  onSave: (data: Partial<MeetingMinutesInput>) => Promise<void>;
+  onSave: (data: Partial<MeetingMinutesInput>) => Promise<MeetingMinutes>;
+  onGenerateDraft: (input: { text?: string; file?: File }) => Promise<MeetingMinutesDraft>;
+  onCreateAction: (data: Partial<ActionItemInput>) => Promise<void>;
 }
 
 const MEETING_TYPE_SUGGESTIONS = [
@@ -18,7 +26,13 @@ function toDateInputValue(value: string | null): string {
   return value ? value.substring(0, 10) : "";
 }
 
-export default function MeetingMinutesFormModal({ meeting, onClose, onSave }: Props) {
+export default function MeetingMinutesFormModal({
+  meeting,
+  onClose,
+  onSave,
+  onGenerateDraft,
+  onCreateAction,
+}: Props) {
   const [meetingDate, setMeetingDate] = useState(
     toDateInputValue(meeting?.meetingDate ?? null) || new Date().toISOString().substring(0, 10)
   );
@@ -33,12 +47,57 @@ export default function MeetingMinutesFormModal({ meeting, onClose, onSave }: Pr
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Generate-from-transcript state — kept separate from the form fields
+  // above so a generated draft is a proposal the PM reviews (and the
+  // fields above stay editable afterwards), not something applied blindly.
+  const [showTranscript, setShowTranscript] = useState(false);
+  const [transcriptText, setTranscriptText] = useState("");
+  const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [draftActions, setDraftActions] = useState<SuggestedAction[] | null>(null);
+  const [selectedActions, setSelectedActions] = useState<Set<number>>(new Set());
+
+  async function handleGenerate() {
+    if (!transcriptText.trim() && !transcriptFile) {
+      setGenerateError("Paste a transcript or choose a file/photo first");
+      return;
+    }
+    setGenerating(true);
+    setGenerateError(null);
+    try {
+      const draft = await onGenerateDraft({
+        text: transcriptText.trim() || undefined,
+        file: transcriptFile ?? undefined,
+      });
+      if (draft.meetingType) setMeetingType(draft.meetingType);
+      if (draft.attendees) setAttendees(draft.attendees);
+      if (draft.summary) setSummary(draft.summary);
+      if (draft.notes) setNotes(draft.notes);
+      setDraftActions(draft.actions);
+      setSelectedActions(new Set(draft.actions.map((_, i) => i)));
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : "Failed to generate from transcript");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  function toggleSelectedAction(i: number) {
+    setSelectedActions((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
     try {
-      await onSave({
+      const saved = await onSave({
         meetingDate: new Date(meetingDate).toISOString(),
         meetingType: meetingType || null,
         location: location || null,
@@ -47,9 +106,24 @@ export default function MeetingMinutesFormModal({ meeting, onClose, onSave }: Pr
         nextMeetingDate: nextMeetingDate ? new Date(nextMeetingDate).toISOString() : null,
         notes: notes || null,
       });
+
+      if (draftActions) {
+        for (let i = 0; i < draftActions.length; i++) {
+          if (!selectedActions.has(i)) continue;
+          const action = draftActions[i];
+          await onCreateAction({
+            title: action.title,
+            type: "ACTION",
+            status: "OPEN",
+            dateRaised: saved.meetingDate,
+            ownerName: action.ownerName,
+            notes: action.dueDateHint ? `Suggested due: ${action.dueDateHint}` : null,
+            meetingMinutesId: saved.id,
+          });
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save meeting minutes");
-    } finally {
       setSaving(false);
     }
   }
@@ -67,6 +141,82 @@ export default function MeetingMinutesFormModal({ meeting, onClose, onSave }: Pr
               {error}
             </div>
           )}
+
+          <div className="border border-dashed border-slate-300 dark:border-slate-600 rounded p-3">
+            <button
+              type="button"
+              onClick={() => setShowTranscript((s) => !s)}
+              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {showTranscript ? "− Hide" : "+ Generate from Transcript (AI)"}
+            </button>
+
+            {showTranscript && (
+              <div className="mt-3 space-y-2">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Paste a transcript, or upload a .txt/.docx/.pdf file or a photo of handwritten
+                  notes — the fields below and a suggested action list will be filled in for you
+                  to review before saving.
+                </p>
+                <textarea
+                  value={transcriptText}
+                  onChange={(e) => setTranscriptText(e.target.value)}
+                  rows={4}
+                  placeholder="Paste transcript text here…"
+                  className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
+                />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="file"
+                    accept=".txt,.docx,.pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => setTranscriptFile(e.target.files?.[0] ?? null)}
+                    className="text-xs text-slate-700 dark:text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-slate-100 dark:file:bg-slate-700 file:text-slate-700 dark:file:text-slate-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleGenerate}
+                    disabled={generating}
+                    className="text-xs px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 shrink-0 ml-auto"
+                  >
+                    {generating ? "Generating…" : "Generate"}
+                  </button>
+                </div>
+
+                {generateError && (
+                  <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded p-2">
+                    {generateError}
+                  </div>
+                )}
+
+                {draftActions && draftActions.length > 0 && (
+                  <div className="border border-slate-200 dark:border-slate-600 rounded p-2 space-y-1.5">
+                    <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Suggested actions (added when you save)
+                    </div>
+                    {draftActions.map((a, i) => (
+                      <label key={i} className="flex items-start gap-2 text-xs cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedActions.has(i)}
+                          onChange={() => toggleSelectedAction(i)}
+                          className="mt-0.5"
+                        />
+                        <span>
+                          <span className="text-slate-700 dark:text-slate-300">{a.title}</span>
+                          {(a.ownerName || a.dueDateHint) && (
+                            <span className="text-slate-400 dark:text-slate-500">
+                              {" "}
+                              ({[a.ownerName, a.dueDateHint].filter(Boolean).join(", ")})
+                            </span>
+                          )}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="min-w-0">

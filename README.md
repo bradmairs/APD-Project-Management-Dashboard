@@ -656,6 +656,28 @@ to the bottom (`frontend/src/documentMeta.ts`'s `documentStatusRank`,
 the same status-rank pattern every other register uses). Open to any
 logged-in user to edit.
 
+## Portfolio Documents
+
+The Dashboard's **Documents** tab holds a portfolio-level file library —
+for documentation that isn't about one specific project: an all-project
+catch-up's minutes, a shared policy, a template. Unlike every other
+document-shaped register in this app (Document Register, Attachments),
+`PortfolioDocument` carries no `projectId` at all, so it lives on the
+Dashboard rather than a project detail page. Each entry has a Title,
+optional Category (freeform, with suggestions like "Meeting Minutes" or
+"Policy"), optional Description, and the uploaded file itself — plus who
+uploaded it and when.
+
+Uploads reuse the same disk-storage/allowlist infrastructure as project
+Attachments (`backend/src/upload.ts`'s `portfolioDocumentUpload`), just
+under their own `portfolio-documents/` subdirectory instead of a
+project-id-keyed one. Backend routes:
+`GET/POST /api/portfolio-documents`,
+`GET /api/portfolio-documents/:id/file`,
+`DELETE /api/portfolio-documents/:id`
+(`backend/src/routes/portfolioDocuments.ts`). Open to any logged-in user
+to upload or delete.
+
 ## Community Enquiries & Complaints
 
 Each project has a **Community Enquiries & Complaints** register — a log
@@ -771,6 +793,35 @@ automatically: the suggestions appear as a checklist (all pre-selected)
 for you to review, deselect, and add. If Ollama can't be reached, the
 button shows the same clear inline error as the AI Assistant rather than
 failing silently.
+
+### Generate from Transcript (AI)
+
+The "New Meeting Minutes" form has a collapsible **Generate from
+Transcript (AI)** section for turning a raw transcript straight into a
+draft — useful when the source is a Teams/Zoom auto-transcript, typed
+notes, or a photo of a whiteboard, rather than something you'd type up
+yourself. It accepts, in any combination:
+
+- **Pasted text** — into a textarea.
+- **An uploaded file** — `.txt`, `.docx` (via
+  [mammoth](https://github.com/mwilliamson/mammoth.js)), or `.pdf` (via
+  [pdf-parse](https://www.npmjs.com/package/pdf-parse)), text-extracted
+  server-side.
+- **A photo of notes** (`.png`/`.jpg`) — sent to the vision model
+  (`OLLAMA_VISION_MODEL`) to transcribe into plain text first.
+
+Whatever text results is then sent to the chat model with the same kind
+of prompt "AI: Suggest Actions from Notes" uses, but asked for the full
+picture at once: a meeting type, summary, attendees, notes, and the
+candidate action list — returned as a draft that pre-fills the form's
+fields (never overwriting anything you'd already typed with an empty
+result) and shows the suggested actions as a checklist, exactly like the
+existing action-extraction flow. Nothing is saved until you review the
+draft and click Save; the selected actions are created and linked to the
+new meeting in the same step. Backend route:
+`POST /api/projects/:id/meeting-minutes/ai/generate-draft`
+(`backend/src/routes/meetingMinutes.ts`,
+`backend/src/transcriptExtraction.ts`).
 
 ## Correspondence
 
@@ -1273,12 +1324,17 @@ answered fresh from the latest data.
 
 ### Configuration
 
-Two environment variables point the backend at Ollama:
+Environment variables point the backend at Ollama and pick which model
+handles which kind of request — text tasks (the Assistant, transcript-to-
+minutes) and image tasks (OCR-ing a photo of notes) are different jobs,
+best served by different models, so each has its own slot:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `OLLAMA_BASE_URL` | `http://host.docker.internal:11434` (docker-compose) / `http://localhost:11434` (local dev) | Where Ollama's HTTP API is reachable from the backend. |
-| `OLLAMA_MODEL` | `llama3.1` | The model to call — must already be pulled on that Ollama server (`ollama pull llama3.1`). |
+| `OLLAMA_CHAT_MODEL` | `llama3.1` (falls back to `OLLAMA_MODEL` if only that's set) | The text model — the AI Assistant, meeting-minutes generation, and action extraction. A capable general chat model (Llama, Gemma, Mistral, ...) — must already be pulled (`ollama pull llama3.1`). |
+| `OLLAMA_VISION_MODEL` | `llava` | The vision model — reads an image into text (a photo of handwritten or whiteboard notes) as the first step of Meeting Minutes' transcript generation. Must be a vision-capable model pulled on that server (`ollama pull llava`; `gemma3` also supports vision). |
+| `OLLAMA_MODEL` | `llama3.1` | Legacy alias for `OLLAMA_CHAT_MODEL`, kept for existing deployments that only set this. |
 
 `host.docker.internal` lets the `backend` container reach Ollama running
 directly on the Docker host; `docker-compose.yml` adds the
@@ -1288,8 +1344,9 @@ different machine, point `OLLAMA_BASE_URL` at that host instead.
 
 Ollama has no built-in authentication, so this integration assumes
 Ollama is only reachable from trusted hosts (e.g. not exposed directly
-to the internet). If the backend can't reach Ollama, the Assistant shows
-a clear error in place of an answer rather than failing silently.
+to the internet). If the backend can't reach Ollama — or the configured
+model for that request isn't pulled — the caller shows a clear error in
+place of an answer rather than failing silently.
 
 ## Procurement & Tenders
 
@@ -1328,8 +1385,9 @@ so a screen only ever shows one section at a time:
 - **Dashboard** — Projects (the filterable/searchable project table),
   Alerts (the eight portfolio-wide "needs attention" panels), Charts
   (spend-vs-budget and projects-by-status), Activity (upcoming deadlines,
-  top risks, recent activity feed). The header and the four stat cards
-  stay above the tabs, visible on every tab.
+  top risks, recent activity feed), Documents (Portfolio Documents — see
+  below), AI Assistant. The header and the four stat cards stay above the
+  tabs, visible on every tab.
 - **Project detail page** — Overview (Stakeholders, Actions & Decisions,
   Activity), Schedule (Milestones, Tasks, EOT Claims, Commissioning &
   Handover), Budget & Contract (Cash Flow, Variations, Payment Claims,
