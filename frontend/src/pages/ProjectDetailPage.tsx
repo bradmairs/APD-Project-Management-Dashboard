@@ -35,6 +35,7 @@ import {
   LessonLearnedInput,
   MeetingMinutes,
   MeetingMinutesInput,
+  MeetingMinutesDraft,
   PaymentClaim,
   PaymentClaimInput,
   Permit,
@@ -114,6 +115,7 @@ import {
   deleteEnvironmentalMonitoring,
   deleteEotClaim,
   extractMeetingActions,
+  generateMeetingMinutesDraft,
   deleteSafetyInspection,
   deleteInsuranceWarranty,
   deleteLessonLearned,
@@ -1022,23 +1024,35 @@ export default function ProjectDetailPage() {
     await load();
   }
 
-  async function handleCreateMeetingMinutes(data: Partial<MeetingMinutesInput>) {
-    if (!project) return;
-    await createMeetingMinutes(project.id, data);
+  async function handleCreateMeetingMinutes(
+    data: Partial<MeetingMinutesInput>
+  ): Promise<MeetingMinutes> {
+    if (!project) throw new Error("Project not loaded");
+    const created = await createMeetingMinutes(project.id, data);
     await load();
+    return created;
   }
 
   async function handleUpdateMeetingMinutes(
     meeting: MeetingMinutes,
     data: Partial<MeetingMinutesInput>
-  ) {
-    await updateMeetingMinutes(meeting.id, data);
+  ): Promise<MeetingMinutes> {
+    const updated = await updateMeetingMinutes(meeting.id, data);
     await load();
+    return updated;
   }
 
   async function handleDeleteMeetingMinutes(meeting: MeetingMinutes) {
     await deleteMeetingMinutes(meeting.id);
     await load();
+  }
+
+  async function handleGenerateMeetingMinutesDraft(input: {
+    text?: string;
+    file?: File;
+  }): Promise<MeetingMinutesDraft> {
+    if (!project) throw new Error("Project not loaded");
+    return generateMeetingMinutesDraft(project.id, input);
   }
 
   async function handleUploadMeetingAttachment(meetingId: string, file: File) {
@@ -1222,6 +1236,7 @@ export default function ProjectDetailPage() {
                 onDeleteAttachment={handleDeleteAttachment}
                 onCreateAction={handleCreateActionItem}
                 onExtractActions={handleExtractMeetingActions}
+                onGenerateDraft={handleGenerateMeetingMinutesDraft}
               />
 
               <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">

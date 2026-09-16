@@ -291,6 +291,7 @@ model User {
   tenderPackages                 TenderPackage[]
   memberships                    OrganizationMembership[]
   archiveLinks                   ArchiveLink[]
+  portfolioDocuments             PortfolioDocument[]
 }
 
 // One of the separate companies/agencies this tool serves — e.g. Goulburn
@@ -424,6 +425,26 @@ model Attachment {
 
   @@index([projectId])
   @@index([meetingMinutesId])
+}
+
+// A file that isn't scoped to any one project — an all-portfolio catch-up's
+// minutes, a policy document, a template — shown on the portfolio dashboard
+// rather than a project detail page. Deliberately has no projectId: unlike
+// Attachment, nothing here cascades from a project's deletion.
+model PortfolioDocument {
+  id               String   @id @default(cuid())
+  title            String
+  category         String?
+  description      String?
+  storedFilename   String
+  originalFilename String
+  mimeType         String
+  fileSize         Int
+  uploadedBy       User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedById     String?
+  uploadedByName   String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 // A major project deliverable from the WBS schedule table in the monthly
@@ -577,17 +598,17 @@ model SiteVisitPhoto {
 // ENGINEERING_ARCHIVE_PUBLIC_URL rather than built fresh by the frontend,
 // so the frontend needs no archive-specific configuration of its own.
 model ArchiveLink {
-  id             String      @id @default(cuid())
-  project        Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId      String
-  archiveType    ArchiveItemType
-  archiveId      String
-  label          String
-  url            String
-  createdBy      User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdById    String?
-  createdByName  String
-  createdAt      DateTime    @default(now())
+  id            String          @id @default(cuid())
+  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  archiveType   ArchiveItemType
+  archiveId     String
+  label         String
+  url           String
+  createdBy     User?           @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById   String?
+  createdByName String
+  createdAt     DateTime        @default(now())
 
   @@index([projectId])
 }

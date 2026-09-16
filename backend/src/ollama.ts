@@ -4,7 +4,17 @@
 // see docker-compose.yml's extra_hosts entry). No API key: Ollama's HTTP
 // API is unauthenticated, so this is only appropriate for a trusted host.
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://host.docker.internal:11434";
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.1";
+
+// Two separate model slots for two separate jobs: a text/chat model (e.g.
+// llama3.1, gemma2) for everything that reasons over already-textual
+// project data or a transcript, and a vision-capable model (e.g. llava,
+// gemma3) for reading an image (a photo of handwritten or whiteboard
+// notes) into text in the first place. OLLAMA_MODEL is kept as the legacy
+// env var name and falls back into the chat slot so existing deployments
+// that only set it keep working unchanged.
+const OLLAMA_CHAT_MODEL =
+  process.env.OLLAMA_CHAT_MODEL || process.env.OLLAMA_MODEL || "llama3.1";
+const OLLAMA_VISION_MODEL = process.env.OLLAMA_VISION_MODEL || "llava";
 
 export class OllamaError extends Error {}
 
@@ -12,17 +22,22 @@ interface OllamaChatResponse {
   message?: { content?: string };
 }
 
-export async function askOllama(systemPrompt: string, userPrompt: string): Promise<string> {
+async function chatRequest(
+  model: string,
+  systemPrompt: string,
+  userPrompt: string,
+  images?: string[]
+): Promise<string> {
   let res: Response;
   try {
     res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: OLLAMA_MODEL,
+        model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          { role: "user", content: userPrompt, ...(images ? { images } : {}) },
         ],
         stream: false,
       }),
@@ -35,6 +50,11 @@ export async function askOllama(systemPrompt: string, userPrompt: string): Promi
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
+    if (res.status === 404) {
+      throw new OllamaError(
+        `Ollama doesn't have model "${model}" pulled. Run "ollama pull ${model}" on the host, or set the appropriate OLLAMA_CHAT_MODEL/OLLAMA_VISION_MODEL env var to a model you have.`
+      );
+    }
     throw new OllamaError(`Ollama returned an error (${res.status}): ${body || res.statusText}`);
   }
 
@@ -44,4 +64,23 @@ export async function askOllama(systemPrompt: string, userPrompt: string): Promi
     throw new OllamaError("Ollama returned an empty response.");
   }
   return answer;
+}
+
+// Text-in, text-out — the chat model, used for everything from answering
+// portfolio questions to turning a transcript into structured minutes.
+export async function askOllama(systemPrompt: string, userPrompt: string): Promise<string> {
+  return chatRequest(OLLAMA_CHAT_MODEL, systemPrompt, userPrompt);
+}
+
+// Image-in, text-out — the vision model, used to read a photo of
+// handwritten or whiteboard notes into plain text before it's handed to
+// askOllama for structuring. imageBase64 is the raw image bytes,
+// base64-encoded with no "data:image/...;base64," prefix (Ollama's own
+// convention, distinct from a data: URL).
+export async function askOllamaVision(
+  systemPrompt: string,
+  userPrompt: string,
+  imageBase64: string
+): Promise<string> {
+  return chatRequest(OLLAMA_VISION_MODEL, systemPrompt, userPrompt, [imageBase64]);
 }

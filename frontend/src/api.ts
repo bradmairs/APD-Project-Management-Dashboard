@@ -28,6 +28,9 @@ import {
   LessonLearnedInput,
   MeetingMinutes,
   MeetingMinutesInput,
+  MeetingMinutesDraft,
+  PortfolioDocument,
+  PortfolioDocumentInput,
   Correspondence,
   CorrespondenceInput,
   Milestone,
@@ -1097,6 +1100,47 @@ export function extractMeetingActions(
   return fetch(`${API_BASE}/meeting-minutes/${meetingId}/ai/extract-actions`, {
     method: "POST",
   }).then((res) => handle(res));
+}
+
+export function generateMeetingMinutesDraft(
+  projectId: string,
+  input: { text?: string; file?: File }
+): Promise<MeetingMinutesDraft> {
+  const formData = new FormData();
+  if (input.text) formData.append("text", input.text);
+  if (input.file) formData.append("file", input.file);
+  return fetch(`${API_BASE}/projects/${projectId}/meeting-minutes/ai/generate-draft`, {
+    method: "POST",
+    body: formData,
+  }).then((res) => handle(res));
+}
+
+export function getPortfolioDocuments(): Promise<PortfolioDocument[]> {
+  return fetch(`${API_BASE}/portfolio-documents`).then((res) => handle(res));
+}
+
+export function uploadPortfolioDocument(
+  data: Partial<PortfolioDocumentInput> & { file: File }
+): Promise<PortfolioDocument> {
+  const formData = new FormData();
+  formData.append("file", data.file);
+  if (data.title) formData.append("title", data.title);
+  if (data.category) formData.append("category", data.category);
+  if (data.description) formData.append("description", data.description);
+  return fetch(`${API_BASE}/portfolio-documents`, {
+    method: "POST",
+    body: formData,
+  }).then((res) => handle(res));
+}
+
+export function deletePortfolioDocument(id: string): Promise<void> {
+  return fetch(`${API_BASE}/portfolio-documents/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function portfolioDocumentFileUrl(id: string): string {
+  return `${API_BASE}/portfolio-documents/${id}/file`;
 }
 
 export function getCorrespondence(projectId: string): Promise<Correspondence[]> {

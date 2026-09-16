@@ -1043,3 +1043,42 @@ export type TenderPackageInput = Omit<
   | "updatedAt"
   | "project"
 >;
+
+// A file that isn't scoped to any one project — see the PortfolioDocument
+// Prisma model for why it carries no projectId.
+export interface PortfolioDocument {
+  id: string;
+  title: string;
+  category: string | null;
+  description: string | null;
+  originalFilename: string;
+  mimeType: string;
+  fileSize: number;
+  uploadedById: string | null;
+  uploadedByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PortfolioDocumentInput = Omit<
+  PortfolioDocument,
+  | "id"
+  | "originalFilename"
+  | "mimeType"
+  | "fileSize"
+  | "uploadedById"
+  | "uploadedByName"
+  | "createdAt"
+  | "updatedAt"
+>;
+
+// What the AI transcript-to-minutes endpoint returns — a draft to review
+// and edit before it's saved as a real MeetingMinutes record, using the
+// same SuggestedAction shape the existing extract-actions feature returns.
+export interface MeetingMinutesDraft {
+  meetingType: string | null;
+  summary: string | null;
+  attendees: string | null;
+  notes: string | null;
+  actions: SuggestedAction[];
+}

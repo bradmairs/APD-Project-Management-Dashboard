@@ -14,6 +14,8 @@ import {
   SafetyInspection,
   PaymentClaim,
   Permit,
+  PortfolioDocument,
+  PortfolioDocumentInput,
   Project,
   ProjectInput,
   ProjectStatus,
@@ -49,10 +51,13 @@ import {
   getAllPerformanceReviews,
   getAllTrainingRecords,
   getAllVariations,
+  getPortfolioDocuments,
   getProjects,
   getRecentActivity,
   getUpcomingTasks,
   updateProject,
+  uploadPortfolioDocument,
+  deletePortfolioDocument,
 } from "../api";
 import StatCards from "../components/StatCards";
 import ProjectTable from "../components/ProjectTable";
@@ -84,18 +89,20 @@ import { useTheme } from "../theme/ThemeContext";
 import { ALL_STATUSES, STATUS_LABELS } from "../statusMeta";
 import { computeProjectHealth, ProjectHealth } from "../health";
 import NeedsAttentionPanel from "../components/NeedsAttentionPanel";
+import PortfolioDocumentsPanel from "../components/PortfolioDocumentsPanel";
 import UserMenu from "../components/UserMenu";
 import Tabs from "../components/Tabs";
 import { useAuth } from "../auth/AuthContext";
 import GvwLogo from "../components/GvwLogo";
 
-type DashboardTabId = "projects" | "alerts" | "charts" | "activity" | "ai";
+type DashboardTabId = "projects" | "alerts" | "charts" | "activity" | "documents" | "ai";
 
 const DASHBOARD_TABS: { id: DashboardTabId; label: string }[] = [
   { id: "projects", label: "Projects" },
   { id: "alerts", label: "Alerts" },
   { id: "charts", label: "Charts" },
   { id: "activity", label: "Activity" },
+  { id: "documents", label: "Documents" },
   { id: "ai", label: "AI Assistant" },
 ];
 
@@ -127,6 +134,7 @@ export default function DashboardPage() {
   >([]);
   const [safetyInspections, setSafetyInspections] = useState<SafetyInspection[]>([]);
   const [tenderPackages, setTenderPackages] = useState<TenderPackage[]>([]);
+  const [portfolioDocuments, setPortfolioDocuments] = useState<PortfolioDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
@@ -164,6 +172,7 @@ export default function DashboardPage() {
         environmentalMonitoringData,
         safetyInspectionData,
         tenderPackageData,
+        portfolioDocumentData,
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
@@ -187,6 +196,7 @@ export default function DashboardPage() {
         getAllEnvironmentalMonitoring(),
         getAllSafetyInspections(),
         getAllTenderPackages(),
+        getPortfolioDocuments(),
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
@@ -210,6 +220,7 @@ export default function DashboardPage() {
       setEnvironmentalMonitoring(environmentalMonitoringData);
       setSafetyInspections(safetyInspectionData);
       setTenderPackages(tenderPackageData);
+      setPortfolioDocuments(portfolioDocumentData);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -285,6 +296,18 @@ export default function DashboardPage() {
   async function handleDelete(project: Project) {
     if (!confirm(`Delete "${project.name}"? This cannot be undone.`)) return;
     await deleteProject(project.id);
+    await loadData();
+  }
+
+  async function handleUploadPortfolioDocument(
+    data: Partial<PortfolioDocumentInput> & { file: File }
+  ) {
+    await uploadPortfolioDocument(data);
+    await loadData();
+  }
+
+  async function handleDeletePortfolioDocument(document: PortfolioDocument) {
+    await deletePortfolioDocument(document.id);
     await loadData();
   }
 
@@ -445,6 +468,14 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+        )}
+
+        {activeTab === "documents" && (
+          <PortfolioDocumentsPanel
+            documents={portfolioDocuments}
+            onUpload={handleUploadPortfolioDocument}
+            onDelete={handleDeletePortfolioDocument}
+          />
         )}
 
         {activeTab === "ai" && (
