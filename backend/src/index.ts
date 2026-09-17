@@ -1,5 +1,6 @@
 import express, { ErrorRequestHandler } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import multer from "multer";
 import authRouter from "./routes/auth";
@@ -57,7 +58,33 @@ import { requireOrgMembership } from "./middleware/requireOrgMembership";
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 
-app.use(cors());
+// The only way this process ever receives a request is via the frontend
+// container's nginx (see frontend/nginx.conf), which sits directly in
+// front of it on the Docker network — so there's exactly one hop to
+// trust. This makes req.ip (and the login rate limiter, which keys on
+// it) read the real client IP from X-Forwarded-For instead of treating
+// every request as coming from that one proxy. If you put another
+// reverse proxy in front of the frontend container (e.g. for
+// pm.sirishome.org), make sure it forwards/appends X-Forwarded-For too —
+// nginx.conf already chains onto whatever it receives.
+app.set("trust proxy", 1);
+
+// Baseline HTTP security headers (HSTS, X-Content-Type-Options,
+// X-Frame-Options, a default CSP, etc.) — cheap defense in depth for a
+// JSON API, and matters more once this is reachable from the open
+// internet rather than just a trusted LAN.
+app.use(helmet());
+
+// The SPA never actually makes a cross-origin request to this API: in
+// both local dev (Vite's proxy, vite.config.ts) and the shipped
+// container (frontend/nginx.conf's /api/ proxy), the browser always
+// talks to this backend through the same origin it loaded the page
+// from. So nothing legitimate needs CORS at all, and the safe default is
+// to disable cross-origin access entirely unless FRONTEND_URL is set —
+// e.g. for a separately-hosted frontend, or testing against this API
+// from another origin.
+const corsOrigin = process.env.FRONTEND_URL || false;
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -119,16 +146,18 @@ app.use("/api/cmp/ai", requireCmpAccess, cmpAiRouter);
 
 // Catches multer's file-size/file-type rejections (thrown before any route
 // handler runs) and reports them as clean JSON instead of Express's default
-// HTML error page.
+// HTML error page. Also the app-wide fallback for anything else thrown or
+// passed to next(err) — those messages (Prisma errors, programming bugs,
+// ...) are never safe to hand straight to the client, so only multer's own
+// deliberately user-facing messages are ever echoed back; everything else
+// is logged here and reported generically.
 const handleUploadErrors: ErrorRequestHandler = (err, _req, res, next) => {
   if (res.headersSent) return next(err);
   if (err instanceof multer.MulterError) {
     return res.status(400).json({ error: err.message });
   }
-  if (err instanceof Error) {
-    return res.status(400).json({ error: err.message });
-  }
-  next(err);
+  console.error(err);
+  res.status(500).json({ error: "Something went wrong. Please try again." });
 };
 app.use(handleUploadErrors);
 

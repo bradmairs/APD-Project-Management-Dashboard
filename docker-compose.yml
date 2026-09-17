@@ -36,10 +36,12 @@ services:
     build: ./backend
     restart: unless-stopped
     environment:
+      NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-apd}:${POSTGRES_PASSWORD:-apd}@db:5432/${POSTGRES_DB:-apd_dashboard}
       CMP_DATABASE_URL: postgresql://${POSTGRES_USER:-apd}:${POSTGRES_PASSWORD:-apd}@db-cmp:5432/${POSTGRES_CMP_DB:-apd_cmp}
       PORT: 4000
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
+      FRONTEND_URL: ${FRONTEND_URL:-}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1}
       ENGINEERING_ARCHIVE_BASE_URL: ${ENGINEERING_ARCHIVE_BASE_URL:-}
@@ -50,8 +52,17 @@ services:
         condition: service_healthy
       db-cmp:
         condition: service_healthy
+    # Bound to loopback only: the frontend container's nginx (see
+    # frontend/nginx.conf) already proxies /api/ to this service over the
+    # internal Docker network, and that's meant to be the only way in from
+    # outside the host. Publishing 4000 on every interface would let
+    # anyone reach the raw Express API directly — no TLS, no CORS
+    # restriction, none of the header/hardening this container relies on
+    # nginx or an external reverse proxy for — bypassing the frontend
+    # entirely. 127.0.0.1:4000 is still reachable for local
+    # debugging (curl/Postman on the host itself).
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     volumes:
       - uploads_data:/app/uploads
     # Lets the backend container reach Ollama running on the Docker host via
