@@ -1,5 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
+import rateLimit from "express-rate-limit";
 import { prisma } from "../prisma";
 import { COOKIE_NAME, signToken } from "../auth";
 import { requireAuth } from "../middleware/requireAuth";
@@ -13,7 +14,24 @@ const COOKIE_OPTIONS = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
-router.post("/login", async (req, res) => {
+// This app is reachable from the open internet, so login needs its own
+// brute-force/credential-stuffing throttle rather than relying on a
+// strong password alone. Keyed by IP (express-rate-limit's default) — a
+// shared office/NAT IP will share this budget, which is an acceptable
+// trade-off for a small self-hosted deployment. Counts only failed
+// attempts (skipSuccessfulRequests) so a legitimate user who mistypes
+// their password once isn't locked out by their own subsequent correct
+// login.
+const loginRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { error: "Too many login attempts. Try again in a few minutes." },
+});
+
+router.post("/login", loginRateLimiter, async (req, res) => {
   const { email, password } = req.body as { email?: string; password?: string };
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required" });

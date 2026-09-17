@@ -186,6 +186,48 @@ menu (top right → **Change Password**), no admin needed.
 `docker compose up` will refuse to start the backend without it. Generate one
 with `openssl rand -base64 32`.
 
+### Deploying on the internet
+
+This app was built for a small team behind a login, not for the open
+internet — but it can be exposed there (e.g. via a reverse proxy on a
+domain like `pm.example.com`) with the hardening `docker-compose.yml`
+and the backend already carry:
+
+- **Login is rate-limited** — 10 failed attempts per IP per 15 minutes
+  (`backend/src/routes/auth.ts`) — to blunt brute-force/credential-
+  stuffing against `/api/auth/login`. This is keyed on the real client
+  IP via `X-Forwarded-For`, which only works correctly through the
+  chain `app.set("trust proxy", 1)` (`backend/src/index.ts`) +
+  `frontend/nginx.conf`'s `proxy_set_header X-Forwarded-For
+  $proxy_add_x_forwarded_for` sets up — if you add another reverse
+  proxy in front of the `frontend` container, make sure it forwards
+  (not strips) `X-Forwarded-For` too, or every request will look like
+  it's coming from that proxy and share one rate-limit bucket.
+- **`NODE_ENV=production`** is set for the `backend` service — this is
+  what makes the auth cookie's `secure` flag actually take effect (see
+  `COOKIE_OPTIONS` in `backend/src/routes/auth.ts`), so it isn't sent
+  over a plain-HTTP connection. Serve the app over HTTPS (a reverse
+  proxy terminating TLS in front of the `frontend` container is the
+  usual way) — without HTTPS, this flag makes the cookie stop working
+  at all rather than silently downgrading.
+- **The backend's port (4000) is bound to `127.0.0.1` only**, not every
+  interface — `docker-compose.yml`'s `ports:` entry. The only supported
+  path in is through the `frontend` container's nginx, which proxies
+  `/api/`; nginx is also where CORS-adjacent headers, TLS (via your
+  reverse proxy), and this rate limiting actually take effect. A
+  directly-reachable backend port would bypass all of that.
+- **Security headers** (`helmet`) and a **locked-down CORS origin** are
+  applied in `backend/src/index.ts` — see the comments there for what's
+  configurable via `FRONTEND_URL`.
+- Ollama's own exposure is a host-level concern this repo can't
+  control — see the warning under **AI Assistant → Configuration**
+  below if you're running it on the same host.
+
+None of this replaces a firewall — only the ports this app itself needs
+(your reverse proxy's HTTPS port) should be open to the internet at all;
+Postgres never needs to be, and isn't (`docker-compose.yml` publishes no
+port for either `db` service).
+
 ### Managing users
 
 Admins get a **Manage Users** link in the account menu, opening a page to:
@@ -1290,6 +1332,22 @@ Ollama has no built-in authentication, so this integration assumes
 Ollama is only reachable from trusted hosts (e.g. not exposed directly
 to the internet). If the backend can't reach Ollama, the Assistant shows
 a clear error in place of an answer rather than failing silently.
+
+**If this app is exposed to the internet** (see "Deploying on the
+internet" below), Ollama's own exposure is entirely a host-config
+question this repo can't see or control — `host.docker.internal` only
+works if Ollama listens on an interface the Docker bridge can reach,
+which in practice means someone set `OLLAMA_HOST=0.0.0.0` on the host.
+If your firewall doesn't then scope port 11434 to localhost/the Docker
+subnet, Ollama's unauthenticated API is reachable from the open
+internet — verify directly:
+```sh
+# On the host — should show 127.0.0.1 or a Docker-only address, not 0.0.0.0
+ss -tlnp | grep 11434
+# From OUTSIDE your network (a phone on cellular data, a friend's connection) —
+# should time out or refuse, never return Ollama's version JSON
+curl http://<your-public-ip>:11434/api/version
+```
 
 ## Procurement & Tenders
 
