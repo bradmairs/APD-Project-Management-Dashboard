@@ -1,7 +1,8 @@
+import { useEffect, useState } from "react";
 import { Milestone, Project, Task } from "../types";
 import { formatDate } from "../format";
 import { useTheme } from "../theme/ThemeContext";
-import { CHART_BASELINE, SEQUENTIAL_BLUE, TASK_STATUS_COLORS, chartColor } from "../charts/palette";
+import { SEQUENTIAL_BLUE, TASK_STATUS_COLORS, chartColor } from "../charts/palette";
 
 interface Props {
   project: Project;
@@ -35,6 +36,13 @@ function milestoneBars(project: Project, milestones: Milestone[]) {
 
 export default function ProjectTimeline({ project, milestones, tasks }: Props) {
   const { theme } = useTheme();
+  // Re-read the clock once a minute so a page left open all day keeps the
+  // "Today" line moving rather than freezing at the moment it loaded.
+  const [today, setToday] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setToday(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
   const bars = milestoneBars(project, milestones);
   const tasksWithDueDate = tasks.filter((t) => t.dueDate);
 
@@ -59,21 +67,28 @@ export default function ProjectTimeline({ project, milestones, tasks }: Props) {
     );
   }
 
+  // rawMin/rawMax describe the project's own dates (shown in the header);
+  // the drawn domain additionally always contains today, so a project that's
+  // running past its last milestone visibly overshoots its bars instead of
+  // the "Today" line silently vanishing off the end of the chart.
   const rawMin = Math.min(...candidateTimes);
   const rawMax = Math.max(...candidateTimes);
-  const span = Math.max(rawMax - rawMin, 24 * 60 * 60 * 1000);
+  const domainMin = Math.min(rawMin, today);
+  const domainMax = Math.max(rawMax, today);
+  const span = Math.max(domainMax - domainMin, 24 * 60 * 60 * 1000);
   const pad = span * 0.05;
-  const min = rawMin - pad;
-  const max = rawMax + pad;
+  const min = domainMin - pad;
+  const max = domainMax + pad;
 
   function percentFor(time: number): number {
     return Math.min(100, Math.max(0, ((time - min) / (max - min)) * 100));
   }
 
-  const today = Date.now();
-  const showToday = today >= min && today <= max;
+  const todayPct = percentFor(today);
+  // Keep the label's box on-screen when today sits near either end.
+  const labelPct = Math.min(94, Math.max(6, todayPct));
+  const todayLabel = `Today · ${formatDate(new Date(today).toISOString())}`;
   const milestoneColor = chartColor(SEQUENTIAL_BLUE, theme);
-  const baselineColor = chartColor(CHART_BASELINE, theme);
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
@@ -85,19 +100,27 @@ export default function ProjectTimeline({ project, milestones, tasks }: Props) {
       </div>
 
       <div className="overflow-x-auto">
-        <div className="min-w-[640px] space-y-2">
+        <div className="relative min-w-[640px] space-y-2 pt-6">
+          {/* One continuous line across every row (label column is w-40 + gap-3
+              = 10.75rem, so the overlay starts where the tracks start). */}
+          <div className="pointer-events-none absolute inset-y-0 left-[10.75rem] right-0" aria-hidden="true">
+            <div
+              className="absolute top-5 bottom-0 w-0.5 -translate-x-1/2 bg-red-500"
+              style={{ left: `${todayPct}%` }}
+            />
+            <div
+              className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-medium leading-none text-white"
+              style={{ left: `${labelPct}%` }}
+            >
+              {todayLabel}
+            </div>
+          </div>
           {bars.map(({ milestone, startTime, endTime }) => (
             <div key={milestone.id} className="flex items-center gap-3">
               <div className="w-40 shrink-0 truncate text-xs text-slate-600 dark:text-slate-300" title={milestone.taskActivity}>
                 {milestone.taskActivity}
               </div>
               <div className="relative flex-1 h-4 rounded bg-slate-100 dark:bg-slate-700">
-                {showToday && (
-                  <div
-                    className="absolute top-0 bottom-0 w-px"
-                    style={{ left: `${percentFor(today)}%`, backgroundColor: baselineColor }}
-                  />
-                )}
                 {startTime !== null && endTime !== null ? (
                   <div
                     className="absolute top-0 bottom-0 rounded overflow-hidden"
@@ -130,12 +153,6 @@ export default function ProjectTimeline({ project, milestones, tasks }: Props) {
                 Tasks ({tasksWithDueDate.length})
               </div>
               <div className="relative flex-1 h-4">
-                {showToday && (
-                  <div
-                    className="absolute top-0 bottom-0 w-px"
-                    style={{ left: `${percentFor(today)}%`, backgroundColor: baselineColor }}
-                  />
-                )}
                 {tasksWithDueDate.map((task) => {
                   const time = toTime(task.dueDate)!;
                   return (
