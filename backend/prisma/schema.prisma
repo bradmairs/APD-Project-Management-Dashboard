@@ -257,6 +257,11 @@ model User {
   passwordHash                   String
   role                           Role                            @default(MEMBER)
   active                         Boolean                         @default(true)
+  // Opt-in (default off) for the daily email digest — see backend/src/digest.ts.
+  // Off by default since it requires SMTP to be configured to do anything
+  // anyway, and a new account shouldn't start emailing someone who hasn't
+  // asked for it.
+  emailDigestOptIn               Boolean                         @default(false)
   createdAt                      DateTime                        @default(now())
   updatedAt                      DateTime                        @updatedAt
   activityLogs                   ActivityLog[]
@@ -291,6 +296,7 @@ model User {
   tenderPackages                 TenderPackage[]
   memberships                    OrganizationMembership[]
   archiveLinks                   ArchiveLink[]
+  taskTemplates                  TaskTemplate[]
 }
 
 // One of the separate companies/agencies this tool serves — e.g. Goulburn
@@ -383,6 +389,43 @@ model Project {
   safetyInspections              SafetyInspection[]
   tenderPackages                 TenderPackage[]
   archiveLinks                   ArchiveLink[]
+}
+
+// A reusable set of tasks — e.g. a standard "Design Stage" or
+// "Commissioning" checklist — applied to a project in one action instead
+// of re-entering the same boilerplate tasks on every new project. Not
+// project-scoped itself (createdBy aside): it's a portfolio-wide library,
+// applied to as many projects as needed. Deleting a template never touches
+// any Task rows it already produced — applying it just creates ordinary
+// Task rows with no ongoing link back to the template, the same way a
+// TenderPackage.awardedTo doesn't create a live Subcontractor relation.
+model TaskTemplate {
+  id          String             @id @default(cuid())
+  name        String
+  description String?
+  createdBy   User?              @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  items       TaskTemplateItem[]
+}
+
+// One task within a TaskTemplate. dueOffsetDays is relative to the
+// project's startDate at the moment the template is applied (e.g. 14 =
+// "two weeks after the project starts") rather than an absolute date,
+// since a template is reused across projects with different start dates;
+// null means the resulting task gets no due date. sortOrder preserves the
+// order items were added in, the same reasoning as Milestone.sortOrder.
+model TaskTemplateItem {
+  id            String       @id @default(cuid())
+  template      TaskTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  templateId    String
+  title         String
+  description   String?
+  dueOffsetDays Int?
+  sortOrder     Int          @default(0)
+
+  @@index([templateId])
 }
 
 model Task {

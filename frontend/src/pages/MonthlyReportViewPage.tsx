@@ -5,6 +5,7 @@ import { getCashFlowEntries, getMilestones, getMonthlyReport, getProject } from 
 import { formatCurrency, formatDate, formatReportMonth } from "../format";
 import { expenditureToDate as sumExpenditureToDate, forecastAtCompletion } from "../cashflow";
 import { HealthRow, NarrativeBlock, ReportField, ReportSection } from "../components/ReportPrimitives";
+import { downloadElementAsPdf } from "../pdfExport";
 import gvwLogo from "../assets/gvw-logo.png";
 
 export default function MonthlyReportViewPage() {
@@ -18,6 +19,20 @@ export default function MonthlyReportViewPage() {
   const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  async function handleDownloadPdf() {
+    if (!project || !report) return;
+    setExportingPdf(true);
+    try {
+      await downloadElementAsPdf(
+        "report-content",
+        `${project.name} - Monthly Report - ${formatReportMonth(report.reportingMonth)}`
+      );
+    } finally {
+      setExportingPdf(false);
+    }
+  }
 
   useEffect(() => {
     if (!projectId || !reportId) return;
@@ -86,15 +101,24 @@ export default function MonthlyReportViewPage() {
           >
             ← Back to {project.name}
           </Link>
-          <button
-            onClick={() => window.print()}
-            className="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-          >
-            Print / Save as PDF
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleDownloadPdf}
+              disabled={exportingPdf}
+              className="px-4 py-2 text-sm rounded border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              {exportingPdf ? "Generating…" : "Download PDF"}
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Print
+            </button>
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-6 print:border-0 print:p-0">
+        <div id="report-content" className="bg-white border border-slate-200 rounded-lg p-6 print:border-0 print:p-0">
           <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
             <img
               src={gvwLogo}

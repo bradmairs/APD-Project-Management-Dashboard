@@ -9,6 +9,7 @@ import {
   ACTION_TYPE_LABELS,
 } from "../actionItemMeta";
 import ActionItemFormModal from "./ActionItemFormModal";
+import ExportCsvButton from "./ExportCsvButton";
 
 interface Props {
   actionItems: ActionItem[];
@@ -71,12 +72,43 @@ export default function ActionsPanel({
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Action
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportCsvButton
+            filename="actions-and-decisions"
+            columns={[
+              { header: "Type", key: "type" },
+              { header: "Title", key: "title" },
+              { header: "Category", key: "category" },
+              { header: "Status", key: "status" },
+              { header: "Owner", key: "owner" },
+              { header: "Due Date", key: "dueDate" },
+              { header: "Date Raised", key: "dateRaised" },
+              { header: "Date Closed", key: "dateClosed" },
+              { header: "Raised By", key: "raisedBy" },
+              { header: "Description", key: "description" },
+              { header: "Notes", key: "notes" },
+            ]}
+            rows={actionItems.map((actionItem) => ({
+              type: ACTION_TYPE_LABELS[actionItem.type],
+              title: actionItem.title,
+              category: actionItem.category ?? "",
+              status: ACTION_STATUS_LABELS[actionItem.status],
+              owner: actionItem.ownerName ?? "",
+              dueDate: actionItem.dueDate ? formatDate(actionItem.dueDate) : "",
+              dateRaised: formatDate(actionItem.dateRaised),
+              dateClosed: actionItem.dateClosed ? formatDate(actionItem.dateClosed) : "",
+              raisedBy: actionItem.raisedByName,
+              description: actionItem.description ?? "",
+              notes: actionItem.notes ?? "",
+            }))}
+          />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Action
+          </button>
+        </div>
       </div>
 
       {actionItems.length === 0 ? (

@@ -9,6 +9,7 @@ import {
   rfiStatusRank,
 } from "../rfiMeta";
 import RfiFormModal from "./RfiFormModal";
+import ExportCsvButton from "./ExportCsvButton";
 
 interface Props {
   rfis: Rfi[];
@@ -68,12 +69,41 @@ export default function RfisPanel({ rfis, onCreate, onUpdate, onDelete }: Props)
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New RFI
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportCsvButton
+            filename="rfis"
+            columns={[
+              { header: "RFI Number", key: "rfiNumber" },
+              { header: "Subject", key: "subject" },
+              { header: "Status", key: "status" },
+              { header: "Raised To", key: "raisedTo" },
+              { header: "Date Raised", key: "dateRaised" },
+              { header: "Date Required", key: "dateRequired" },
+              { header: "Date Answered", key: "dateAnswered" },
+              { header: "Raised By", key: "raisedBy" },
+              { header: "Question", key: "question" },
+              { header: "Response", key: "response" },
+            ]}
+            rows={sorted.map((rfi) => ({
+              rfiNumber: rfi.rfiNumber,
+              subject: rfi.subject,
+              status: RFI_STATUS_LABELS[rfi.status],
+              raisedTo: rfi.raisedTo ?? "",
+              dateRaised: formatDate(rfi.dateRaised),
+              dateRequired: rfi.dateRequired ? formatDate(rfi.dateRequired) : "",
+              dateAnswered: rfi.dateAnswered ? formatDate(rfi.dateAnswered) : "",
+              raisedBy: rfi.raisedByName,
+              question: rfi.question,
+              response: rfi.response ?? "",
+            }))}
+          />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New RFI
+          </button>
+        </div>
       </div>
 
       {rfis.length === 0 ? (

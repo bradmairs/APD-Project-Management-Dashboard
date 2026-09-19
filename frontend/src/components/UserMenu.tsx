@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { updateDigestPreference } from "../api";
 import ChangePasswordModal from "./ChangePasswordModal";
 import GlobalSearch from "./GlobalSearch";
 import NotificationBell from "./NotificationBell";
@@ -8,16 +9,28 @@ import OrgSwitcher from "./OrgSwitcher";
 import ThemeToggle from "./ThemeToggle";
 
 export default function UserMenu() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isCmp = location.pathname.startsWith("/cmp");
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [togglingDigest, setTogglingDigest] = useState(false);
 
   async function handleLogout() {
     await logout();
     navigate("/login", { replace: true });
+  }
+
+  async function handleToggleDigest() {
+    if (!user) return;
+    setTogglingDigest(true);
+    try {
+      await updateDigestPreference(!user.emailDigestOptIn);
+      await refreshUser();
+    } finally {
+      setTogglingDigest(false);
+    }
   }
 
   if (!user) return null;
@@ -58,6 +71,23 @@ export default function UserMenu() {
               >
                 Change Password
               </button>
+              <button
+                onClick={handleToggleDigest}
+                disabled={togglingDigest}
+                className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+                title="Daily email of overdue/due-soon tasks, RFIs, permits and insurance — requires the server to have email sending configured"
+              >
+                Email Digest: {user.emailDigestOptIn ? "On" : "Off"}
+              </button>
+              {!isCmp && (
+                <Link
+                  to="/task-templates"
+                  onClick={() => setMenuOpen(false)}
+                  className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                >
+                  Task Templates
+                </Link>
+              )}
               {user.role === "ADMIN" && (
                 <Link
                   to="/admin/users"

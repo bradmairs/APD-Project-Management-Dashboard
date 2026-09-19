@@ -10,6 +10,7 @@ import {
   RISK_TYPE_LABELS,
 } from "../riskMeta";
 import RiskFormModal from "./RiskFormModal";
+import ExportCsvButton from "./ExportCsvButton";
 
 interface Props {
   risks: Risk[];
@@ -85,12 +86,46 @@ export default function RisksPanel({ risks, onCreate, onUpdate, onDelete }: Prop
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Risk
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportCsvButton
+            filename="risks-and-opportunities"
+            columns={[
+              { header: "Type", key: "type" },
+              { header: "Title", key: "title" },
+              { header: "Category", key: "category" },
+              { header: "Status", key: "status" },
+              { header: "Inherent Score", key: "inherentScore" },
+              { header: "Residual Score", key: "residualScore" },
+              { header: "Owner", key: "owner" },
+              { header: "Due Date", key: "dueDate" },
+              { header: "Raised By", key: "raisedBy" },
+              { header: "Description", key: "description" },
+              { header: "Mitigation", key: "mitigation" },
+            ]}
+            rows={sorted.map((risk) => ({
+              type: RISK_TYPE_LABELS[risk.type],
+              title: risk.title,
+              category: risk.category ?? "",
+              status: RISK_STATUS_LABELS[risk.status],
+              inherentScore: riskScore(risk.inherentLikelihood, risk.inherentConsequence),
+              residualScore:
+                risk.residualLikelihood && risk.residualConsequence
+                  ? riskScore(risk.residualLikelihood, risk.residualConsequence)
+                  : "",
+              owner: risk.ownerName ?? "",
+              dueDate: risk.dueDate ? formatDate(risk.dueDate) : "",
+              raisedBy: risk.createdByName,
+              description: risk.description ?? "",
+              mitigation: risk.mitigation ?? "",
+            }))}
+          />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Risk
+          </button>
+        </div>
       </div>
 
       {risks.length === 0 ? (

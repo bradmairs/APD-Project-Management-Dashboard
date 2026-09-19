@@ -61,6 +61,7 @@ router.post("/login", loginRateLimiter, async (req, res) => {
     email: user.email,
     role: user.role,
     createdAt: user.createdAt,
+    emailDigestOptIn: user.emailDigestOptIn,
   });
 });
 
@@ -69,14 +70,35 @@ router.post("/logout", (_req, res) => {
   res.status(204).send();
 });
 
-router.get("/me", requireAuth, (req, res) => {
+router.get("/me", requireAuth, async (req, res) => {
+  // emailDigestOptIn is read fresh from the DB rather than the JWT — it's a
+  // preference a user can flip mid-session (see PUT /preferences below),
+  // and baking it into the token would mean it goes stale until next login.
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.sub },
+    select: { emailDigestOptIn: true },
+  });
   res.json({
     id: req.user!.sub,
     name: req.user!.name,
     email: req.user!.email,
     role: req.user!.role,
     createdAt: req.user!.createdAt,
+    emailDigestOptIn: user?.emailDigestOptIn ?? false,
   });
+});
+
+router.put("/preferences", requireAuth, async (req, res) => {
+  const { emailDigestOptIn } = req.body as { emailDigestOptIn?: unknown };
+  if (typeof emailDigestOptIn !== "boolean") {
+    return res.status(400).json({ error: "emailDigestOptIn must be true or false" });
+  }
+  const user = await prisma.user.update({
+    where: { id: req.user!.sub },
+    data: { emailDigestOptIn },
+    select: { emailDigestOptIn: true },
+  });
+  res.json(user);
 });
 
 router.post("/change-password", requireAuth, async (req, res) => {

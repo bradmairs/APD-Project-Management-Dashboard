@@ -96,6 +96,7 @@ import {
   createStakeholder,
   createSubcontractor,
   createContract,
+  applyTaskTemplate,
   createTask,
   createTenderPackage,
   createPerformanceReview,
@@ -214,6 +215,8 @@ import AttachmentsPanel from "../components/AttachmentsPanel";
 import ArchiveLinksPanel from "../components/ArchiveLinksPanel";
 import MonthlyReportsPanel from "../components/MonthlyReportsPanel";
 import MilestonesPanel from "../components/MilestonesPanel";
+import ProjectTimeline from "../components/ProjectTimeline";
+import ApplyTaskTemplateControl from "../components/ApplyTaskTemplateControl";
 import CashFlowPanel from "../components/CashFlowPanel";
 import SiteVisitsPanel from "../components/SiteVisitsPanel";
 import VariationsPanel from "../components/VariationsPanel";
@@ -463,6 +466,12 @@ export default function ProjectDetailPage() {
 
   async function handleDeleteTask(task: Task) {
     await deleteTask(task.id);
+    await load();
+  }
+
+  async function handleApplyTaskTemplate(templateId: string) {
+    if (!project) return;
+    await applyTaskTemplate(templateId, project.id);
     await load();
   }
 
@@ -1235,6 +1244,8 @@ export default function ProjectDetailPage() {
 
           {activeTab === "schedule" && (
             <>
+              <ProjectTimeline project={project} milestones={milestones} tasks={project.tasks ?? []} />
+
               <MilestonesPanel
                 milestones={milestones}
                 onCreate={handleCreateMilestone}
@@ -1242,6 +1253,8 @@ export default function ProjectDetailPage() {
                 onDelete={handleDeleteMilestone}
                 onReorder={handleReorderMilestone}
               />
+
+              <ApplyTaskTemplateControl onApply={handleApplyTaskTemplate} />
 
               <TaskList
                 tasks={project.tasks ?? []}

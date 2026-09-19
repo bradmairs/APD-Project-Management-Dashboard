@@ -88,6 +88,12 @@ import UserMenu from "../components/UserMenu";
 import Tabs from "../components/Tabs";
 import { useAuth } from "../auth/AuthContext";
 import GvwLogo from "../components/GvwLogo";
+import ExportCsvButton from "../components/ExportCsvButton";
+import { formatCurrency, formatDate } from "../format";
+import { DashboardView, addSavedView, loadSavedViews, removeSavedView } from "../savedViews";
+import { RagStatus } from "../types";
+
+const RAG_LABELS: Record<RagStatus, string> = { GREEN: "Green", AMBER: "Amber", RED: "Red" };
 
 type DashboardTabId = "projects" | "alerts" | "charts" | "activity" | "ai";
 
@@ -132,10 +138,18 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "ALL">(
     "ALL"
   );
+  const [healthFilter, setHealthFilter] = useState<RagStatus | "ALL">("ALL");
+  const [pmFilter, setPmFilter] = useState("");
   const [search, setSearch] = useState("");
   const [modalProject, setModalProject] = useState<Project | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<DashboardTabId>("projects");
+  const [savedViews, setSavedViews] = useState<DashboardView[]>([]);
+  const [selectedViewId, setSelectedViewId] = useState("");
+
+  useEffect(() => {
+    setSavedViews(loadSavedViews());
+  }, []);
 
   async function loadData() {
     setLoading(true);
@@ -248,9 +262,19 @@ export default function DashboardPage() {
     return result;
   }, [projects, cashFlowEntries, variations, risks, eotClaims]);
 
+  const projectManagers = useMemo(() => {
+    const names = new Set<string>();
+    for (const p of projects) {
+      if (p.projectManager) names.add(p.projectManager);
+    }
+    return Array.from(names).sort();
+  }, [projects]);
+
   const filteredProjects = useMemo(() => {
     return projects.filter((p) => {
       if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
+      if (healthFilter !== "ALL" && healthByProjectId[p.id]?.overall !== healthFilter) return false;
+      if (pmFilter && p.projectManager !== pmFilter) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
         const haystack = `${p.name} ${p.location ?? ""} ${
@@ -260,7 +284,39 @@ export default function DashboardPage() {
       }
       return true;
     });
-  }, [projects, statusFilter, search]);
+  }, [projects, statusFilter, healthFilter, pmFilter, search, healthByProjectId]);
+
+  function applyView(viewId: string) {
+    setSelectedViewId(viewId);
+    const view = savedViews.find((v) => v.id === viewId);
+    if (!view) return;
+    setStatusFilter(view.statusFilter);
+    setHealthFilter(view.healthFilter);
+    setPmFilter(view.projectManager);
+    setSearch(view.search);
+  }
+
+  function handleSaveView() {
+    const name = prompt("Name this view (e.g. \"My overdue projects\"):");
+    if (!name || !name.trim()) return;
+    const updated = addSavedView({
+      name: name.trim(),
+      statusFilter,
+      healthFilter,
+      projectManager: pmFilter,
+      search,
+    });
+    setSavedViews(updated);
+    setSelectedViewId(updated[updated.length - 1].id);
+  }
+
+  function handleDeleteView() {
+    if (!selectedViewId) return;
+    const view = savedViews.find((v) => v.id === selectedViewId);
+    if (!view || !confirm(`Delete the saved view "${view.name}"?`)) return;
+    setSavedViews(removeSavedView(selectedViewId));
+    setSelectedViewId("");
+  }
 
   function openNewProject() {
     setModalProject(null);
@@ -371,6 +427,96 @@ export default function DashboardPage() {
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name, location, manager…"
                 className="w-full sm:w-72 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+              <div className="flex gap-2 flex-wrap items-center">
+                <select
+                  value={healthFilter}
+                  onChange={(e) => setHealthFilter(e.target.value as RagStatus | "ALL")}
+                  className="text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-2 py-1.5"
+                >
+                  <option value="ALL">Any health</option>
+                  {(["GREEN", "AMBER", "RED"] as RagStatus[]).map((s) => (
+                    <option key={s} value={s}>
+                      {RAG_LABELS[s]}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={pmFilter}
+                  onChange={(e) => setPmFilter(e.target.value)}
+                  className="text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-2 py-1.5"
+                >
+                  <option value="">Any manager</option>
+                  {projectManagers.map((pm) => (
+                    <option key={pm} value={pm}>
+                      {pm}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={selectedViewId}
+                  onChange={(e) => applyView(e.target.value)}
+                  className="text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 px-2 py-1.5"
+                >
+                  <option value="">Saved views…</option>
+                  {savedViews.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleSaveView}
+                  className="px-3 py-1.5 text-sm rounded border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+                >
+                  Save current view
+                </button>
+                {selectedViewId && (
+                  <button
+                    onClick={handleDeleteView}
+                    className="text-xs text-red-600 dark:text-red-400 hover:underline"
+                  >
+                    Delete view
+                  </button>
+                )}
+              </div>
+              <ExportCsvButton
+                filename="projects"
+                columns={[
+                  { header: "Name", key: "name" },
+                  { header: "Status", key: "status" },
+                  { header: "Health", key: "health" },
+                  { header: "BP Ref No.", key: "bpRefNo" },
+                  { header: "Manager", key: "manager" },
+                  { header: "Director", key: "director" },
+                  { header: "Sponsor", key: "sponsor" },
+                  { header: "Location", key: "location" },
+                  { header: "Contractor", key: "contractor" },
+                  { header: "Budget", key: "budget" },
+                  { header: "Contract Value", key: "contractValue" },
+                  { header: "Start Date", key: "startDate" },
+                  { header: "Target Completion", key: "targetCompletion" },
+                  { header: "Actual Completion", key: "actualCompletion" },
+                ]}
+                rows={filteredProjects.map((p) => ({
+                  name: p.name,
+                  status: STATUS_LABELS[p.status],
+                  health: healthByProjectId[p.id] ? RAG_LABELS[healthByProjectId[p.id].overall] : "",
+                  bpRefNo: p.bpRefNo ?? "",
+                  manager: p.projectManager ?? "",
+                  director: p.projectDirector ?? "",
+                  sponsor: p.projectSponsor ?? "",
+                  location: p.location ?? "",
+                  contractor: p.contractor ?? "",
+                  budget: p.budget != null ? formatCurrency(p.budget) : "",
+                  contractValue: p.contractValue != null ? formatCurrency(p.contractValue) : "",
+                  startDate: p.startDate ? formatDate(p.startDate) : "",
+                  targetCompletion: p.targetCompletionDate ? formatDate(p.targetCompletionDate) : "",
+                  actualCompletion: p.actualCompletionDate ? formatDate(p.actualCompletionDate) : "",
+                }))}
               />
             </div>
 
