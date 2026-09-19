@@ -2,9 +2,22 @@
 // ExportCsvButton. Values are stringified as-is (dates should already be
 // formatted by the caller); commas/quotes/newlines are escaped per RFC 4180
 // by quoting the field and doubling any embedded quotes.
+// Spreadsheet apps treat a cell that starts with = + - @ (or a tab/CR) as a
+// formula, so a user-entered name like "=HYPERLINK(...)" would execute when
+// someone opens the export (CSV/formula injection). Prefixing a single quote
+// makes it inert text. Plain numeric-looking values ("-$23,696", "+5") are
+// left alone — they can't carry a formula, and prefixing them would turn a
+// legitimate negative amount into text.
+const NUMERIC_LIKE = /^[-+]?\$?[\d,]*\.?\d+%?$/;
+
+function neutraliseFormula(str: string): string {
+  if (!/^[=+\-@\t\r]/.test(str) || str === "-") return str; // lone "-" is just an empty-value placeholder
+  return NUMERIC_LIKE.test(str) ? str : `'${str}`;
+}
+
 function csvCell(value: unknown): string {
   if (value === null || value === undefined) return "";
-  const str = String(value);
+  const str = neutraliseFormula(String(value));
   if (/[",\n]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }
