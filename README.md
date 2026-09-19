@@ -475,6 +475,22 @@ sequence is meaningful on its own and isn't derivable from the other
 fields. Open to any logged-in user to edit, like Tasks and Attachments —
 only the project record itself needs an owner.
 
+### Timeline
+
+The Schedule tab opens with a **Timeline** chart (`components/ProjectTimeline.tsx`)
+above the Milestones panel — a horizontal, date-scaled view of the same
+milestones plus every task with a due date. Milestone doesn't store its
+own start date (only completion dates — see the schema comment on that
+model), so each bar's start is inferred as the previous milestone's own
+end, chaining from the project's start date for the first one: a
+reasonable approximation of sequential WBS scheduling without inventing a
+field the data doesn't have. Each bar fills proportionally to that
+milestone's percent complete; tasks render as small diamond markers
+colored by status, on their own row beneath the milestone bars. A
+milestone with no completion date at all simply lists as "No dates set"
+rather than drawing a meaningless bar. This is a read-only visualization —
+editing still happens in the Milestones panel and Tasks list below it.
+
 ## Variations
 
 Each project has a **Variations** panel for tracking contract variations
@@ -1057,11 +1073,15 @@ user to edit, matching Tasks, Attachments, and Milestones.
 Clicking **View** on a monthly report opens it as its own page at
 `/projects/:id/reports/:reportId`, laid out like the source document —
 Project Information, Current Status, Cash Flows, and Schedule / Major
-Milestones as the same four blue-headed sections, with a "Print / Save as
-PDF" button. There's no server-side PDF generation (no headless-browser
-dependency to run in Docker); it uses the browser's own print dialog,
-which on every modern browser includes a "Save as PDF" destination, so a
-board-ready PDF is one click and one native dialog away.
+Milestones as the same four blue-headed sections, with both a **Download
+PDF** button and a **Print** button. Print uses the browser's own print
+dialog (every modern browser's print dialog includes a "Save as PDF"
+destination too). Download PDF instead rasterizes the report content
+client-side (`jspdf` + `html2canvas`, see `frontend/src/pdfExport.ts`) and
+triggers a direct file download — no print dialog, no server-side PDF
+generation or headless-browser dependency to run in Docker; the tradeoff
+is a rasterized (image-based) PDF rather than one with selectable text,
+which is fine for a report that's read and archived, not re-edited.
 
 The Project Information and Current Status sections come straight from
 that report's locked snapshot, so they show the record as it was for that
@@ -1081,8 +1101,8 @@ Every project detail page has a **Closeout Report** button in its header,
 opening a printable summary at `/projects/:id/closeout-report` — the
 counterpart to the Monthly Report view above, but a single point-in-time
 rollup of a project's *final* outcomes rather than one month's status.
-It pulls together, into the same blue-headed section layout with a
-"Print / Save as PDF" button:
+It pulls together, into the same blue-headed section layout with the same
+Download PDF / Print buttons described above:
 
 - **Final Budget Outcome** — original approved budget, approved variations
   total, the resulting final budget (via the same `revisedBudget()` helper
@@ -1403,11 +1423,85 @@ and back always starts from the default tab. Every panel that was already
 on these pages is still there; this only changed which section of the
 page shows it.
 
+## CSV Export
+
+The highest-traffic registers — Risks & Opportunities, Actions & Decisions,
+Defects & Punch List, RFIs, Permits & Approvals, Document Register,
+Variations, Subcontractors, plus the Dashboard's project table itself —
+each have an **Export CSV** button next to their "+ New X" button. It
+exports exactly the rows currently loaded in that panel (same filtering/
+sorting the panel already applies) via a shared client-side helper
+(`frontend/src/csvExport.ts`, `components/ExportCsvButton.tsx`) — there's
+no backend export endpoint, since every register's full list is already
+fetched to the browser to render the panel in the first place. The file
+opens correctly in Excel (UTF-8 BOM prefix, RFC 4180 quoting) for sharing
+with stakeholders who don't have a login. Not every register has this
+button yet; the pattern is easy to extend to more panels as needed.
+
+## Dashboard Filters & Saved Views
+
+The Dashboard's Projects tab filters by status and free-text search (name/
+location/manager), plus two more: a **health** filter (Green/Amber/Red,
+reading the same computed `ProjectHealth.overall` the Health column shows)
+and a **manager** filter (populated from whatever project managers are
+actually in use, no separate list to maintain). Since a PM managing many
+projects tends to reapply the same combination every visit, the current
+filter state can be saved as a named view via **Save current view** —
+stored in the browser's `localStorage` (`frontend/src/savedViews.ts`), not
+on the server, so views are per-browser rather than shared across a team.
+A **Saved views** dropdown re-applies one in a click; **Delete view**
+removes the currently-selected one. The Export CSV button next to these
+filters exports the currently-filtered project list, so "my overdue
+projects, as a spreadsheet" is two clicks from a saved view.
+
+## Task Templates
+
+A reusable set of tasks — e.g. a standard "Design Stage" or
+"Commissioning" checklist — that can be applied to any project in one
+action instead of re-entering the same boilerplate tasks every time.
+Manage templates from **Task Templates** in the account menu: give a
+template a name and a list of task titles, each with an optional "due N
+days after start" offset (left blank, the resulting task gets no due
+date). On a project's Schedule tab, above its Tasks list, **Apply a task
+template…** creates one Task per template item, with due dates computed
+against that project's own `startDate` at the moment it's applied — the
+same template produces different actual dates on different projects.
+Templates are a portfolio-wide library (`TaskTemplate`/`TaskTemplateItem`
+in the schema), not tied to any one project; deleting a template never
+touches tasks it already produced, since applying it just creates
+ordinary Task rows with no ongoing link back to the template.
+
+## Email Digest
+
+An optional daily email summarizing the same items the in-app notification
+bell flags — overdue/due-soon tasks and RFIs (7-day window), and
+expiring/expired permits and insurance/warranties (60-day window) — across
+every project. It's opt-in at two levels, so it does nothing by default:
+
+1. **The server needs SMTP configured.** Set `SMTP_HOST` (and optionally
+   `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`) in `.env` — see
+   `backend/.env.example`. Leave `SMTP_HOST` unset and the feature is fully
+   disabled, the same "unset env vars = integration off" pattern the
+   Ollama and Engineering Archive integrations use.
+2. **Each user opts in individually** from **Email Digest: Off/On** in
+   their account menu — new accounts start opted out, so enabling SMTP on
+   a deployment doesn't suddenly start emailing anyone who hasn't asked
+   for it.
+
+A cron job (`node-cron`, `DIGEST_CRON` env var, default 7am server-local
+time daily — see `backend/src/digest.ts`) builds the digest content fresh
+each run and skips sending entirely if there's nothing to report, so
+opted-in users don't get empty "nothing's overdue" emails every morning.
+Set `PUBLIC_APP_URL` to the deployment's externally-reachable URL to make
+project names in the email clickable links back into the app; without it
+the digest still sends, just as plain text project names.
+
 ## Roadmap ideas (not built yet)
 
 This is intentionally a starting point. Natural next steps to discuss:
 
-- Email/SMS delivery for deadline notifications (today: in-app only, via the notification bell)
+- SMS delivery for deadline notifications (today: in-app via the
+  notification bell, and email via the opt-in daily digest above)
 - Integration with existing GVW systems (e.g. finance, GIS/asset data)
 
 ## Project structure

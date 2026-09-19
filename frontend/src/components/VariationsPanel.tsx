@@ -8,6 +8,7 @@ import {
   VARIATION_STATUS_LABELS,
 } from "../variationMeta";
 import VariationFormModal from "./VariationFormModal";
+import ExportCsvButton from "./ExportCsvButton";
 
 interface Props {
   variations: Variation[];
@@ -79,12 +80,43 @@ export default function VariationsPanel({
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Variation
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportCsvButton
+            filename="variations"
+            columns={[
+              { header: "Reference", key: "reference" },
+              { header: "Title", key: "title" },
+              { header: "Category", key: "category" },
+              { header: "Status", key: "status" },
+              { header: "Cost Impact", key: "costImpact" },
+              { header: "Time Impact (days)", key: "timeImpactDays" },
+              { header: "Date Raised", key: "dateRaised" },
+              { header: "Date Decided", key: "dateDecided" },
+              { header: "Raised By", key: "raisedBy" },
+              { header: "Description", key: "description" },
+              { header: "Notes", key: "notes" },
+            ]}
+            rows={variations.map((variation) => ({
+              reference: variation.reference ?? "",
+              title: variation.title,
+              category: variation.category ?? "",
+              status: VARIATION_STATUS_LABELS[variation.status],
+              costImpact: formatCostImpact(variation.costImpact),
+              timeImpactDays: variation.timeImpactDays ?? "",
+              dateRaised: formatDate(variation.dateRaised),
+              dateDecided: variation.dateDecided ? formatDate(variation.dateDecided) : "",
+              raisedBy: variation.raisedByName,
+              description: variation.description ?? "",
+              notes: variation.notes ?? "",
+            }))}
+          />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Variation
+          </button>
+        </div>
       </div>
 
       {variations.length === 0 ? (

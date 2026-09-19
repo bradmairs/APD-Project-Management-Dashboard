@@ -8,6 +8,7 @@ import {
   documentStatusRank,
 } from "../documentMeta";
 import DocumentFormModal from "./DocumentFormModal";
+import ExportCsvButton from "./ExportCsvButton";
 
 interface Props {
   documents: DocumentRecord[];
@@ -68,12 +69,39 @@ export default function DocumentsPanel({ documents, onCreate, onUpdate, onDelete
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Document
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportCsvButton
+            filename="document-register"
+            columns={[
+              { header: "Document Number", key: "documentNumber" },
+              { header: "Title", key: "title" },
+              { header: "Category", key: "category" },
+              { header: "Revision", key: "revision" },
+              { header: "Status", key: "status" },
+              { header: "Issue Date", key: "issueDate" },
+              { header: "Uploaded By", key: "uploadedBy" },
+              { header: "Description", key: "description" },
+              { header: "Notes", key: "notes" },
+            ]}
+            rows={sorted.map((document) => ({
+              documentNumber: document.documentNumber,
+              title: document.title,
+              category: document.category ?? "",
+              revision: document.revision,
+              status: DOCUMENT_STATUS_LABELS[document.status],
+              issueDate: document.issueDate ? formatDate(document.issueDate) : "",
+              uploadedBy: document.uploadedByName,
+              description: document.description ?? "",
+              notes: document.notes ?? "",
+            }))}
+          />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Document
+          </button>
+        </div>
       </div>
 
       {documents.length === 0 ? (

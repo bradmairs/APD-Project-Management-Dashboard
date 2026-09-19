@@ -12,6 +12,7 @@ import ProjectCloseoutReportPage from "./pages/ProjectCloseoutReportPage";
 import ReportsPage from "./pages/ReportsPage";
 import LessonsLearnedPage from "./pages/LessonsLearnedPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import TaskTemplatesPage from "./pages/TaskTemplatesPage";
 import CmpDashboardPage from "./pages/CmpDashboardPage";
 import CmpProjectDetailPage from "./pages/CmpProjectDetailPage";
 
@@ -67,6 +68,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <LessonsLearnedPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/task-templates"
+              element={
+                <ProtectedRoute>
+                  <TaskTemplatesPage />
                 </ProtectedRoute>
               }
             />

@@ -8,6 +8,7 @@ import {
   defectStatusRank,
 } from "../defectMeta";
 import DefectFormModal from "./DefectFormModal";
+import ExportCsvButton from "./ExportCsvButton";
 
 interface Props {
   defects: DefectItem[];
@@ -69,12 +70,45 @@ export default function DefectsPanel({ defects, onCreate, onUpdate, onDelete }: 
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Defect
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportCsvButton
+            filename="defects-and-punch-list"
+            columns={[
+              { header: "Title", key: "title" },
+              { header: "Location", key: "location" },
+              { header: "Category", key: "category" },
+              { header: "Status", key: "status" },
+              { header: "Assigned To", key: "assignedTo" },
+              { header: "Due Date", key: "dueDate" },
+              { header: "Date Raised", key: "dateRaised" },
+              { header: "Date Closed", key: "dateClosed" },
+              { header: "Retention Held", key: "retentionHeld" },
+              { header: "Raised By", key: "raisedBy" },
+              { header: "Description", key: "description" },
+              { header: "Notes", key: "notes" },
+            ]}
+            rows={sorted.map((defect) => ({
+              title: defect.title,
+              location: defect.location ?? "",
+              category: defect.category ?? "",
+              status: DEFECT_STATUS_LABELS[defect.status],
+              assignedTo: defect.assignedTo ?? "",
+              dueDate: defect.dueDate ? formatDate(defect.dueDate) : "",
+              dateRaised: formatDate(defect.dateRaised),
+              dateClosed: defect.dateClosed ? formatDate(defect.dateClosed) : "",
+              retentionHeld: defect.retentionHeld != null ? formatCurrency(defect.retentionHeld) : "",
+              raisedBy: defect.raisedByName,
+              description: defect.description ?? "",
+              notes: defect.notes ?? "",
+            }))}
+          />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Defect
+          </button>
+        </div>
       </div>
 
       {defects.length === 0 ? (

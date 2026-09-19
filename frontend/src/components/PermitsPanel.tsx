@@ -9,6 +9,7 @@ import {
   isPermitExpiringSoon,
 } from "../permitMeta";
 import PermitFormModal from "./PermitFormModal";
+import ExportCsvButton from "./ExportCsvButton";
 
 interface Props {
   permits: Permit[];
@@ -57,12 +58,39 @@ export default function PermitsPanel({ permits, onCreate, onUpdate, onDelete }: 
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           Permits &amp; Approvals
         </h2>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Permit
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportCsvButton
+            filename="permits-and-approvals"
+            columns={[
+              { header: "Title", key: "title" },
+              { header: "Category", key: "category" },
+              { header: "Reference Number", key: "referenceNumber" },
+              { header: "Issuing Authority", key: "issuingAuthority" },
+              { header: "Status", key: "status" },
+              { header: "Date Applied", key: "dateApplied" },
+              { header: "Date Approved", key: "dateApproved" },
+              { header: "Expiry Date", key: "expiryDate" },
+              { header: "Notes", key: "notes" },
+            ]}
+            rows={permits.map((permit) => ({
+              title: permit.title,
+              category: permit.category ?? "",
+              referenceNumber: permit.referenceNumber ?? "",
+              issuingAuthority: permit.issuingAuthority ?? "",
+              status: PERMIT_STATUS_LABELS[permit.status],
+              dateApplied: permit.dateApplied ? formatDate(permit.dateApplied) : "",
+              dateApproved: permit.dateApproved ? formatDate(permit.dateApproved) : "",
+              expiryDate: permit.expiryDate ? formatDate(permit.expiryDate) : "",
+              notes: permit.notes ?? "",
+            }))}
+          />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Permit
+          </button>
+        </div>
       </div>
 
       {permits.length === 0 ? (

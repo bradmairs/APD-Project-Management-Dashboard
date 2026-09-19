@@ -62,6 +62,8 @@ import {
   SubcontractorInput,
   Task,
   TaskInput,
+  TaskTemplate,
+  TaskTemplateInput,
   TenderPackage,
   TenderPackageInput,
   ToolboxTalk,
@@ -101,6 +103,14 @@ export function logout(): Promise<void> {
 
 export function getMe(): Promise<User> {
   return fetch(`${API_BASE}/auth/me`).then((res) => handle(res));
+}
+
+export function updateDigestPreference(emailDigestOptIn: boolean): Promise<{ emailDigestOptIn: boolean }> {
+  return fetch(`${API_BASE}/auth/preferences`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ emailDigestOptIn }),
+  }).then((res) => handle(res));
 }
 
 export function getMyOrganizations(): Promise<OrganizationMembership[]> {
@@ -292,6 +302,43 @@ export function deleteMonthlyReport(id: string): Promise<void> {
   return fetch(`${API_BASE}/reports/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
+}
+
+export function getTaskTemplates(): Promise<TaskTemplate[]> {
+  return fetch(`${API_BASE}/task-templates`).then((res) => handle(res));
+}
+
+export function createTaskTemplate(data: TaskTemplateInput): Promise<TaskTemplate> {
+  return fetch(`${API_BASE}/task-templates`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateTaskTemplate(
+  id: string,
+  data: Partial<TaskTemplateInput>
+): Promise<TaskTemplate> {
+  return fetch(`${API_BASE}/task-templates/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteTaskTemplate(id: string): Promise<void> {
+  return fetch(`${API_BASE}/task-templates/${id}`, { method: "DELETE" }).then((res) =>
+    handle(res)
+  );
+}
+
+export function applyTaskTemplate(id: string, projectId: string): Promise<Task[]> {
+  return fetch(`${API_BASE}/task-templates/${id}/apply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ projectId }),
+  }).then((res) => handle(res));
 }
 
 export function getMilestones(projectId: string): Promise<Milestone[]> {

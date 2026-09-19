@@ -10,6 +10,7 @@ import {
   subcontractorStatusRank,
 } from "../subcontractorMeta";
 import SubcontractorFormModal from "./SubcontractorFormModal";
+import ExportCsvButton from "./ExportCsvButton";
 
 interface Props {
   subcontractors: Subcontractor[];
@@ -74,12 +75,44 @@ export default function SubcontractorsPanel({
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Subcontractor
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportCsvButton
+            filename="subcontractors"
+            columns={[
+              { header: "Company", key: "companyName" },
+              { header: "Trade", key: "trade" },
+              { header: "Contact Name", key: "contactName" },
+              { header: "Contact Details", key: "contactDetails" },
+              { header: "Contract Value", key: "contractValue" },
+              { header: "Status", key: "status" },
+              { header: "Start Date", key: "startDate" },
+              { header: "End Date", key: "endDate" },
+              { header: "Insurance Expiry", key: "insuranceExpiry" },
+              { header: "Notes", key: "notes" },
+            ]}
+            rows={subcontractors.map((subcontractor) => ({
+              companyName: subcontractor.companyName,
+              trade: subcontractor.trade ?? "",
+              contactName: subcontractor.contactName ?? "",
+              contactDetails: subcontractor.contactDetails ?? "",
+              contractValue:
+                subcontractor.contractValue != null ? formatCurrency(subcontractor.contractValue) : "",
+              status: SUBCONTRACTOR_STATUS_LABELS[subcontractor.status],
+              startDate: subcontractor.startDate ? formatDate(subcontractor.startDate) : "",
+              endDate: subcontractor.endDate ? formatDate(subcontractor.endDate) : "",
+              insuranceExpiry: subcontractor.insuranceExpiry
+                ? formatDate(subcontractor.insuranceExpiry)
+                : "",
+              notes: subcontractor.notes ?? "",
+            }))}
+          />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Subcontractor
+          </button>
+        </div>
       </div>
 
       {subcontractors.length === 0 ? (

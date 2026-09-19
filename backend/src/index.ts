@@ -3,6 +3,8 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import multer from "multer";
+import cron from "node-cron";
+import { sendDigestEmails } from "./digest";
 import authRouter from "./routes/auth";
 import projectsRouter from "./routes/projects";
 import { tasksRouter } from "./routes/tasks";
@@ -42,6 +44,7 @@ import { archiveLinksRouter, archiveSearchRouter } from "./routes/archiveLinks";
 import activityRouter from "./routes/activity";
 import attachmentsRouter from "./routes/attachments";
 import usersRouter from "./routes/users";
+import taskTemplatesRouter from "./routes/taskTemplates";
 import organizationsRouter from "./routes/organizations";
 import cmpProjectsRouter from "./routes/cmp/projects";
 import { designStagesRouter } from "./routes/cmp/designStages";
@@ -132,6 +135,7 @@ app.use("/api/archive-search", requireAuth, archiveSearchRouter);
 app.use("/api/activity", requireAuth, activityRouter);
 app.use("/api/attachments", requireAuth, attachmentsRouter);
 app.use("/api/users", requireAuth, requireAdmin, usersRouter);
+app.use("/api/task-templates", requireAuth, taskTemplatesRouter);
 app.use("/api/organizations", requireAuth, organizationsRouter);
 
 const requireCmpAccess = [requireAuth, requireOrgMembership("cmp")];
@@ -164,3 +168,17 @@ app.use(handleUploadErrors);
 app.listen(port, () => {
   console.log(`APD dashboard API listening on port ${port}`);
 });
+
+// Fires every day at the configured time (server-local time zone, default
+// 7am) and no-ops unless SMTP_HOST is set — see digest.ts. A bad
+// DIGEST_CRON value would otherwise throw at startup and take the whole
+// API down with it, so it's validated first and only the default is used
+// on an invalid override.
+const digestCron = process.env.DIGEST_CRON || "0 7 * * *";
+if (cron.validate(digestCron)) {
+  cron.schedule(digestCron, () => {
+    sendDigestEmails().catch((err) => console.error("Digest email run failed:", err));
+  });
+} else {
+  console.error(`Invalid DIGEST_CRON "${digestCron}" — email digest scheduling disabled.`);
+}

@@ -18,6 +18,9 @@ export interface User {
   role: Role;
   active: boolean;
   createdAt: string;
+  // Only populated on the logged-in user's own record (login/me responses) —
+  // see PUT /api/auth/preferences. Not selected on the admin Users list.
+  emailDigestOptIn?: boolean;
 }
 
 export type ProjectStatus =
@@ -43,6 +46,37 @@ export interface Task {
   createdAt: string;
   updatedAt: string;
   project?: { id: string; name: string };
+}
+
+export interface TaskTemplateItem {
+  id: string;
+  templateId: string;
+  title: string;
+  description: string | null;
+  dueOffsetDays: number | null;
+  sortOrder: number;
+}
+
+export interface TaskTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  createdById: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: TaskTemplateItem[];
+}
+
+export interface TaskTemplateItemInput {
+  title: string;
+  description?: string | null;
+  dueOffsetDays?: number | null;
+}
+
+export interface TaskTemplateInput {
+  name: string;
+  description?: string | null;
+  items: TaskTemplateItemInput[];
 }
 
 export type TaskInput = Omit<
