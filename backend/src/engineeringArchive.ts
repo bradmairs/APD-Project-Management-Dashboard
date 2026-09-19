@@ -8,9 +8,9 @@ import { siteVisitPhotoFilePath } from "./upload";
 //     (POST /api/external/site-visit-photos, a write-scoped endpoint the
 //     Archive already built specifically to receive these).
 //   - search: this app's users can search the Archive's assets/media/files
-//     to link one to a GVW project (GET /api/search, unauthenticated on the
-//     Archive's side today but sent with the key anyway so this keeps
-//     working if that changes).
+//     to link one to a GVW project (GET /api/external/search, key-authenticated
+//     — the Archive's plain /api/search sits behind its web login and
+//     rejects an API key).
 // No API key: unlike Ollama, the Archive's /api/external/* routes DO check
 // one (X-API-Key), created once on the Archive's Integrations page and
 // stored here as ENGINEERING_ARCHIVE_API_KEY — never sent to the browser.
@@ -100,7 +100,7 @@ export async function searchArchive(query: string): Promise<ArchiveSearchResult>
 
   let res: Response;
   try {
-    res = await fetch(`${baseUrl}/api/search?q=${encodeURIComponent(query)}`, {
+    res = await fetch(`${baseUrl}/api/external/search?q=${encodeURIComponent(query)}`, {
       headers: { "X-API-Key": apiKey },
     });
   } catch (err) {
