@@ -9,6 +9,34 @@ import {
 } from "../documentMeta";
 import DocumentFormModal from "./DocumentFormModal";
 import ExportCsvButton from "./ExportCsvButton";
+import ImportCsvButton from "./ImportCsvButton";
+import { parseImportDate, parseOptionalEnum, requireCell } from "../csvImport";
+import BulkActionsBar from "./BulkActionsBar";
+import { useSelection } from "../useSelection";
+
+const DOCUMENT_IMPORT_HEADERS = [
+  "Document Number",
+  "Title",
+  "Category",
+  "Revision",
+  "Status",
+  "Issue Date",
+  "Description",
+  "Notes",
+];
+
+function parseDocumentImportRow(row: Record<string, string>): Partial<DocumentRecordInput> {
+  return {
+    documentNumber: requireCell(row, "Document Number"),
+    title: requireCell(row, "Title"),
+    category: row["Category"] || null,
+    revision: requireCell(row, "Revision"),
+    status: parseOptionalEnum(DOCUMENT_STATUS_LABELS, row["Status"], "Status") ?? "DRAFT",
+    issueDate: parseImportDate(row["Issue Date"] ?? ""),
+    description: row["Description"] || null,
+    notes: row["Notes"] || null,
+  };
+}
 
 interface Props {
   documents: DocumentRecord[];
@@ -21,6 +49,21 @@ export default function DocumentsPanel({ documents, onCreate, onUpdate, onDelete
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<DocumentRecord | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const selection = useSelection();
+
+  async function handleBulkStatus(status: DocumentStatus) {
+    for (const document of documents.filter((d) => selection.isSelected(d.id))) {
+      await onUpdate(document, { status });
+    }
+    selection.clear();
+  }
+
+  async function handleBulkDelete() {
+    for (const document of documents.filter((d) => selection.isSelected(d.id))) {
+      await onDelete(document);
+    }
+    selection.clear();
+  }
 
   function openCreate() {
     setEditing(null);
@@ -68,6 +111,14 @@ export default function DocumentsPanel({ documents, onCreate, onUpdate, onDelete
               {documents.length} document{documents.length === 1 ? "" : "s"}
             </span>
           )}
+          {documents.length > 0 && (
+            <button
+              onClick={() => selection.toggleAll(sorted.map((d) => d.id))}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {selection.count === documents.length ? "Deselect all" : "Select all"}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <ExportCsvButton
@@ -95,6 +146,13 @@ export default function DocumentsPanel({ documents, onCreate, onUpdate, onDelete
               notes: document.notes ?? "",
             }))}
           />
+          <ImportCsvButton
+            entityLabel="document"
+            expectedHeaders={DOCUMENT_IMPORT_HEADERS}
+            parseRow={parseDocumentImportRow}
+            onImportRow={onCreate}
+            onImported={async () => {}}
+          />
           <button
             onClick={openCreate}
             className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
@@ -103,6 +161,17 @@ export default function DocumentsPanel({ documents, onCreate, onUpdate, onDelete
           </button>
         </div>
       </div>
+
+      {selection.count > 0 && (
+        <BulkActionsBar
+          count={selection.count}
+          entityLabel="document"
+          statusOptions={ALL_DOCUMENT_STATUSES.map((s) => ({ value: s, label: DOCUMENT_STATUS_LABELS[s] }))}
+          onApplyStatus={handleBulkStatus}
+          onDelete={handleBulkDelete}
+          onClear={selection.clear}
+        />
+      )}
 
       {documents.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">No documents recorded yet.</p>
@@ -113,6 +182,12 @@ export default function DocumentsPanel({ documents, onCreate, onUpdate, onDelete
             return (
               <li key={document.id} className="py-3">
                 <div className="flex items-start justify-between gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selection.isSelected(document.id)}
+                    onChange={() => selection.toggle(document.id)}
+                    className="mt-1.5 h-4 w-4 shrink-0"
+                  />
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : document.id)}
                     className="flex-1 min-w-0 text-left"

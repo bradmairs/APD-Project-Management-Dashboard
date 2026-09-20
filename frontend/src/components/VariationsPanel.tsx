@@ -9,6 +9,8 @@ import {
 } from "../variationMeta";
 import VariationFormModal from "./VariationFormModal";
 import ExportCsvButton from "./ExportCsvButton";
+import BulkActionsBar from "./BulkActionsBar";
+import { useSelection } from "../useSelection";
 
 interface Props {
   variations: Variation[];
@@ -32,9 +34,24 @@ export default function VariationsPanel({
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Variation | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const selection = useSelection();
 
   const approvedTotal = approvedVariationsTotal(variations);
   const proposedCount = variations.filter((v) => v.status === "PROPOSED").length;
+
+  async function handleBulkStatus(status: VariationStatus) {
+    for (const variation of variations.filter((v) => selection.isSelected(v.id))) {
+      await onUpdate(variation, { status });
+    }
+    selection.clear();
+  }
+
+  async function handleBulkDelete() {
+    for (const variation of variations.filter((v) => selection.isSelected(v.id))) {
+      await onDelete(variation);
+    }
+    selection.clear();
+  }
 
   function openCreate() {
     setEditing(null);
@@ -79,6 +96,14 @@ export default function VariationsPanel({
                 ` · ${proposedCount} proposed awaiting decision`}
             </span>
           )}
+          {variations.length > 0 && (
+            <button
+              onClick={() => selection.toggleAll(variations.map((v) => v.id))}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {selection.count === variations.length ? "Deselect all" : "Select all"}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <ExportCsvButton
@@ -119,6 +144,17 @@ export default function VariationsPanel({
         </div>
       </div>
 
+      {selection.count > 0 && (
+        <BulkActionsBar
+          count={selection.count}
+          entityLabel="variation"
+          statusOptions={ALL_VARIATION_STATUSES.map((s) => ({ value: s, label: VARIATION_STATUS_LABELS[s] }))}
+          onApplyStatus={handleBulkStatus}
+          onDelete={handleBulkDelete}
+          onClear={selection.clear}
+        />
+      )}
+
       {variations.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">
           No variations raised yet.
@@ -131,6 +167,12 @@ export default function VariationsPanel({
             return (
               <li key={variation.id} className="py-3">
                 <div className="flex items-start justify-between gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selection.isSelected(variation.id)}
+                    onChange={() => selection.toggle(variation.id)}
+                    className="mt-1.5 h-4 w-4 shrink-0"
+                  />
                   <button
                     onClick={() =>
                       setExpandedId(isExpanded ? null : variation.id)

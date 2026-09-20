@@ -8,20 +8,24 @@ const router = Router();
 // belong to); an ADMIN additionally gets ADMIN access to every other
 // organization (CMP included, and any future one) so promoting or creating
 // an admin always leaves them able to switch dashboards, mirroring what the
-// seed script does for its own "Admin" account.
-async function grantDefaultOrgMembership(userId: string, role: "ADMIN" | "MEMBER") {
+// seed script does for its own "Admin" account. A VIEWER is granted the same
+// GVW membership as a MEMBER — OrgRole has no read-only tier of its own, and
+// the app's Role (checked by blockViewerMutations) is what actually enforces
+// read-only access, not org membership.
+async function grantDefaultOrgMembership(userId: string, role: "ADMIN" | "MEMBER" | "VIEWER") {
   const organizations = await prisma.organization.findMany();
   const gvw = organizations.find((o) => o.slug === "gvw");
   const targets =
     role === "ADMIN"
       ? organizations
       : organizations.filter((o) => o.id === gvw?.id);
+  const orgRole = role === "ADMIN" ? "ADMIN" : "MEMBER";
 
   for (const org of targets) {
     await prisma.organizationMembership.upsert({
       where: { userId_organizationId: { userId, organizationId: org.id } },
       update: role === "ADMIN" ? { role: "ADMIN" } : {},
-      create: { userId, organizationId: org.id, role },
+      create: { userId, organizationId: org.id, role: orgRole },
     });
   }
 }
@@ -39,7 +43,7 @@ router.post("/", async (req, res) => {
     name?: string;
     email?: string;
     password?: string;
-    role?: "ADMIN" | "MEMBER";
+    role?: "ADMIN" | "MEMBER" | "VIEWER";
   };
   if (!name || !email || !password) {
     return res.status(400).json({ error: "Name, email, and password are required" });
@@ -47,8 +51,8 @@ router.post("/", async (req, res) => {
   if (password.length < 8) {
     return res.status(400).json({ error: "Password must be at least 8 characters" });
   }
-  if (role && role !== "ADMIN" && role !== "MEMBER") {
-    return res.status(400).json({ error: "Role must be ADMIN or MEMBER" });
+  if (role && role !== "ADMIN" && role !== "MEMBER" && role !== "VIEWER") {
+    return res.status(400).json({ error: "Role must be ADMIN, MEMBER, or VIEWER" });
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -67,14 +71,14 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   const { role, active } = req.body as {
-    role?: "ADMIN" | "MEMBER";
+    role?: "ADMIN" | "MEMBER" | "VIEWER";
     active?: boolean;
   };
   if (role === undefined && active === undefined) {
     return res.status(400).json({ error: "Nothing to update" });
   }
-  if (role !== undefined && role !== "ADMIN" && role !== "MEMBER") {
-    return res.status(400).json({ error: "Role must be ADMIN or MEMBER" });
+  if (role !== undefined && role !== "ADMIN" && role !== "MEMBER" && role !== "VIEWER") {
+    return res.status(400).json({ error: "Role must be ADMIN, MEMBER, or VIEWER" });
   }
   if (active !== undefined && typeof active !== "boolean") {
     return res.status(400).json({ error: "active must be true or false" });
@@ -88,7 +92,7 @@ router.put("/:id", async (req, res) => {
     }
   }
 
-  const data: { role?: "ADMIN" | "MEMBER"; active?: boolean } = {};
+  const data: { role?: "ADMIN" | "MEMBER" | "VIEWER"; active?: boolean } = {};
   if (role !== undefined) data.role = role;
   if (active !== undefined) data.active = active;
 

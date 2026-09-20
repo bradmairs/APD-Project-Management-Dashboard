@@ -10,6 +10,8 @@ import {
 } from "../actionItemMeta";
 import ActionItemFormModal from "./ActionItemFormModal";
 import ExportCsvButton from "./ExportCsvButton";
+import BulkActionsBar from "./BulkActionsBar";
+import { useSelection } from "../useSelection";
 
 interface Props {
   actionItems: ActionItem[];
@@ -27,8 +29,23 @@ export default function ActionsPanel({
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<ActionItem | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const selection = useSelection();
 
   const openCount = actionItems.filter((a) => a.status !== "DONE").length;
+
+  async function handleBulkStatus(status: ActionItemStatus) {
+    for (const item of actionItems.filter((a) => selection.isSelected(a.id))) {
+      await onUpdate(item, { status });
+    }
+    selection.clear();
+  }
+
+  async function handleBulkDelete() {
+    for (const item of actionItems.filter((a) => selection.isSelected(a.id))) {
+      await onDelete(item);
+    }
+    selection.clear();
+  }
 
   function openCreate() {
     setEditing(null);
@@ -71,6 +88,14 @@ export default function ActionsPanel({
               {openCount} open of {actionItems.length}
             </span>
           )}
+          {actionItems.length > 0 && (
+            <button
+              onClick={() => selection.toggleAll(actionItems.map((a) => a.id))}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {selection.count === actionItems.length ? "Deselect all" : "Select all"}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <ExportCsvButton
@@ -111,6 +136,17 @@ export default function ActionsPanel({
         </div>
       </div>
 
+      {selection.count > 0 && (
+        <BulkActionsBar
+          count={selection.count}
+          entityLabel="action"
+          statusOptions={ALL_ACTION_STATUSES.map((s) => ({ value: s, label: ACTION_STATUS_LABELS[s] }))}
+          onApplyStatus={handleBulkStatus}
+          onDelete={handleBulkDelete}
+          onClear={selection.clear}
+        />
+      )}
+
       {actionItems.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">
           No actions or decisions logged yet.
@@ -122,6 +158,12 @@ export default function ActionsPanel({
             return (
               <li key={actionItem.id} className="py-3">
                 <div className="flex items-start justify-between gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selection.isSelected(actionItem.id)}
+                    onChange={() => selection.toggle(actionItem.id)}
+                    className="mt-1.5 h-4 w-4 shrink-0"
+                  />
                   <button
                     onClick={() =>
                       setExpandedId(isExpanded ? null : actionItem.id)

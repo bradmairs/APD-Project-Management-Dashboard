@@ -160,6 +160,7 @@ export default function AdminUsersPage() {
                       >
                         <option value="MEMBER">Member</option>
                         <option value="ADMIN">Admin</option>
+                        <option value="VIEWER">Viewer (read-only)</option>
                       </select>
                     </td>
                     <td className="px-4 py-3">

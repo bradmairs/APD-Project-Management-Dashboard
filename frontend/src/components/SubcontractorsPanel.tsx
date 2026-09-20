@@ -11,6 +11,38 @@ import {
 } from "../subcontractorMeta";
 import SubcontractorFormModal from "./SubcontractorFormModal";
 import ExportCsvButton from "./ExportCsvButton";
+import ImportCsvButton from "./ImportCsvButton";
+import { parseImportCurrency, parseImportDate, parseOptionalEnum, requireCell } from "../csvImport";
+import BulkActionsBar from "./BulkActionsBar";
+import { useSelection } from "../useSelection";
+
+const SUBCONTRACTOR_IMPORT_HEADERS = [
+  "Company",
+  "Trade",
+  "Contact Name",
+  "Contact Details",
+  "Contract Value",
+  "Status",
+  "Start Date",
+  "End Date",
+  "Insurance Expiry",
+  "Notes",
+];
+
+function parseSubcontractorImportRow(row: Record<string, string>): Partial<SubcontractorInput> {
+  return {
+    companyName: requireCell(row, "Company"),
+    trade: row["Trade"] || null,
+    contactName: row["Contact Name"] || null,
+    contactDetails: row["Contact Details"] || null,
+    contractValue: row["Contract Value"] ? parseImportCurrency(row["Contract Value"]) : null,
+    status: parseOptionalEnum(SUBCONTRACTOR_STATUS_LABELS, row["Status"], "Status") ?? "ENGAGED",
+    startDate: parseImportDate(row["Start Date"] ?? ""),
+    endDate: parseImportDate(row["End Date"] ?? ""),
+    insuranceExpiry: parseImportDate(row["Insurance Expiry"] ?? ""),
+    notes: row["Notes"] || null,
+  };
+}
 
 interface Props {
   subcontractors: Subcontractor[];
@@ -28,6 +60,21 @@ export default function SubcontractorsPanel({
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Subcontractor | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const selection = useSelection();
+
+  async function handleBulkStatus(status: SubcontractorStatus) {
+    for (const subcontractor of subcontractors.filter((s) => selection.isSelected(s.id))) {
+      await onUpdate(subcontractor, { status });
+    }
+    selection.clear();
+  }
+
+  async function handleBulkDelete() {
+    for (const subcontractor of subcontractors.filter((s) => selection.isSelected(s.id))) {
+      await onDelete(subcontractor);
+    }
+    selection.clear();
+  }
 
   function openCreate() {
     setEditing(null);
@@ -74,6 +121,14 @@ export default function SubcontractorsPanel({
               {subcontractors.length} on record
             </span>
           )}
+          {subcontractors.length > 0 && (
+            <button
+              onClick={() => selection.toggleAll(sorted.map((s) => s.id))}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {selection.count === subcontractors.length ? "Deselect all" : "Select all"}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <ExportCsvButton
@@ -106,6 +161,13 @@ export default function SubcontractorsPanel({
               notes: subcontractor.notes ?? "",
             }))}
           />
+          <ImportCsvButton
+            entityLabel="subcontractor"
+            expectedHeaders={SUBCONTRACTOR_IMPORT_HEADERS}
+            parseRow={parseSubcontractorImportRow}
+            onImportRow={onCreate}
+            onImported={async () => {}}
+          />
           <button
             onClick={openCreate}
             className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
@@ -114,6 +176,17 @@ export default function SubcontractorsPanel({
           </button>
         </div>
       </div>
+
+      {selection.count > 0 && (
+        <BulkActionsBar
+          count={selection.count}
+          entityLabel="subcontractor"
+          statusOptions={ALL_SUBCONTRACTOR_STATUSES.map((s) => ({ value: s, label: SUBCONTRACTOR_STATUS_LABELS[s] }))}
+          onApplyStatus={handleBulkStatus}
+          onDelete={handleBulkDelete}
+          onClear={selection.clear}
+        />
+      )}
 
       {subcontractors.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -128,6 +201,12 @@ export default function SubcontractorsPanel({
             return (
               <li key={subcontractor.id} className="py-3">
                 <div className="flex items-start justify-between gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selection.isSelected(subcontractor.id)}
+                    onChange={() => selection.toggle(subcontractor.id)}
+                    className="mt-1.5 h-4 w-4 shrink-0"
+                  />
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : subcontractor.id)}
                     className="flex-1 min-w-0 text-left"

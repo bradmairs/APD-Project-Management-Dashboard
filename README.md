@@ -234,8 +234,9 @@ Admins get a **Manage Users** link in the account menu, opening a page to:
 
 - See every account, its role, and when it joined
 - Create a new account (name, email, a temporary password you share with
-  them directly — there's no email/invite flow yet) with either role
-- Promote or demote a user between `MEMBER` and `ADMIN`
+  them directly — there's no email/invite flow yet) with any role
+- Change a user's role between `MEMBER`, `ADMIN`, and the read-only
+  `VIEWER` (see [Viewer Role](#viewer-role) below)
 
 An admin can't demote themselves (the UI disables their own row, and the
 backend rejects it too) — a guard against a lone admin locking themselves
@@ -256,14 +257,15 @@ delete would need.
 
 ### Permissions
 
-Every user has a **role** — `MEMBER` (default) or `ADMIN` — and every project
-records who created it. All logged-in users can view every project and
-create new ones, but **editing or deleting a project is restricted to its
-creator or an admin**; this is enforced by the backend (a 403, not just a
-hidden button) as well as reflected in the UI, which hides the Edit/Delete
-buttons and shows who owns the project instead. Tasks and attachments stay
-open to any logged-in user, matching how a small team actually works day to
-day — only the project record itself needs an owner.
+Every user has a **role** — `MEMBER` (default), `ADMIN`, or the read-only
+`VIEWER` — and every project records who created it. All logged-in
+non-Viewer users can view every project and create new ones, but **editing
+or deleting a project is restricted to its creator or an admin**; this is
+enforced by the backend (a 403, not just a hidden button) as well as
+reflected in the UI, which hides the Edit/Delete buttons and shows who owns
+the project instead. Tasks and attachments stay open to any logged-in
+non-Viewer user, matching how a small team actually works day to day — only
+the project record itself needs an owner.
 
 A project with no recorded creator (there isn't one in the current seed
 data, but this covers a project whose creator's account was later removed)
@@ -1495,6 +1497,69 @@ opted-in users don't get empty "nothing's overdue" emails every morning.
 Set `PUBLIC_APP_URL` to the deployment's externally-reachable URL to make
 project names in the email clickable links back into the app; without it
 the digest still sends, just as plain text project names.
+
+## CSV Import
+
+The same registers that have an Export CSV button (Risks & Opportunities,
+Permits & Approvals, Subcontractors, Document Register) also have an
+**Import CSV** button next to it. Pick a file, and the panel shows a
+preview of every row it parsed before anything is sent — nothing is
+created until you confirm. Each row is submitted through the same
+create endpoint the "+ New X" form already uses
+(`frontend/src/csvImport.ts` + `components/ImportCsvButton.tsx`), so
+per-field validation is identical either way; a bad row is reported by row
+number in the results screen without blocking the rows around it. The
+expected header row matches that register's own CSV export, so
+round-tripping an exported file (edit it in a spreadsheet, re-import)
+works out of the box. Dates accept either ISO format or the app's own
+display format (e.g. "20 Aug 2025"), and currency cells tolerate a `$` and
+thousands separators.
+
+## Bulk Actions
+
+Risks & Opportunities, Actions & Decisions, Defects & Punch List, RFIs,
+Permits & Approvals, Document Register, Variations, and Subcontractors
+each have a checkbox on every row plus a **Select all / Deselect all**
+toggle. Selecting one or more rows reveals a toolbar
+(`frontend/src/components/BulkActionsBar.tsx`, backed by the
+`useSelection` hook) to change status or delete every selected row in one
+action, with a single confirmation covering the whole batch rather than
+one dialog per row. Under the hood this loops the same per-row
+update/delete calls the single-row Edit/Delete buttons already use — there
+are no new bulk-specific backend endpoints — so it's subject to the exact
+same validation and permission checks.
+
+## Editable Timeline
+
+On a project's Schedule tab, a milestone's bar on the Timeline chart can be
+dragged left or right to reschedule it: grabbing the bar and releasing
+updates that milestone's forecasted completion date
+(`frontend/src/components/ProjectTimeline.tsx`), writing back through the
+same `PUT /api/milestones/:id` endpoint the Milestones panel's own edit
+form uses. A milestone that's already been marked actually complete isn't
+draggable — only the forecast can move, not history. The chart previews
+the new date live while dragging and only saves once you let go; a
+negligible drag (under a minute of resulting date change) is treated as a
+click and ignored.
+
+## Viewer Role
+
+A third role, alongside `MEMBER` and `ADMIN`: **`VIEWER`** gets full read
+access to the whole dashboard and no create/update/delete access anywhere.
+The real boundary is on the backend — `blockViewerMutations`
+(`backend/src/middleware/blockViewerMutations.ts`) sits behind
+`requireAuth` on every register route and rejects any non-`GET` request
+from a Viewer with a 403, so this holds even if a Viewer reaches a
+create/edit form through some UI path that hasn't been explicitly hidden.
+The frontend additionally hides the highest-traffic entry points for a
+better experience — the Dashboard's "+ New Project" button and the project
+table's Edit/Delete column (`canModifyProject`/`canModifyReport` in
+`frontend/src/permissions.ts` both return `false` for a Viewer) — rather
+than touching every one of the dozens of register panels individually;
+anywhere a Viewer does trigger a mutation, the backend's 403 surfaces
+through the same error-message UI every form already has. AI Assistant
+queries and organization-switching are intentionally exempt from the
+block, since neither mutates project data.
 
 ## Roadmap ideas (not built yet)
 

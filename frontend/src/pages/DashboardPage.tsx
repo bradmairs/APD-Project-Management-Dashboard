@@ -107,7 +107,7 @@ const DASHBOARD_TABS: { id: DashboardTabId; label: string }[] = [
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isViewer } = useAuth();
   const { theme } = useTheme();
   const [projects, setProjects] = useState<Project[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
@@ -372,12 +372,14 @@ export default function DashboardPage() {
             >
               Reports
             </Link>
-            <button
-              onClick={openNewProject}
-              className="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-            >
-              + New Project
-            </button>
+            {!isViewer && (
+              <button
+                onClick={openNewProject}
+                className="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+              >
+                + New Project
+              </button>
+            )}
             <UserMenu />
           </div>
         </div>
