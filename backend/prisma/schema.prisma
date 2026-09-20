@@ -32,6 +32,9 @@ enum TaskStatus {
 enum Role {
   ADMIN
   MEMBER
+  // Full read access across the dashboard, no create/update/delete —
+  // enforced by the blockViewerMutations middleware on every mutating route.
+  VIEWER
 }
 
 enum OrgRole {

@@ -11,6 +11,51 @@ import {
 } from "../riskMeta";
 import RiskFormModal from "./RiskFormModal";
 import ExportCsvButton from "./ExportCsvButton";
+import ImportCsvButton from "./ImportCsvButton";
+import BulkActionsBar from "./BulkActionsBar";
+import { useSelection } from "../useSelection";
+import { LIKELIHOOD_LABELS, CONSEQUENCE_LABELS } from "../riskScoring";
+import { parseImportDate, parseOptionalEnum, parseRequiredEnum, requireCell } from "../csvImport";
+
+const RISK_IMPORT_HEADERS = [
+  "Type",
+  "Title",
+  "Category",
+  "Status",
+  "Inherent Likelihood",
+  "Inherent Consequence",
+  "Residual Likelihood",
+  "Residual Consequence",
+  "Owner",
+  "Due Date",
+  "Description",
+  "Mitigation",
+];
+
+function parseRiskImportRow(row: Record<string, string>): Partial<RiskInput> {
+  return {
+    type: parseOptionalEnum(RISK_TYPE_LABELS, row["Type"], "Type") ?? "RISK",
+    title: requireCell(row, "Title"),
+    category: row["Category"] || null,
+    status: parseOptionalEnum(RISK_STATUS_LABELS, row["Status"], "Status") ?? "OPEN",
+    inherentLikelihood: parseRequiredEnum(LIKELIHOOD_LABELS, row["Inherent Likelihood"], "Inherent Likelihood"),
+    inherentConsequence: parseRequiredEnum(
+      CONSEQUENCE_LABELS,
+      row["Inherent Consequence"],
+      "Inherent Consequence"
+    ),
+    residualLikelihood: parseOptionalEnum(LIKELIHOOD_LABELS, row["Residual Likelihood"], "Residual Likelihood"),
+    residualConsequence: parseOptionalEnum(
+      CONSEQUENCE_LABELS,
+      row["Residual Consequence"],
+      "Residual Consequence"
+    ),
+    ownerName: row["Owner"] || null,
+    dueDate: parseImportDate(row["Due Date"] ?? ""),
+    description: row["Description"] || null,
+    mitigation: row["Mitigation"] || null,
+  };
+}
 
 interface Props {
   risks: Risk[];
@@ -35,8 +80,23 @@ export default function RisksPanel({ risks, onCreate, onUpdate, onDelete }: Prop
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Risk | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const selection = useSelection();
 
   const openCount = risks.filter((r) => r.status !== "CLOSED").length;
+
+  async function handleBulkStatus(status: RiskStatus) {
+    for (const risk of risks.filter((r) => selection.isSelected(r.id))) {
+      await onUpdate(risk, { status });
+    }
+    selection.clear();
+  }
+
+  async function handleBulkDelete() {
+    for (const risk of risks.filter((r) => selection.isSelected(r.id))) {
+      await onDelete(risk);
+    }
+    selection.clear();
+  }
 
   function openCreate() {
     setEditing(null);
@@ -85,6 +145,14 @@ export default function RisksPanel({ risks, onCreate, onUpdate, onDelete }: Prop
               {openCount} open of {risks.length}
             </span>
           )}
+          {risks.length > 0 && (
+            <button
+              onClick={() => selection.toggleAll(sorted.map((r) => r.id))}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {selection.count === risks.length ? "Deselect all" : "Select all"}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <ExportCsvButton
@@ -119,6 +187,13 @@ export default function RisksPanel({ risks, onCreate, onUpdate, onDelete }: Prop
               mitigation: risk.mitigation ?? "",
             }))}
           />
+          <ImportCsvButton
+            entityLabel="risk"
+            expectedHeaders={RISK_IMPORT_HEADERS}
+            parseRow={parseRiskImportRow}
+            onImportRow={onCreate}
+            onImported={async () => {}}
+          />
           <button
             onClick={openCreate}
             className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
@@ -127,6 +202,17 @@ export default function RisksPanel({ risks, onCreate, onUpdate, onDelete }: Prop
           </button>
         </div>
       </div>
+
+      {selection.count > 0 && (
+        <BulkActionsBar
+          count={selection.count}
+          entityLabel="risk"
+          statusOptions={ALL_RISK_STATUSES.map((s) => ({ value: s, label: RISK_STATUS_LABELS[s] }))}
+          onApplyStatus={handleBulkStatus}
+          onDelete={handleBulkDelete}
+          onClear={selection.clear}
+        />
+      )}
 
       {risks.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -144,6 +230,12 @@ export default function RisksPanel({ risks, onCreate, onUpdate, onDelete }: Prop
             return (
               <li key={risk.id} className="py-3">
                 <div className="flex items-start justify-between gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selection.isSelected(risk.id)}
+                    onChange={() => selection.toggle(risk.id)}
+                    className="mt-1.5 h-4 w-4 shrink-0"
+                  />
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : risk.id)}
                     className="flex-1 min-w-0 text-left"

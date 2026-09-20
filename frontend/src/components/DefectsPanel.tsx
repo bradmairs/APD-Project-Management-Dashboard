@@ -9,6 +9,8 @@ import {
 } from "../defectMeta";
 import DefectFormModal from "./DefectFormModal";
 import ExportCsvButton from "./ExportCsvButton";
+import BulkActionsBar from "./BulkActionsBar";
+import { useSelection } from "../useSelection";
 
 interface Props {
   defects: DefectItem[];
@@ -21,8 +23,23 @@ export default function DefectsPanel({ defects, onCreate, onUpdate, onDelete }: 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<DefectItem | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const selection = useSelection();
 
   const openCount = defects.filter((d) => d.status !== "VERIFIED").length;
+
+  async function handleBulkStatus(status: DefectStatus) {
+    for (const defect of defects.filter((d) => selection.isSelected(d.id))) {
+      await onUpdate(defect, { status });
+    }
+    selection.clear();
+  }
+
+  async function handleBulkDelete() {
+    for (const defect of defects.filter((d) => selection.isSelected(d.id))) {
+      await onDelete(defect);
+    }
+    selection.clear();
+  }
 
   function openCreate() {
     setEditing(null);
@@ -69,6 +86,14 @@ export default function DefectsPanel({ defects, onCreate, onUpdate, onDelete }: 
               {openCount} outstanding of {defects.length}
             </span>
           )}
+          {defects.length > 0 && (
+            <button
+              onClick={() => selection.toggleAll(sorted.map((d) => d.id))}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {selection.count === defects.length ? "Deselect all" : "Select all"}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <ExportCsvButton
@@ -111,6 +136,17 @@ export default function DefectsPanel({ defects, onCreate, onUpdate, onDelete }: 
         </div>
       </div>
 
+      {selection.count > 0 && (
+        <BulkActionsBar
+          count={selection.count}
+          entityLabel="defect"
+          statusOptions={ALL_DEFECT_STATUSES.map((s) => ({ value: s, label: DEFECT_STATUS_LABELS[s] }))}
+          onApplyStatus={handleBulkStatus}
+          onDelete={handleBulkDelete}
+          onClear={selection.clear}
+        />
+      )}
+
       {defects.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">No defects logged yet.</p>
       ) : (
@@ -120,6 +156,12 @@ export default function DefectsPanel({ defects, onCreate, onUpdate, onDelete }: 
             return (
               <li key={defect.id} className="py-3">
                 <div className="flex items-start justify-between gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selection.isSelected(defect.id)}
+                    onChange={() => selection.toggle(defect.id)}
+                    className="mt-1.5 h-4 w-4 shrink-0"
+                  />
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : defect.id)}
                     className="flex-1 min-w-0 text-left"

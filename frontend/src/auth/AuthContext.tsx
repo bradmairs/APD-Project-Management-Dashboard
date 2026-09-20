@@ -11,6 +11,7 @@ import { User } from "../types";
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
+  isViewer: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -43,8 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(await getMe());
   }
 
+  const isViewer = user?.role === "VIEWER";
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, isViewer, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

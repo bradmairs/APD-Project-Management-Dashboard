@@ -10,6 +10,36 @@ import {
 } from "../permitMeta";
 import PermitFormModal from "./PermitFormModal";
 import ExportCsvButton from "./ExportCsvButton";
+import ImportCsvButton from "./ImportCsvButton";
+import { parseImportDate, parseOptionalEnum, requireCell } from "../csvImport";
+import BulkActionsBar from "./BulkActionsBar";
+import { useSelection } from "../useSelection";
+
+const PERMIT_IMPORT_HEADERS = [
+  "Title",
+  "Category",
+  "Reference Number",
+  "Issuing Authority",
+  "Status",
+  "Date Applied",
+  "Date Approved",
+  "Expiry Date",
+  "Notes",
+];
+
+function parsePermitImportRow(row: Record<string, string>): Partial<PermitInput> {
+  return {
+    title: requireCell(row, "Title"),
+    category: row["Category"] || null,
+    referenceNumber: row["Reference Number"] || null,
+    issuingAuthority: row["Issuing Authority"] || null,
+    status: parseOptionalEnum(PERMIT_STATUS_LABELS, row["Status"], "Status") ?? "PENDING",
+    dateApplied: parseImportDate(row["Date Applied"] ?? ""),
+    dateApproved: parseImportDate(row["Date Approved"] ?? ""),
+    expiryDate: parseImportDate(row["Expiry Date"] ?? ""),
+    notes: row["Notes"] || null,
+  };
+}
 
 interface Props {
   permits: Permit[];
@@ -22,6 +52,21 @@ export default function PermitsPanel({ permits, onCreate, onUpdate, onDelete }: 
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Permit | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const selection = useSelection();
+
+  async function handleBulkStatus(status: PermitStatus) {
+    for (const permit of permits.filter((p) => selection.isSelected(p.id))) {
+      await onUpdate(permit, { status });
+    }
+    selection.clear();
+  }
+
+  async function handleBulkDelete() {
+    for (const permit of permits.filter((p) => selection.isSelected(p.id))) {
+      await onDelete(permit);
+    }
+    selection.clear();
+  }
 
   function openCreate() {
     setEditing(null);
@@ -55,9 +100,19 @@ export default function PermitsPanel({ permits, onCreate, onUpdate, onDelete }: 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          Permits &amp; Approvals
-        </h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            Permits &amp; Approvals
+          </h2>
+          {permits.length > 0 && (
+            <button
+              onClick={() => selection.toggleAll(permits.map((p) => p.id))}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {selection.count === permits.length ? "Deselect all" : "Select all"}
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <ExportCsvButton
             filename="permits-and-approvals"
@@ -84,6 +139,13 @@ export default function PermitsPanel({ permits, onCreate, onUpdate, onDelete }: 
               notes: permit.notes ?? "",
             }))}
           />
+          <ImportCsvButton
+            entityLabel="permit"
+            expectedHeaders={PERMIT_IMPORT_HEADERS}
+            parseRow={parsePermitImportRow}
+            onImportRow={onCreate}
+            onImported={async () => {}}
+          />
           <button
             onClick={openCreate}
             className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
@@ -92,6 +154,17 @@ export default function PermitsPanel({ permits, onCreate, onUpdate, onDelete }: 
           </button>
         </div>
       </div>
+
+      {selection.count > 0 && (
+        <BulkActionsBar
+          count={selection.count}
+          entityLabel="permit"
+          statusOptions={ALL_PERMIT_STATUSES.map((s) => ({ value: s, label: PERMIT_STATUS_LABELS[s] }))}
+          onApplyStatus={handleBulkStatus}
+          onDelete={handleBulkDelete}
+          onClear={selection.clear}
+        />
+      )}
 
       {permits.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -106,6 +179,12 @@ export default function PermitsPanel({ permits, onCreate, onUpdate, onDelete }: 
             return (
               <li key={permit.id} className="py-3">
                 <div className="flex items-start justify-between gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selection.isSelected(permit.id)}
+                    onChange={() => selection.toggle(permit.id)}
+                    className="mt-1.5 h-4 w-4 shrink-0"
+                  />
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : permit.id)}
                     className="flex-1 min-w-0 text-left"

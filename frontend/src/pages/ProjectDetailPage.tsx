@@ -1244,7 +1244,12 @@ export default function ProjectDetailPage() {
 
           {activeTab === "schedule" && (
             <>
-              <ProjectTimeline project={project} milestones={milestones} tasks={project.tasks ?? []} />
+              <ProjectTimeline
+                project={project}
+                milestones={milestones}
+                tasks={project.tasks ?? []}
+                onUpdateMilestone={handleUpdateMilestone}
+              />
 
               <MilestonesPanel
                 milestones={milestones}

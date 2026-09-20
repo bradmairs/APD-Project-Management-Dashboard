@@ -101,6 +101,7 @@ export default function CreateUserModal({ onClose, onCreate }: Props) {
             >
               <option value="MEMBER">Member</option>
               <option value="ADMIN">Admin</option>
+              <option value="VIEWER">Viewer (read-only)</option>
             </select>
           </div>
 

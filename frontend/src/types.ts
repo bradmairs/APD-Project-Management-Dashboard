@@ -1,4 +1,4 @@
-export type Role = "ADMIN" | "MEMBER";
+export type Role = "ADMIN" | "MEMBER" | "VIEWER";
 
 // One organization (GVW, CMP, ...) the current user can switch into — see
 // the "Multi-Organization Architecture" section of the README. Each

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Milestone, Project, Task } from "../types";
+import { useEffect, useRef, useState } from "react";
+import { Milestone, MilestoneInput, Project, Task } from "../types";
 import { formatDate } from "../format";
 import { useTheme } from "../theme/ThemeContext";
 import { SEQUENTIAL_BLUE, TASK_STATUS_COLORS, chartColor } from "../charts/palette";
@@ -8,6 +8,15 @@ interface Props {
   project: Project;
   milestones: Milestone[];
   tasks: Task[];
+  onUpdateMilestone?: (milestone: Milestone, data: Partial<MilestoneInput>) => Promise<void>;
+}
+
+interface DragState {
+  milestoneId: string;
+  startX: number;
+  trackWidth: number;
+  initialEndTime: number;
+  previewEndTime: number;
 }
 
 function toTime(value: string | null | undefined): number | null {
@@ -34,7 +43,7 @@ function milestoneBars(project: Project, milestones: Milestone[]) {
   });
 }
 
-export default function ProjectTimeline({ project, milestones, tasks }: Props) {
+export default function ProjectTimeline({ project, milestones, tasks, onUpdateMilestone }: Props) {
   const { theme } = useTheme();
   // Re-read the clock once a minute so a page left open all day keeps the
   // "Today" line moving rather than freezing at the moment it loaded.
@@ -43,6 +52,8 @@ export default function ProjectTimeline({ project, milestones, tasks }: Props) {
     const id = setInterval(() => setToday(Date.now()), 60_000);
     return () => clearInterval(id);
   }, []);
+  const [drag, setDrag] = useState<DragState | null>(null);
+  const dragRef = useRef<DragState | null>(null);
   const bars = milestoneBars(project, milestones);
   const tasksWithDueDate = tasks.filter((t) => t.dueDate);
 
@@ -54,7 +65,73 @@ export default function ProjectTimeline({ project, milestones, tasks }: Props) {
     ...tasksWithDueDate.map((t) => toTime(t.dueDate)),
   ].filter((t): t is number => t !== null);
 
-  if (candidateTimes.length === 0) {
+  const hasData = candidateTimes.length > 0;
+  // rawMin/rawMax describe the project's own dates (shown in the header);
+  // the drawn domain additionally always contains today, so a project that's
+  // running past its last milestone visibly overshoots its bars instead of
+  // the "Today" line silently vanishing off the end of the chart.
+  const rawMin = hasData ? Math.min(...candidateTimes) : today;
+  const rawMax = hasData ? Math.max(...candidateTimes) : today;
+  const domainMin = Math.min(rawMin, today);
+  const domainMax = Math.max(rawMax, today);
+  const span = Math.max(domainMax - domainMin, 24 * 60 * 60 * 1000);
+  const pad = span * 0.05;
+  const min = domainMin - pad;
+  const max = domainMax + pad;
+
+  function percentFor(time: number): number {
+    return Math.min(100, Math.max(0, ((time - min) / (max - min)) * 100));
+  }
+
+  useEffect(() => {
+    if (!drag) return;
+    function onMove(e: MouseEvent) {
+      const current = dragRef.current;
+      if (!current) return;
+      const deltaX = e.clientX - current.startX;
+      const deltaTime = (deltaX / current.trackWidth) * (max - min);
+      const previewEndTime = Math.min(max, Math.max(min, current.initialEndTime + deltaTime));
+      const next = { ...current, previewEndTime };
+      dragRef.current = next;
+      setDrag(next);
+    }
+    async function onUp() {
+      const current = dragRef.current;
+      dragRef.current = null;
+      setDrag(null);
+      if (!current || !onUpdateMilestone) return;
+      const milestone = milestones.find((m) => m.id === current.milestoneId);
+      if (!milestone) return;
+      if (Math.abs(current.previewEndTime - current.initialEndTime) < 60_000) return;
+      await onUpdateMilestone(milestone, {
+        forecastedCompletion: new Date(current.previewEndTime).toISOString(),
+      });
+    }
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [Boolean(drag)]);
+
+  function startDrag(e: React.MouseEvent<HTMLDivElement>, milestone: Milestone, endTime: number) {
+    if (!onUpdateMilestone || milestone.actualCompletion) return;
+    e.preventDefault();
+    const trackEl = e.currentTarget.parentElement as HTMLElement;
+    const state: DragState = {
+      milestoneId: milestone.id,
+      startX: e.clientX,
+      trackWidth: trackEl.getBoundingClientRect().width,
+      initialEndTime: endTime,
+      previewEndTime: endTime,
+    };
+    dragRef.current = state;
+    setDrag(state);
+  }
+
+  if (!hasData) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-2">
@@ -65,23 +142,6 @@ export default function ProjectTimeline({ project, milestones, tasks }: Props) {
         </p>
       </div>
     );
-  }
-
-  // rawMin/rawMax describe the project's own dates (shown in the header);
-  // the drawn domain additionally always contains today, so a project that's
-  // running past its last milestone visibly overshoots its bars instead of
-  // the "Today" line silently vanishing off the end of the chart.
-  const rawMin = Math.min(...candidateTimes);
-  const rawMax = Math.max(...candidateTimes);
-  const domainMin = Math.min(rawMin, today);
-  const domainMax = Math.max(rawMax, today);
-  const span = Math.max(domainMax - domainMin, 24 * 60 * 60 * 1000);
-  const pad = span * 0.05;
-  const min = domainMin - pad;
-  const max = domainMax + pad;
-
-  function percentFor(time: number): number {
-    return Math.min(100, Math.max(0, ((time - min) / (max - min)) * 100));
   }
 
   const todayPct = percentFor(today);
@@ -115,23 +175,32 @@ export default function ProjectTimeline({ project, milestones, tasks }: Props) {
               {todayLabel}
             </div>
           </div>
-          {bars.map(({ milestone, startTime, endTime }) => (
+          {bars.map(({ milestone, startTime, endTime }) => {
+            const isDragging = drag?.milestoneId === milestone.id;
+            const effectiveEndTime = isDragging ? drag.previewEndTime : endTime;
+            const draggable = Boolean(onUpdateMilestone) && !milestone.actualCompletion;
+            return (
             <div key={milestone.id} className="flex items-center gap-3">
               <div className="w-40 shrink-0 truncate text-xs text-slate-600 dark:text-slate-300" title={milestone.taskActivity}>
                 {milestone.taskActivity}
               </div>
               <div className="relative flex-1 h-4 rounded bg-slate-100 dark:bg-slate-700">
-                {startTime !== null && endTime !== null ? (
+                {startTime !== null && effectiveEndTime !== null ? (
                   <div
-                    className="absolute top-0 bottom-0 rounded overflow-hidden"
+                    className={`absolute top-0 bottom-0 rounded overflow-hidden ${
+                      draggable ? "cursor-ew-resize" : ""
+                    } ${isDragging ? "ring-2 ring-offset-1 ring-blue-500" : ""}`}
                     style={{
                       left: `${percentFor(startTime)}%`,
-                      width: `${Math.max(percentFor(endTime) - percentFor(startTime), 1.5)}%`,
+                      width: `${Math.max(percentFor(effectiveEndTime) - percentFor(startTime), 1.5)}%`,
                       backgroundColor: `${milestoneColor}33`,
                     }}
+                    onMouseDown={(e) => endTime !== null && startDrag(e, milestone, endTime)}
                     title={`${milestone.taskActivity}: ${
                       milestone.originalCompletion ? formatDate(milestone.originalCompletion) : "no start"
-                    } → ${endTime ? formatDate(new Date(endTime).toISOString()) : "no end"} (${milestone.percentComplete}% complete)`}
+                    } → ${effectiveEndTime ? formatDate(new Date(effectiveEndTime).toISOString()) : "no end"} (${milestone.percentComplete}% complete)${
+                      draggable ? " — drag to reschedule" : ""
+                    }`}
                   >
                     <div
                       className="h-full"
@@ -145,7 +214,8 @@ export default function ProjectTimeline({ project, milestones, tasks }: Props) {
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {tasksWithDueDate.length > 0 && (
             <div className="flex items-center gap-3 pt-1 border-t border-slate-100 dark:border-slate-700">

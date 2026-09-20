@@ -57,6 +57,7 @@ import { cmpAiRouter } from "./routes/cmp/ai";
 import { requireAuth } from "./middleware/requireAuth";
 import { requireAdmin } from "./middleware/requireAdmin";
 import { requireOrgMembership } from "./middleware/requireOrgMembership";
+import { blockViewerMutations } from "./middleware/blockViewerMutations";
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
@@ -95,47 +96,53 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+// The Viewer role gets full read access but no create/update/delete anywhere
+// in the main app — enforced here in one place rather than in each of the
+// several dozen register routers below. AI (query, not mutation) and
+// organizations (membership) are intentionally left off this list.
+const readOnlyGuarded = [requireAuth, blockViewerMutations];
+
 app.use("/api/auth", authRouter);
-app.use("/api/projects", requireAuth, projectsRouter);
-app.use("/api/tasks", requireAuth, tasksRouter);
-app.use("/api/reports", requireAuth, reportsRouter);
-app.use("/api/milestones", requireAuth, milestonesRouter);
-app.use("/api/cashflow", requireAuth, cashFlowRouter);
-app.use("/api/site-visits", requireAuth, siteVisitsRouter);
-app.use("/api/site-visit-photos", requireAuth, siteVisitPhotosRouter);
-app.use("/api/variations", requireAuth, variationsRouter);
-app.use("/api/risks", requireAuth, risksRouter);
-app.use("/api/action-items", requireAuth, actionItemsRouter);
-app.use("/api/stakeholders", requireAuth, stakeholdersRouter);
-app.use("/api/permits", requireAuth, permitsRouter);
-app.use("/api/lessons-learned", requireAuth, lessonsLearnedRouter);
-app.use("/api/sqe", requireAuth, sqeRouter);
-app.use("/api/eot-claims", requireAuth, eotClaimsRouter);
-app.use("/api/checklist-items", requireAuth, checklistItemsRouter);
-app.use("/api/defects", requireAuth, defectsRouter);
-app.use("/api/payment-claims", requireAuth, paymentClaimsRouter);
-app.use("/api/insurance-warranties", requireAuth, insuranceWarrantiesRouter);
-app.use("/api/rfis", requireAuth, rfisRouter);
-app.use("/api/documents", requireAuth, documentsRouter);
-app.use("/api/community-enquiries", requireAuth, communityEnquiriesRouter);
-app.use("/api/subcontractors", requireAuth, subcontractorsRouter);
-app.use("/api/contracts", requireAuth, contractsRouter);
-app.use("/api/meeting-minutes", requireAuth, meetingMinutesRouter);
-app.use("/api/correspondence", requireAuth, correspondenceRouter);
-app.use("/api/training-records", requireAuth, trainingRecordsRouter);
-app.use("/api/performance-reviews", requireAuth, performanceReviewsRouter);
-app.use("/api/toolbox-talks", requireAuth, toolboxTalksRouter);
-app.use("/api/environmental-monitoring", requireAuth, environmentalMonitoringRouter);
-app.use("/api/safety-inspections", requireAuth, safetyInspectionsRouter);
-app.use("/api/tender-packages", requireAuth, tenderPackagesRouter);
+app.use("/api/projects", readOnlyGuarded, projectsRouter);
+app.use("/api/tasks", readOnlyGuarded, tasksRouter);
+app.use("/api/reports", readOnlyGuarded, reportsRouter);
+app.use("/api/milestones", readOnlyGuarded, milestonesRouter);
+app.use("/api/cashflow", readOnlyGuarded, cashFlowRouter);
+app.use("/api/site-visits", readOnlyGuarded, siteVisitsRouter);
+app.use("/api/site-visit-photos", readOnlyGuarded, siteVisitPhotosRouter);
+app.use("/api/variations", readOnlyGuarded, variationsRouter);
+app.use("/api/risks", readOnlyGuarded, risksRouter);
+app.use("/api/action-items", readOnlyGuarded, actionItemsRouter);
+app.use("/api/stakeholders", readOnlyGuarded, stakeholdersRouter);
+app.use("/api/permits", readOnlyGuarded, permitsRouter);
+app.use("/api/lessons-learned", readOnlyGuarded, lessonsLearnedRouter);
+app.use("/api/sqe", readOnlyGuarded, sqeRouter);
+app.use("/api/eot-claims", readOnlyGuarded, eotClaimsRouter);
+app.use("/api/checklist-items", readOnlyGuarded, checklistItemsRouter);
+app.use("/api/defects", readOnlyGuarded, defectsRouter);
+app.use("/api/payment-claims", readOnlyGuarded, paymentClaimsRouter);
+app.use("/api/insurance-warranties", readOnlyGuarded, insuranceWarrantiesRouter);
+app.use("/api/rfis", readOnlyGuarded, rfisRouter);
+app.use("/api/documents", readOnlyGuarded, documentsRouter);
+app.use("/api/community-enquiries", readOnlyGuarded, communityEnquiriesRouter);
+app.use("/api/subcontractors", readOnlyGuarded, subcontractorsRouter);
+app.use("/api/contracts", readOnlyGuarded, contractsRouter);
+app.use("/api/meeting-minutes", readOnlyGuarded, meetingMinutesRouter);
+app.use("/api/correspondence", readOnlyGuarded, correspondenceRouter);
+app.use("/api/training-records", readOnlyGuarded, trainingRecordsRouter);
+app.use("/api/performance-reviews", readOnlyGuarded, performanceReviewsRouter);
+app.use("/api/toolbox-talks", readOnlyGuarded, toolboxTalksRouter);
+app.use("/api/environmental-monitoring", readOnlyGuarded, environmentalMonitoringRouter);
+app.use("/api/safety-inspections", readOnlyGuarded, safetyInspectionsRouter);
+app.use("/api/tender-packages", readOnlyGuarded, tenderPackagesRouter);
 app.use("/api/search", requireAuth, searchRouter);
 app.use("/api/ai", requireAuth, aiRouter);
-app.use("/api/archive-links", requireAuth, archiveLinksRouter);
+app.use("/api/archive-links", readOnlyGuarded, archiveLinksRouter);
 app.use("/api/archive-search", requireAuth, archiveSearchRouter);
 app.use("/api/activity", requireAuth, activityRouter);
-app.use("/api/attachments", requireAuth, attachmentsRouter);
+app.use("/api/attachments", readOnlyGuarded, attachmentsRouter);
 app.use("/api/users", requireAuth, requireAdmin, usersRouter);
-app.use("/api/task-templates", requireAuth, taskTemplatesRouter);
+app.use("/api/task-templates", readOnlyGuarded, taskTemplatesRouter);
 app.use("/api/organizations", requireAuth, organizationsRouter);
 
 const requireCmpAccess = [requireAuth, requireOrgMembership("cmp")];
