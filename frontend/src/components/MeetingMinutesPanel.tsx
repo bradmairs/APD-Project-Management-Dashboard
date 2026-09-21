@@ -4,6 +4,7 @@ import {
   ActionItemInput,
   Attachment,
   MeetingMinutes,
+  MeetingMinutesDraft,
   MeetingMinutesInput,
   SuggestedAction,
 } from "../types";
@@ -13,16 +14,21 @@ import { ACTION_STATUS_COLORS, ACTION_STATUS_LABELS } from "../actionItemMeta";
 import MeetingMinutesFormModal from "./MeetingMinutesFormModal";
 
 interface Props {
+  projectName: string;
   meetings: MeetingMinutes[];
   attachments: Attachment[];
   actionItems: ActionItem[];
-  onCreate: (data: Partial<MeetingMinutesInput>) => Promise<void>;
-  onUpdate: (meeting: MeetingMinutes, data: Partial<MeetingMinutesInput>) => Promise<void>;
+  onCreate: (data: Partial<MeetingMinutesInput>) => Promise<MeetingMinutes>;
+  onUpdate: (
+    meeting: MeetingMinutes,
+    data: Partial<MeetingMinutesInput>
+  ) => Promise<MeetingMinutes>;
   onDelete: (meeting: MeetingMinutes) => Promise<void>;
   onUploadAttachment: (meetingId: string, file: File) => Promise<void>;
   onDeleteAttachment: (attachment: Attachment) => Promise<void>;
   onCreateAction: (data: Partial<ActionItemInput>) => Promise<void>;
   onExtractActions: (meetingId: string) => Promise<SuggestedAction[]>;
+  onGenerateDraft: (input: { text?: string; file?: File }) => Promise<MeetingMinutesDraft>;
 }
 
 // The attachments/actions sub-sections below are the "attach the record,
@@ -310,6 +316,7 @@ function MeetingActions({
 }
 
 export default function MeetingMinutesPanel({
+  projectName,
   meetings,
   attachments,
   actionItems,
@@ -320,6 +327,7 @@ export default function MeetingMinutesPanel({
   onDeleteAttachment,
   onCreateAction,
   onExtractActions,
+  onGenerateDraft,
 }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<MeetingMinutes | null>(null);
@@ -335,14 +343,11 @@ export default function MeetingMinutesPanel({
     setShowModal(true);
   }
 
-  async function handleSave(data: Partial<MeetingMinutesInput>) {
-    if (editing) {
-      await onUpdate(editing, data);
-    } else {
-      await onCreate(data);
-    }
+  async function handleSave(data: Partial<MeetingMinutesInput>): Promise<MeetingMinutes> {
+    const saved = editing ? await onUpdate(editing, data) : await onCreate(data);
     setShowModal(false);
     setEditing(null);
+    return saved;
   }
 
   async function handleDelete(meeting: MeetingMinutes) {
@@ -492,12 +497,16 @@ export default function MeetingMinutesPanel({
 
       {showModal && (
         <MeetingMinutesFormModal
+          projectName={projectName}
           meeting={editing}
           onClose={() => {
             setShowModal(false);
             setEditing(null);
           }}
           onSave={handleSave}
+          onGenerateDraft={onGenerateDraft}
+          onCreateAction={onCreateAction}
+          onUploadAttachment={onUploadAttachment}
         />
       )}
     </div>

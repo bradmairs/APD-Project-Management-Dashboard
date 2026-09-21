@@ -1,7 +1,9 @@
 import { Request, Response, Router } from "express";
 import { prisma } from "../prisma";
 import { describeMeetingMinutesUpdate, logActivity } from "../activityLog";
-import { askOllama, OllamaError } from "../ollama";
+import { askOllama, askOllamaVision, OllamaError } from "../ollama";
+import { extractTextFromDocument, isImageUpload } from "../transcriptExtraction";
+import { transcriptUpload } from "../upload";
 
 function parseDate(value: unknown): Date | null | undefined {
   if (value === undefined) return undefined;
@@ -80,6 +82,96 @@ const EXTRACT_ACTIONS_SYSTEM_PROMPT =
   "if the notes say so, otherwise null; dueDateHint is any date or timeframe mentioned, as free " +
   "text, otherwise null. If the notes contain no follow-up items, respond with an empty array [].";
 
+// A raw transcript (auto-generated captions, a typed record, or OCR output
+// from a photo of notes) is messier than the summary/notes a PM would type
+// by hand — filler speech, no clear structure. This asks the chat model to
+// do in one pass what a PM would otherwise do by hand after the meeting:
+// write the minutes and pull out the actions.
+const GENERATE_MINUTES_SYSTEM_PROMPT =
+  "You are an assistant embedded in a project management dashboard for Goulburn Valley Water, " +
+  "a water utility. You turn a raw meeting transcript — which may be messy, auto-generated, or " +
+  "include filler speech — into structured meeting minutes for a construction or infrastructure " +
+  "project delivered by consultants and contractors. Respond with ONLY a JSON object, no other " +
+  'text and no markdown code fences, of the shape {"meetingType": string or null, "summary": ' +
+  'string or null, "attendees": string or null, "notes": string or null, "actions": [{"title": ' +
+  'string, "ownerName": string or null, "dueDateHint": string or null}]}. meetingType is a short ' +
+  'label like "Progress Meeting" or "Design Review" if inferable, otherwise null. summary is a ' +
+  "2-4 sentence overview of what was discussed. attendees is a comma-separated list of names " +
+  "mentioned as present, otherwise null. notes is a more detailed account of discussion points, " +
+  "decisions, and context, using short paragraphs or bullet-style lines. actions is every " +
+  "follow-up or action item mentioned, each with its owner and any due date mentioned, in the " +
+  "same format meeting-notes action extraction already uses elsewhere in this app. If the " +
+  "transcript contains no useful content, return null for the text fields and an empty array " +
+  "for actions rather than inventing information.";
+
+const OCR_TRANSCRIPT_SYSTEM_PROMPT =
+  "You transcribe text from a photo of handwritten or printed meeting notes for a construction " +
+  "project management dashboard. Respond with ONLY the transcribed text, verbatim, in reading " +
+  "order, with no commentary, no markdown formatting, and no preamble such as 'Here is the " +
+  "transcription'. If the image contains no legible text, respond with an empty string.";
+
+interface MeetingMinutesDraft {
+  meetingType: string | null;
+  summary: string | null;
+  attendees: string | null;
+  notes: string | null;
+  actions: SuggestedAction[];
+}
+
+const MAX_FREE_TEXT_LENGTH = 5000;
+
+function coerceDraftText(value: unknown): string | null {
+  return typeof value === "string" && value.trim()
+    ? value.trim().slice(0, MAX_FREE_TEXT_LENGTH)
+    : null;
+}
+
+// Same defensive strategy as parseSuggestedActions above (whole response,
+// then the bracketed/braced substring, code-fence stripping implicit in
+// both) — a local model asked for JSON doesn't always give only JSON.
+function parseMinutesDraft(raw: string): MeetingMinutesDraft {
+  const attempts: string[] = [raw];
+  const braceMatch = raw.match(/\{[\s\S]*\}/);
+  if (braceMatch) attempts.push(braceMatch[0]);
+
+  for (const attempt of attempts) {
+    try {
+      const parsed = JSON.parse(attempt);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const rawActions = (parsed as Record<string, unknown>).actions;
+        const actions = Array.isArray(rawActions)
+          ? rawActions
+              .map(coerceSuggestedAction)
+              .filter((a): a is SuggestedAction => a !== null)
+              .slice(0, MAX_SUGGESTED_ACTIONS)
+          : [];
+        return {
+          meetingType: coerceDraftText((parsed as Record<string, unknown>).meetingType)?.slice(
+            0,
+            MAX_TITLE_LENGTH
+          ) ?? null,
+          summary: coerceDraftText((parsed as Record<string, unknown>).summary),
+          attendees: coerceDraftText((parsed as Record<string, unknown>).attendees),
+          notes: coerceDraftText((parsed as Record<string, unknown>).notes),
+          actions,
+        };
+      }
+    } catch {
+      // try the next attempt
+    }
+  }
+
+  // Couldn't parse structured JSON at all — fall back to treating the
+  // whole response as notes rather than discarding it silently.
+  return {
+    meetingType: null,
+    summary: null,
+    attendees: null,
+    notes: coerceDraftText(raw),
+    actions: [],
+  };
+}
+
 const projectMeetingMinutesRouter = Router({ mergeParams: true });
 
 type ProjectParams = { id: string };
@@ -129,6 +221,62 @@ projectMeetingMinutesRouter.post("/", async (req: Request<ProjectParams>, res: R
 
   res.status(201).json(meeting);
 });
+
+const MAX_TRANSCRIPT_CHARS = 12000;
+
+// Generates a draft — meetingType/summary/attendees/notes plus suggested
+// actions — from a transcript, without saving anything. The caller (the
+// "New Meeting" form) reviews and edits the draft before it ever becomes a
+// real MeetingMinutes row, the same way AI-suggested actions are reviewed
+// before being added. Lives on the project-scoped router, not the
+// per-meeting one below, since there's no meeting yet at this point.
+projectMeetingMinutesRouter.post(
+  "/ai/generate-draft",
+  transcriptUpload.single("file"),
+  async (req: Request<ProjectParams>, res: Response) => {
+    const project = await prisma.project.findUnique({ where: { id: req.params.id } });
+    if (!project) return res.status(404).json({ error: "Project not found" });
+
+    const pastedText = typeof req.body.text === "string" ? req.body.text.trim() : "";
+    const file = req.file;
+
+    let fileText = "";
+    try {
+      if (file && isImageUpload(file)) {
+        fileText = await askOllamaVision(
+          OCR_TRANSCRIPT_SYSTEM_PROMPT,
+          "Transcribe all text visible in this image of meeting notes.",
+          file.buffer.toString("base64")
+        );
+      } else if (file) {
+        fileText = await extractTextFromDocument(file);
+      }
+    } catch (err) {
+      if (err instanceof OllamaError) return res.status(502).json({ error: err.message });
+      return res
+        .status(400)
+        .json({ error: err instanceof Error ? err.message : "Could not read the uploaded file" });
+    }
+
+    const transcript = [fileText.trim(), pastedText].filter(Boolean).join("\n\n");
+    if (!transcript) {
+      return res.status(400).json({
+        error: "Provide a transcript — paste text, or upload a file or a photo of notes",
+      });
+    }
+
+    try {
+      const raw = await askOllama(
+        GENERATE_MINUTES_SYSTEM_PROMPT,
+        transcript.slice(0, MAX_TRANSCRIPT_CHARS)
+      );
+      res.json(parseMinutesDraft(raw));
+    } catch (err) {
+      if (err instanceof OllamaError) return res.status(502).json({ error: err.message });
+      res.status(500).json({ error: "Failed to generate meeting minutes from the transcript" });
+    }
+  }
+);
 
 export const meetingMinutesRouter = Router();
 

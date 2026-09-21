@@ -28,6 +28,7 @@ import {
   LessonLearnedInput,
   MeetingMinutes,
   MeetingMinutesInput,
+  MeetingMinutesDraft,
   Correspondence,
   CorrespondenceInput,
   Milestone,
@@ -1143,6 +1144,19 @@ export function extractMeetingActions(
 ): Promise<{ actions: SuggestedAction[] }> {
   return fetch(`${API_BASE}/meeting-minutes/${meetingId}/ai/extract-actions`, {
     method: "POST",
+  }).then((res) => handle(res));
+}
+
+export function generateMeetingMinutesDraft(
+  projectId: string,
+  input: { text?: string; file?: File }
+): Promise<MeetingMinutesDraft> {
+  const formData = new FormData();
+  if (input.text) formData.append("text", input.text);
+  if (input.file) formData.append("file", input.file);
+  return fetch(`${API_BASE}/projects/${projectId}/meeting-minutes/ai/generate-draft`, {
+    method: "POST",
+    body: formData,
   }).then((res) => handle(res));
 }
 
