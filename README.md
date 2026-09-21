@@ -808,6 +808,12 @@ Like Site Visits, this is a plain log with no status workflow — nothing
 to mark open or closed, just a record of what happened. The panel sorts
 by meeting date, most recent first. Open to any logged-in user to edit.
 
+Both **+ New Meeting** and **Edit** have an **Attach Minutes Document
+(PDF or Word)** file field right in the form — for the common case of
+already having a signed minutes document (typed up separately, or
+exported from the site's own meeting software) and just wanting to log
+it against the project. It's optional and uploads alongside the save.
+
 Expanding a meeting reveals two linked sub-sections:
 
 - **Attachments** — files (the signed PDF, a slide deck) uploaded against
