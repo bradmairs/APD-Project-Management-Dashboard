@@ -51,6 +51,7 @@ export default function MeetingMinutesFormModal({
   const [notes, setNotes] = useState(meeting?.notes ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [minutesFile, setMinutesFile] = useState<File | null>(null);
 
   // Generate-from-transcript state — kept separate from the form fields
   // above so a generated draft is a proposal the PM reviews (and the
@@ -114,6 +115,10 @@ export default function MeetingMinutesFormModal({
         notes: notes || null,
       });
 
+      if (minutesFile) {
+        await onUploadAttachment(saved.id, minutesFile);
+      }
+
       const chosenActions =
         draftActions?.filter((_, i) => selectedActions.has(i)) ?? [];
 
@@ -171,6 +176,22 @@ export default function MeetingMinutesFormModal({
               {error}
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Attach Minutes Document (PDF or Word)
+            </label>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={(e) => setMinutesFile(e.target.files?.[0] ?? null)}
+              className="w-full text-sm text-slate-700 dark:text-slate-300 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:bg-slate-100 dark:file:bg-slate-700 file:text-slate-700 dark:file:text-slate-300"
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Optional — attach an existing signed minutes document. You can also attach files
+              (or more than one) after saving, from the meeting's Attachments section.
+            </p>
+          </div>
 
           {!meeting && (
             <div className="border border-dashed border-slate-300 dark:border-slate-600 rounded p-3">
