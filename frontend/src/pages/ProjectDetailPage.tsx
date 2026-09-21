@@ -35,6 +35,7 @@ import {
   LessonLearnedInput,
   MeetingMinutes,
   MeetingMinutesInput,
+  MeetingMinutesDraft,
   PaymentClaim,
   PaymentClaimInput,
   Permit,
@@ -62,6 +63,7 @@ import {
   ContractRecordInput,
   SuggestedAction,
   Task,
+  TaskInput,
   TaskStatus,
   TenderPackage,
   TenderPackageInput,
@@ -115,6 +117,7 @@ import {
   deleteEnvironmentalMonitoring,
   deleteEotClaim,
   extractMeetingActions,
+  generateMeetingMinutesDraft,
   deleteSafetyInspection,
   deleteInsuranceWarranty,
   deleteLessonLearned,
@@ -456,10 +459,7 @@ export default function ProjectDetailPage() {
     await load();
   }
 
-  async function handleUpdateTask(
-    task: Task,
-    changes: { status?: TaskStatus; dueDate?: string | null }
-  ) {
+  async function handleUpdateTask(task: Task, changes: Partial<TaskInput>) {
     await updateTask(task.id, changes);
     await load();
   }
@@ -1031,18 +1031,22 @@ export default function ProjectDetailPage() {
     await load();
   }
 
-  async function handleCreateMeetingMinutes(data: Partial<MeetingMinutesInput>) {
-    if (!project) return;
-    await createMeetingMinutes(project.id, data);
+  async function handleCreateMeetingMinutes(
+    data: Partial<MeetingMinutesInput>
+  ): Promise<MeetingMinutes> {
+    if (!project) throw new Error("Project not loaded");
+    const created = await createMeetingMinutes(project.id, data);
     await load();
+    return created;
   }
 
   async function handleUpdateMeetingMinutes(
     meeting: MeetingMinutes,
     data: Partial<MeetingMinutesInput>
-  ) {
-    await updateMeetingMinutes(meeting.id, data);
+  ): Promise<MeetingMinutes> {
+    const updated = await updateMeetingMinutes(meeting.id, data);
     await load();
+    return updated;
   }
 
   async function handleDeleteMeetingMinutes(meeting: MeetingMinutes) {
@@ -1054,6 +1058,14 @@ export default function ProjectDetailPage() {
     if (!project) return;
     await uploadAttachment(project.id, file, meetingId);
     await load();
+  }
+
+  async function handleGenerateMeetingMinutesDraft(input: {
+    text?: string;
+    file?: File;
+  }): Promise<MeetingMinutesDraft> {
+    if (!project) throw new Error("Project not loaded");
+    return generateMeetingMinutesDraft(project.id, input);
   }
 
   async function handleExtractMeetingActions(meetingId: string): Promise<SuggestedAction[]> {
@@ -1221,6 +1233,7 @@ export default function ProjectDetailPage() {
               />
 
               <MeetingMinutesPanel
+                projectName={project.name}
                 meetings={meetingMinutes}
                 attachments={attachments}
                 actionItems={actionItems}
@@ -1231,6 +1244,7 @@ export default function ProjectDetailPage() {
                 onDeleteAttachment={handleDeleteAttachment}
                 onCreateAction={handleCreateActionItem}
                 onExtractActions={handleExtractMeetingActions}
+                onGenerateDraft={handleGenerateMeetingMinutesDraft}
               />
 
               <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">

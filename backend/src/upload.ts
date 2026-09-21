@@ -125,3 +125,22 @@ export const photoUpload = multer({
     cb(null, true);
   },
 });
+
+// A transcript upload (.txt/.docx/.pdf, or a photo of handwritten notes for
+// the vision model) that only exists in memory long enough to extract its
+// text — nothing is persisted to disk, unlike every other upload above.
+const TRANSCRIPT_EXTENSIONS = new Set([".txt", ".docx", ".pdf", ".png", ".jpg", ".jpeg"]);
+const MAX_TRANSCRIPT_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
+export const transcriptUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_TRANSCRIPT_FILE_SIZE },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!TRANSCRIPT_EXTENSIONS.has(ext)) {
+      cb(new Error(`File type "${ext || "unknown"}" is not supported for transcripts`));
+      return;
+    }
+    cb(null, true);
+  },
+});

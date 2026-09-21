@@ -832,6 +832,34 @@ for you to review, deselect, and add. If Ollama can't be reached, the
 button shows the same clear inline error as the AI Assistant rather than
 failing silently.
 
+### Generate from Transcript (AI)
+
+On **+ New Meeting**, **+ Generate from Transcript (AI)** turns a raw
+meeting transcript into a structured draft in one step: paste text, or
+upload a `.txt`/`.docx`/`.pdf` file or a photo of handwritten notes
+(`backend/src/transcriptExtraction.ts` extracts the text — `mammoth` for
+Word, `pdf-parse` for PDF; a photo instead goes through Ollama's vision
+model for OCR). The extracted text is sent to Ollama's chat model, which
+returns meeting type, summary, attendees, notes, and a suggested-actions
+list — the same shape and review-before-adding pattern as **AI: Suggest
+Actions from Notes** above, filled into the form fields for you to edit
+before saving.
+
+Saving a meeting created this way does two things beyond a normal save:
+it creates the selected suggested actions (linked to the new meeting, as
+above), and it builds a one-page PDF summary of the final — possibly
+hand-edited — meeting content (`frontend/src/meetingMinutesPdf.ts`, drawn
+directly with jsPDF rather than a screenshot, since it's just structured
+text) and attaches it to the meeting automatically, so there's a
+shareable document alongside the structured record with no separate
+export step. Editing an existing meeting or a plain (non-transcript) new
+meeting doesn't trigger this — the PDF is specific to the transcript
+workflow.
+
+This uses two separate Ollama model slots — `OLLAMA_CHAT_MODEL` for text
+reasoning and `OLLAMA_VISION_MODEL` for reading a photo — rather than one
+model for everything; see **AI Assistant → Configuration** below.
+
 ## Correspondence
 
 Each project has a **Correspondence Register** — a log of formal letters
@@ -1337,12 +1365,13 @@ answered fresh from the latest data.
 
 ### Configuration
 
-Two environment variables point the backend at Ollama:
+Three environment variables point the backend at Ollama:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `OLLAMA_BASE_URL` | `http://host.docker.internal:11434` (docker-compose) / `http://localhost:11434` (local dev) | Where Ollama's HTTP API is reachable from the backend. |
-| `OLLAMA_MODEL` | `llama3.1` | The model to call — must already be pulled on that Ollama server (`ollama pull llama3.1`). |
+| `OLLAMA_CHAT_MODEL` | `llama3.1` | The text/chat model — must already be pulled on that Ollama server (`ollama pull llama3.1`). Used for everything that reasons over text: the Assistant, action extraction, and transcript-to-minutes generation. `OLLAMA_MODEL` is kept as a legacy alias for this same slot. |
+| `OLLAMA_VISION_MODEL` | `llava` | A vision-capable model (e.g. `llava`, `gemma3`), used only to read a photo of handwritten/whiteboard notes into text before it's handed to the chat model — see **Meeting Minutes → Generate from Transcript** above. |
 
 `host.docker.internal` lets the `backend` container reach Ollama running
 directly on the Docker host; `docker-compose.yml` adds the
@@ -1455,6 +1484,14 @@ A **Saved views** dropdown re-applies one in a click; **Delete view**
 removes the currently-selected one. The Export CSV button next to these
 filters exports the currently-filtered project list, so "my overdue
 projects, as a spreadsheet" is two clicks from a saved view.
+
+## Tasks
+
+A project's Tasks list (Schedule tab) supports full editing, not just
+status and due date: **Edit** on any task switches that row to an inline
+form for its title and description, with **Save**/**Cancel** — the same
+`PUT /api/tasks/:id` endpoint status/due-date changes already used,
+just with more fields.
 
 ## Task Templates
 

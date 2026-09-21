@@ -378,6 +378,17 @@ export interface SuggestedAction {
   dueDateHint: string | null;
 }
 
+// What the AI transcript-to-minutes endpoint returns — a draft to review
+// and edit before it's saved as a real MeetingMinutes record, using the
+// same SuggestedAction shape the existing extract-actions feature returns.
+export interface MeetingMinutesDraft {
+  meetingType: string | null;
+  summary: string | null;
+  attendees: string | null;
+  notes: string | null;
+  actions: SuggestedAction[];
+}
+
 export interface Stakeholder {
   id: string;
   projectId: string;
