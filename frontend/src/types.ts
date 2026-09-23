@@ -168,6 +168,7 @@ export interface Milestone {
   wbsItem: string | null;
   taskActivity: string;
   percentComplete: number;
+  startDate: string | null;
   originalCompletion: string | null;
   forecastedCompletion: string | null;
   actualCompletion: string | null;

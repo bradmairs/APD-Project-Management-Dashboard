@@ -23,13 +23,16 @@ function toTime(value: string | null | undefined): number | null {
   return value ? new Date(value).getTime() : null;
 }
 
-// Milestone doesn't store its own start date (only completion dates — see
-// the schema comment on the Milestone model), so a bar's start is inferred
-// as the previous milestone's own end, chaining from the project's start
-// date for the first one — a reasonable approximation of sequential WBS
-// scheduling without inventing a field the underlying data doesn't have.
-// A milestone with no completion date at all (original/forecast/actual)
-// simply can't be placed and is listed without a bar.
+// A milestone's own startDate is optional — most milestones simply run
+// back-to-back, so when it's blank a bar's start is inferred as the
+// previous milestone's own end, chaining from the project's start date for
+// the first one. Setting startDate explicitly overrides that chaining,
+// which is how a milestone that starts early, overlaps the previous one, or
+// runs concurrently gets placed correctly. Either way, the chain continues
+// from this milestone's own end once it has one, so a later milestone with
+// no explicit start still picks up where this one left off. A milestone
+// with no completion date at all (original/forecast/actual) simply can't be
+// placed and is listed without a bar.
 function milestoneBars(project: Project, milestones: Milestone[]) {
   let cursor = toTime(project.startDate);
   return milestones.map((milestone) => {
@@ -37,7 +40,7 @@ function milestoneBars(project: Project, milestones: Milestone[]) {
       toTime(milestone.actualCompletion) ??
       toTime(milestone.forecastedCompletion) ??
       toTime(milestone.originalCompletion);
-    const startTime = cursor;
+    const startTime = toTime(milestone.startDate) ?? cursor;
     if (endTime !== null) cursor = endTime;
     return { milestone, startTime, endTime };
   });
@@ -197,7 +200,7 @@ export default function ProjectTimeline({ project, milestones, tasks, onUpdateMi
                     }}
                     onMouseDown={(e) => endTime !== null && startDrag(e, milestone, endTime)}
                     title={`${milestone.taskActivity}: ${
-                      milestone.originalCompletion ? formatDate(milestone.originalCompletion) : "no start"
+                      startTime ? formatDate(new Date(startTime).toISOString()) : "no start"
                     } → ${effectiveEndTime ? formatDate(new Date(effectiveEndTime).toISOString()) : "no end"} (${milestone.percentComplete}% complete)${
                       draggable ? " — drag to reschedule" : ""
                     }`}

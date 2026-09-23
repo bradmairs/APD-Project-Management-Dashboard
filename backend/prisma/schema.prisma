@@ -488,7 +488,12 @@ model Attachment {
 // needless duplication for rows that mostly don't change month to month.
 // sortOrder preserves the WBS sequence (each new row appends to the end;
 // reordering swaps two rows' values) since that order is meaningful and
-// isn't derivable from any other field.
+// isn't derivable from any other field. startDate is optional — most
+// milestones simply run back-to-back, so the timeline (see
+// frontend/src/components/ProjectTimeline.tsx) infers a blank startDate as
+// "starts when the previous milestone ends"; setting it explicitly is only
+// needed for a milestone that starts early, overlaps the previous one, or
+// otherwise doesn't follow straight on.
 model Milestone {
   id                   String    @id @default(cuid())
   project              Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -496,6 +501,7 @@ model Milestone {
   wbsItem              String?
   taskActivity         String
   percentComplete      Int       @default(0)
+  startDate            DateTime?
   originalCompletion   DateTime?
   forecastedCompletion DateTime?
   actualCompletion     DateTime?
