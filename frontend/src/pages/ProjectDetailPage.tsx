@@ -1189,7 +1189,13 @@ export default function ProjectDetailPage() {
           <Field label="Project Sponsor" value={project.projectSponsor || "—"} />
           <Field label="Location" value={project.location || "—"} />
           <Field label="Contractor" value={project.contractor || "—"} />
-          <Field label="Budget" value={formatCurrency(project.budget)} />
+          <Field label="Original Budget" value={formatCurrency(project.budget)} />
+          {project.latestApprovedBudget !== null && (
+            <Field
+              label="Latest Approved Budget"
+              value={formatCurrency(project.latestApprovedBudget)}
+            />
+          )}
           <Field
             label="Contract Value"
             value={formatCurrency(project.contractValue)}

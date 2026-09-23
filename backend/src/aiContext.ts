@@ -140,7 +140,10 @@ export async function buildProjectContext(projectId: string): Promise<string | n
   lines.push(`Start date: ${fmtDate(project.startDate, now)}`);
   lines.push(`Target completion: ${fmtTargetCompletion(project, now)}`);
   lines.push(`Actual completion: ${fmtDate(project.actualCompletionDate, now)}`);
-  lines.push(`Budget: ${fmtMoney(project.budget ? Number(project.budget) : null)}`);
+  lines.push(`Original budget: ${fmtMoney(project.budget ? Number(project.budget) : null)}`);
+  if (project.latestApprovedBudget) {
+    lines.push(`Latest approved budget: ${fmtMoney(Number(project.latestApprovedBudget))}`);
+  }
   lines.push(
     `Contract value: ${fmtMoney(project.contractValue ? Number(project.contractValue) : null)}`
   );

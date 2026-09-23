@@ -3,6 +3,7 @@ import { useTheme } from "../theme/ThemeContext";
 import {
   CASH_FLOW_ACTUAL,
   CASH_FLOW_FORECAST,
+  ChartToken,
   CHART_BASELINE,
   CHART_GRIDLINE,
   CHART_TEXT_MUTED,
@@ -20,34 +21,42 @@ const PAD_BOTTOM = 30;
 const PLOT_WIDTH = WIDTH - PAD_LEFT - PAD_RIGHT;
 const PLOT_HEIGHT = HEIGHT - PAD_TOP - PAD_BOTTOM;
 
+export interface BudgetLine {
+  value: number;
+  label: string;
+  color: ChartToken;
+}
+
 interface Props {
   months: string[];
   cumulative: number[];
   lastActualIndex: number;
-  budget: number | null;
-  budgetLabel?: string;
+  budgetLines: BudgetLine[];
   footerNote: string;
 }
 
 // The shared S-curve renderer behind both the per-project and portfolio
 // cumulative-spend charts — everything project-specific (which entries feed
 // in, how many projects' budgets are summed) is resolved by the caller into
-// this one series-plus-budget shape first. The dataviz skill treats a
-// threshold like a budget line as a neutral reference rather than a data
-// series, so it gets a muted gray rather than a categorical hue — it would
-// otherwise compete with Actual/Forecast for attention it isn't supposed to.
+// this one series-plus-budget-lines shape first. budgetLines is usually one
+// or two reference lines (Original Budget, Latest Approved Budget) — each
+// caller decides its own color and label, so the two can be told apart when
+// both are plotted together.
 export default function CumulativeSpendChartView({
   months,
   cumulative,
   lastActualIndex,
-  budget,
-  budgetLabel = "Approved Budget",
+  budgetLines,
   footerNote,
 }: Props) {
   const { theme } = useTheme();
-  const BUDGET_COLOR = chartColor(CHART_TEXT_MUTED, theme);
 
-  const maxValue = Math.max(budget ?? 0, cumulative[cumulative.length - 1] ?? 0, 1) * 1.1;
+  const maxValue =
+    Math.max(
+      ...budgetLines.map((b) => b.value),
+      cumulative[cumulative.length - 1] ?? 0,
+      1
+    ) * 1.1;
 
   const x = (i: number) =>
     PAD_LEFT + (months.length > 1 ? (i / (months.length - 1)) * PLOT_WIDTH : 0);
@@ -93,15 +102,15 @@ export default function CumulativeSpendChartView({
           />
           Forecast (cumulative)
         </span>
-        {budget !== null && (
-          <span className="flex items-center gap-1.5">
+        {budgetLines.map((line) => (
+          <span key={line.label} className="flex items-center gap-1.5">
             <span
               className="inline-block w-3 h-0.5 border-t-2 border-dashed"
-              style={{ borderColor: BUDGET_COLOR }}
+              style={{ borderColor: chartColor(line.color, theme) }}
             />
-            {budgetLabel}
+            {line.label}
           </span>
-        )}
+        ))}
       </div>
 
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="w-full h-auto">
@@ -152,17 +161,18 @@ export default function CumulativeSpendChartView({
           ) : null
         )}
 
-        {budget !== null && (
+        {budgetLines.map((line) => (
           <line
+            key={line.label}
             x1={PAD_LEFT}
             x2={WIDTH - PAD_RIGHT}
-            y1={y(budget)}
-            y2={y(budget)}
-            stroke={BUDGET_COLOR}
+            y1={y(line.value)}
+            y2={y(line.value)}
+            stroke={chartColor(line.color, theme)}
             strokeWidth={2}
             strokeDasharray="6 4"
           />
-        )}
+        ))}
 
         {todayIndex >= 0 && (
           <>

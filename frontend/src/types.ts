@@ -97,6 +97,7 @@ export interface Project {
   location: string | null;
   contractor: string | null;
   budget: string | null;
+  latestApprovedBudget: string | null;
   contingency: string | null;
   contractValue: string | null;
   startDate: string | null;

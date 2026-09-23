@@ -198,7 +198,13 @@ export default function ProjectCloseoutReportPage() {
 
           <ReportSection title="Final Budget Outcome">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
-              <ReportField label="Original Approved Budget" value={formatCurrency(project.budget)} />
+              <ReportField label="Original Budget" value={formatCurrency(project.budget)} />
+              {project.latestApprovedBudget !== null && (
+                <ReportField
+                  label="Latest Approved Budget"
+                  value={formatCurrency(project.latestApprovedBudget)}
+                />
+              )}
               <ReportField label="Approved Variations" value={formatCurrency(variationsTotal)} />
               <ReportField label="Final Budget" value={formatCurrency(finalBudget)} />
               <ReportField label="Final Expenditure" value={formatCurrency(finalExpenditure)} />

@@ -57,7 +57,7 @@ export default function ProjectTable({
               Location
             </th>
             <th className="px-4 py-3 text-right font-medium text-slate-600 dark:text-slate-400">
-              Budget
+              Original Budget
             </th>
             <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
               Target Completion

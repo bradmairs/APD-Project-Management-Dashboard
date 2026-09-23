@@ -67,14 +67,15 @@ const PROJECT_FIELD_LABELS: Record<string, string> = {
   projectManager: "project manager",
   location: "location",
   contractor: "contractor",
-  budget: "budget",
+  budget: "original budget",
+  latestApprovedBudget: "latest approved budget",
   contractValue: "contract value",
   startDate: "start date",
   targetCompletionDate: "target completion date",
   actualCompletionDate: "actual completion date",
 };
 
-const NUMERIC_FIELDS = new Set(["budget", "contractValue"]);
+const NUMERIC_FIELDS = new Set(["budget", "latestApprovedBudget", "contractValue"]);
 const DATE_FIELDS = new Set([
   "startDate",
   "targetCompletionDate",

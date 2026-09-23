@@ -1,7 +1,8 @@
 import { CashFlowEntry, Project, Variation } from "../types";
 import { formatCurrency } from "../format";
-import { approvedVariationsTotal, revisedBudget } from "../variations";
-import CumulativeSpendChartView from "./CumulativeSpendChartView";
+import { revisedBudget } from "../variations";
+import { BUDGET_LATEST_APPROVED, CHART_TEXT_MUTED } from "./palette";
+import CumulativeSpendChartView, { BudgetLine } from "./CumulativeSpendChartView";
 import {
   buildCumulativeSeries,
   buildMonthRange,
@@ -18,12 +19,14 @@ interface Props {
 }
 
 // A budget "S-curve": cumulative spend (Actual, then continuing as
-// Forecast) plotted against the Approved Budget as a flat reference line,
-// over the project's own start-to-target-completion timeframe. The
-// reference line uses the project's budget as revised by any approved
-// variations, so an approved scope change is reflected in the same line
-// the Cash Flow panel's own Variance figure is measured against — falls
-// back to the raw Approved Budget when there are no approved variations.
+// Forecast) plotted against up to two flat reference lines — the Original
+// Budget (grey, as set at project setup) and the Latest Approved Budget
+// (green, tracked separately since not every revision is raised as a
+// Variation) — over the project's own start-to-target-completion
+// timeframe. When no Latest Approved Budget has been entered yet, this
+// falls back to the variations-derived revised budget so an approved
+// scope change still shows up as a second line until the field is filled
+// in directly.
 export default function CumulativeSpendChart({
   project,
   entries,
@@ -57,22 +60,43 @@ export default function CumulativeSpendChart({
     lastActualMonth(entries)
   );
 
-  const budget = revisedBudget(project, variations);
-  const isRevised = approvedVariationsTotal(variations) !== 0;
-  const budgetLabel = isRevised ? "Revised Budget" : "Approved Budget";
+  const originalBudget = project.budget !== null ? Number(project.budget) : null;
+  const latestApprovedBudget =
+    project.latestApprovedBudget !== null
+      ? Number(project.latestApprovedBudget)
+      : revisedBudget(project, variations);
+
+  const budgetLines: BudgetLine[] = [];
+  if (originalBudget !== null) {
+    budgetLines.push({
+      value: originalBudget,
+      label: "Original Budget",
+      color: CHART_TEXT_MUTED,
+    });
+  }
+  if (latestApprovedBudget !== null && latestApprovedBudget !== originalBudget) {
+    budgetLines.push({
+      value: latestApprovedBudget,
+      label: "Latest Approved Budget",
+      color: BUDGET_LATEST_APPROVED,
+    });
+  }
 
   return (
     <CumulativeSpendChartView
       months={months}
       cumulative={cumulative}
       lastActualIndex={lastActualIndex}
-      budget={budget}
-      budgetLabel={budgetLabel}
+      budgetLines={budgetLines}
       footerNote={`Cumulative spend from ${monthLabel(rangeStart)} to ${monthLabel(
         rangeEnd
       )}${
-        budget !== null
-          ? `, against ${isRevised ? "a revised" : "an approved"} budget of ${formatCurrency(budget)}`
+        originalBudget !== null
+          ? `, against an original budget of ${formatCurrency(originalBudget)}`
+          : ""
+      }${
+        latestApprovedBudget !== null && latestApprovedBudget !== originalBudget
+          ? ` and a latest approved budget of ${formatCurrency(latestApprovedBudget)}`
           : ""
       }.`}
     />

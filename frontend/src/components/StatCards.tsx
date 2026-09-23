@@ -19,7 +19,7 @@ export default function StatCards({ projects }: { projects: Project[] }) {
     { label: "Total Projects", value: total },
     { label: "In Construction", value: inConstruction },
     { label: "Overdue", value: overdue, alert: overdue > 0 },
-    { label: "Total Budget", value: formatCurrency(totalBudget) },
+    { label: "Total Original Budget", value: formatCurrency(totalBudget) },
   ];
 
   return (
