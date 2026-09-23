@@ -132,7 +132,13 @@ export default function MilestonesPanel({
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                      <div>
+                        Start:{" "}
+                        {milestone.startDate
+                          ? formatDate(milestone.startDate)
+                          : "After previous"}
+                      </div>
                       <div>
                         Original: {formatDate(milestone.originalCompletion)}
                       </div>

@@ -38,6 +38,7 @@ projectMilestonesRouter.post(
       wbsItem,
       taskActivity,
       percentComplete,
+      startDate,
       originalCompletion,
       forecastedCompletion,
       actualCompletion,
@@ -68,6 +69,7 @@ projectMilestonesRouter.post(
           wbsItem: (wbsItem as string) || null,
           taskActivity: taskActivity.trim(),
           percentComplete: pct,
+          startDate: parseDate(startDate) ?? null,
           originalCompletion: parseDate(originalCompletion) ?? null,
           forecastedCompletion: parseDate(forecastedCompletion) ?? null,
           actualCompletion: parseDate(actualCompletion) ?? null,
@@ -102,6 +104,7 @@ milestonesRouter.put("/:id", async (req, res) => {
     wbsItem,
     taskActivity,
     percentComplete,
+    startDate,
     originalCompletion,
     forecastedCompletion,
     actualCompletion,
@@ -126,6 +129,8 @@ milestonesRouter.put("/:id", async (req, res) => {
     }
     data.percentComplete = pct;
   }
+  const start = parseDate(startDate);
+  if (start !== undefined) data.startDate = start;
   const original = parseDate(originalCompletion);
   if (original !== undefined) data.originalCompletion = original;
   const forecasted = parseDate(forecastedCompletion);

@@ -18,6 +18,9 @@ export default function MilestoneFormModal({ milestone, onClose, onSave }: Props
   const [percentComplete, setPercentComplete] = useState(
     milestone?.percentComplete ?? 0
   );
+  const [startDate, setStartDate] = useState(
+    toDateInputValue(milestone?.startDate ?? null)
+  );
   const [originalCompletion, setOriginalCompletion] = useState(
     toDateInputValue(milestone?.originalCompletion ?? null)
   );
@@ -40,6 +43,7 @@ export default function MilestoneFormModal({ milestone, onClose, onSave }: Props
         wbsItem: wbsItem || null,
         taskActivity,
         percentComplete: Number(percentComplete),
+        startDate: startDate ? new Date(startDate).toISOString() : null,
         originalCompletion: originalCompletion
           ? new Date(originalCompletion).toISOString()
           : null,
@@ -115,6 +119,23 @@ export default function MilestoneFormModal({ milestone, onClose, onSave }: Props
                 {percentComplete}%
               </span>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Start Date
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Optional — leave blank to have this milestone start when the
+              previous one ends. Set a date if it starts early, overlaps, or
+              runs at the same time as another milestone.
+            </p>
           </div>
 
           <div className="grid grid-cols-3 gap-4">

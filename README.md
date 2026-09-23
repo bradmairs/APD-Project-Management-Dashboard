@@ -465,10 +465,11 @@ see **Formatted Report View** below.
 
 Each project has a **Milestones** panel — the source report's WBS schedule
 table: Task/Activity, an optional WBS Item code, Percentage Completed
-(shown as a progress bar), and Original / Forecasted / Actual Completion
-dates, plus free-text notes. A rolled-up "X% complete overall" figure next
-to the panel title is the average across all of a project's milestones,
-matching the source report's "Project Completion" summary row.
+(shown as a progress bar), an optional Start Date, and Original / Forecasted
+/ Actual Completion dates, plus free-text notes. A rolled-up "X% complete
+overall" figure next to the panel title is the average across all of a
+project's milestones, matching the source report's "Project Completion"
+summary row.
 
 Unlike Monthly Reports, milestones are a **live list**, not a per-month
 snapshot — the same way Tasks work. A project's WBS breakdown (Concept
@@ -488,17 +489,17 @@ only the project record itself needs an owner.
 
 The Schedule tab opens with a **Timeline** chart (`components/ProjectTimeline.tsx`)
 above the Milestones panel — a horizontal, date-scaled view of the same
-milestones plus every task with a due date. Milestone doesn't store its
-own start date (only completion dates — see the schema comment on that
-model), so each bar's start is inferred as the previous milestone's own
-end, chaining from the project's start date for the first one: a
-reasonable approximation of sequential WBS scheduling without inventing a
-field the data doesn't have. Each bar fills proportionally to that
-milestone's percent complete; tasks render as small diamond markers
-colored by status, on their own row beneath the milestone bars. A
-milestone with no completion date at all simply lists as "No dates set"
-rather than drawing a meaningless bar. This is a read-only visualization —
-editing still happens in the Milestones panel and Tasks list below it.
+milestones plus every task with a due date. A milestone's own Start Date is
+optional: most milestones simply run back-to-back, so leaving it blank
+infers the bar's start as the previous milestone's own end, chaining from
+the project's start date for the first one. Setting it explicitly is only
+needed for a milestone that starts early, overlaps the previous one, or
+otherwise runs concurrently rather than strictly in sequence — the
+Milestones panel shows "After previous" in place of a date for the common,
+chained case. Each bar fills proportionally to that milestone's percent
+complete; tasks render as small diamond markers colored by status, on their
+own row beneath the milestone bars. A milestone with no completion date at
+all simply lists as "No dates set" rather than drawing a meaningless bar.
 
 ## Variations
 
