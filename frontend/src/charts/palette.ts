@@ -33,6 +33,15 @@ export const TASK_STATUS_COLORS: Record<
 export const CASH_FLOW_ACTUAL = SEQUENTIAL_BLUE;
 export const CASH_FLOW_FORECAST = { light: "#eb6834", dark: "#d95926" };
 
+// Budget reference lines on the Spend vs Budget chart: the Original Budget
+// stays the existing neutral gray (CHART_TEXT_MUTED) since it never changes
+// once set; the Latest Approved Budget gets its own green so the two are
+// distinguishable when both are plotted at once — a deliberate departure
+// from "thresholds are always neutral gray" since here there are two
+// thresholds whose relationship (has the budget moved, and which way) is
+// the point of showing them together.
+export const BUDGET_LATEST_APPROVED = { light: "#3f9142", dark: "#5fbf62" };
+
 export type ChartToken = { light: string; dark: string };
 
 export function chartColor(token: ChartToken, theme: "light" | "dark"): string {

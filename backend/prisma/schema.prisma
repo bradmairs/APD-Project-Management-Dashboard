@@ -349,7 +349,15 @@ model Project {
   projectSponsor                 String?
   location                       String?
   contractor                     String?
+  // The budget as originally approved, set once at project setup.
   budget                         Decimal?                        @db.Decimal(14, 2)
+  // The budget as most recently approved (e.g. by the project board),
+  // tracked separately from `budget` so the two can be compared — on the
+  // Cash Flow chart in particular, where both are plotted as reference
+  // lines. Unlike the variations-derived revised budget (see
+  // frontend/src/variations.ts), this is entered directly rather than
+  // computed, since not every budget revision is raised as a Variation.
+  latestApprovedBudget           Decimal?                        @db.Decimal(14, 2)
   contingency                    Decimal?                        @db.Decimal(14, 2)
   contractValue                  Decimal?                        @db.Decimal(14, 2)
   startDate                      DateTime?

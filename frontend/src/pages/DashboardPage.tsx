@@ -497,7 +497,8 @@ export default function DashboardPage() {
                   { header: "Sponsor", key: "sponsor" },
                   { header: "Location", key: "location" },
                   { header: "Contractor", key: "contractor" },
-                  { header: "Budget", key: "budget" },
+                  { header: "Original Budget", key: "budget" },
+                  { header: "Latest Approved Budget", key: "latestApprovedBudget" },
                   { header: "Contract Value", key: "contractValue" },
                   { header: "Start Date", key: "startDate" },
                   { header: "Target Completion", key: "targetCompletion" },
@@ -514,6 +515,8 @@ export default function DashboardPage() {
                   location: p.location ?? "",
                   contractor: p.contractor ?? "",
                   budget: p.budget != null ? formatCurrency(p.budget) : "",
+                  latestApprovedBudget:
+                    p.latestApprovedBudget != null ? formatCurrency(p.latestApprovedBudget) : "",
                   contractValue: p.contractValue != null ? formatCurrency(p.contractValue) : "",
                   startDate: p.startDate ? formatDate(p.startDate) : "",
                   targetCompletion: p.targetCompletionDate ? formatDate(p.targetCompletionDate) : "",

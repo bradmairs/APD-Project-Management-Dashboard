@@ -33,6 +33,9 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
   const [location, setLocation] = useState(project?.location ?? "");
   const [contractor, setContractor] = useState(project?.contractor ?? "");
   const [budget, setBudget] = useState(project?.budget ?? "");
+  const [latestApprovedBudget, setLatestApprovedBudget] = useState(
+    project?.latestApprovedBudget ?? ""
+  );
   const [contingency, setContingency] = useState(project?.contingency ?? "");
   const [contractValue, setContractValue] = useState(
     project?.contractValue ?? ""
@@ -63,6 +66,9 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
         location: location || null,
         contractor: contractor || null,
         budget: budget ? String(budget) : null,
+        latestApprovedBudget: latestApprovedBudget
+          ? String(latestApprovedBudget)
+          : null,
         contingency: contingency ? String(contingency) : null,
         contractValue: contractValue ? String(contractValue) : null,
         startDate: startDate ? new Date(startDate).toISOString() : null,
@@ -229,7 +235,7 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Budget ($)
+                Original Budget ($)
               </label>
               <input
                 type="number"
@@ -238,6 +244,21 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
                 className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Latest Approved Budget ($)
+              </label>
+              <input
+                type="number"
+                value={latestApprovedBudget}
+                onChange={(e) => setLatestApprovedBudget(e.target.value)}
+                placeholder="Leave blank if unchanged from original"
+                className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Included Contingency ($)

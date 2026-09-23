@@ -1,7 +1,8 @@
 import { CashFlowEntry, Project, Variation } from "../types";
 import { formatCurrency } from "../format";
-import { approvedVariationsTotal, revisedBudget } from "../variations";
-import CumulativeSpendChartView from "./CumulativeSpendChartView";
+import { revisedBudget } from "../variations";
+import { BUDGET_LATEST_APPROVED, CHART_TEXT_MUTED } from "./palette";
+import CumulativeSpendChartView, { BudgetLine } from "./CumulativeSpendChartView";
 import {
   buildCumulativeSeries,
   buildMonthRange,
@@ -86,26 +87,59 @@ export default function PortfolioCumulativeSpendChart({
     lastActual ?? null
   );
 
-  const revisedBudgets = projects
-    .map((p) => revisedBudget(p, variationsByProject.get(p.id) ?? []))
+  const originalBudgets = projects
+    .map((p) => (p.budget !== null ? Number(p.budget) : null))
     .filter((b): b is number => b !== null);
-  const totalBudget =
-    revisedBudgets.length === 0 ? null : revisedBudgets.reduce((sum, b) => sum + b, 0);
-  const isRevised = approvedVariationsTotal(variations) !== 0;
-  const budgetLabel = isRevised ? "Total Revised Budget" : "Total Approved Budget";
+  const totalOriginalBudget =
+    originalBudgets.length === 0 ? null : originalBudgets.reduce((sum, b) => sum + b, 0);
+
+  const latestApprovedBudgets = projects
+    .map((p) =>
+      p.latestApprovedBudget !== null
+        ? Number(p.latestApprovedBudget)
+        : revisedBudget(p, variationsByProject.get(p.id) ?? [])
+    )
+    .filter((b): b is number => b !== null);
+  const totalLatestApprovedBudget =
+    latestApprovedBudgets.length === 0
+      ? null
+      : latestApprovedBudgets.reduce((sum, b) => sum + b, 0);
+
+  const budgetLines: BudgetLine[] = [];
+  if (totalOriginalBudget !== null) {
+    budgetLines.push({
+      value: totalOriginalBudget,
+      label: "Total Original Budget",
+      color: CHART_TEXT_MUTED,
+    });
+  }
+  if (
+    totalLatestApprovedBudget !== null &&
+    totalLatestApprovedBudget !== totalOriginalBudget
+  ) {
+    budgetLines.push({
+      value: totalLatestApprovedBudget,
+      label: "Total Latest Approved Budget",
+      color: BUDGET_LATEST_APPROVED,
+    });
+  }
 
   return (
     <CumulativeSpendChartView
       months={months}
       cumulative={cumulative}
       lastActualIndex={lastActualIndex}
-      budget={totalBudget}
-      budgetLabel={budgetLabel}
+      budgetLines={budgetLines}
       footerNote={`Cumulative spend across ${projects.length} project${
         projects.length === 1 ? "" : "s"
       } from ${monthLabel(rangeStart)} to ${monthLabel(rangeEnd)}${
-        totalBudget !== null
-          ? `, against a total ${isRevised ? "revised" : "approved"} budget of ${formatCurrency(totalBudget)}`
+        totalOriginalBudget !== null
+          ? `, against a total original budget of ${formatCurrency(totalOriginalBudget)}`
+          : ""
+      }${
+        totalLatestApprovedBudget !== null &&
+        totalLatestApprovedBudget !== totalOriginalBudget
+          ? ` and a total latest approved budget of ${formatCurrency(totalLatestApprovedBudget)}`
           : ""
       }.`}
     />

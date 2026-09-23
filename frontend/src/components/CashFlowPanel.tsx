@@ -72,7 +72,13 @@ export default function CashFlowPanel({
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
-        <Stat label="Approved Budget" value={formatCurrency(project.budget)} />
+        <Stat label="Original Budget" value={formatCurrency(project.budget)} />
+        {project.latestApprovedBudget !== null && (
+          <Stat
+            label="Latest Approved Budget"
+            value={formatCurrency(project.latestApprovedBudget)}
+          />
+        )}
         {approvedVariations !== 0 && (
           <>
             <Stat label="Approved Variations" value={formatCurrency(approvedVariations)} />

@@ -180,9 +180,15 @@ export default function MonthlyReportViewPage() {
           <ReportSection title="Cash Flows">
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
               <ReportField
-                label="Approved Budget"
+                label="Original Budget"
                 value={formatCurrency(project.budget)}
               />
+              {project.latestApprovedBudget !== null && (
+                <ReportField
+                  label="Latest Approved Budget"
+                  value={formatCurrency(project.latestApprovedBudget)}
+                />
+              )}
               <ReportField
                 label="Included Contingency"
                 value={formatCurrency(project.contingency)}
