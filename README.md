@@ -1472,6 +1472,21 @@ and back always starts from the default tab. Every panel that was already
 on these pages is still there; this only changed which section of the
 page shows it.
 
+### Jump To
+
+Several project detail tabs still stack many panels (Budget & Contract
+alone has nine), so a **Jump to:** row of pills
+(`components/SectionJumpNav.tsx`) sits just below the tab bar, one pill per
+panel in that tab, in the same top-to-bottom order they're stacked in.
+Clicking one smooth-scrolls straight to that panel
+(`element.scrollIntoView`) rather than scrolling past everything above it
+first. Each panel is wrapped in a `<div id="...">` in
+`ProjectDetailPage.tsx` that the matching pill targets; the list of
+{id, label} pairs per tab is a static map there (`TAB_SECTIONS`) rather
+than derived from the JSX, since the panel components themselves don't
+know their own tab or position. A tab with only one section (AI Assistant)
+shows no jump row at all, since there'd be nowhere else to jump to.
+
 ## CSV Export
 
 The highest-traffic registers — Risks & Opportunities, Actions & Decisions,

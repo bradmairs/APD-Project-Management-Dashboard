@@ -258,6 +258,7 @@ import { canModifyProject } from "../permissions";
 import UserMenu from "../components/UserMenu";
 import { useAuth } from "../auth/AuthContext";
 import GvwLogo from "../components/GvwLogo";
+import SectionJumpNav, { JumpSection } from "../components/SectionJumpNav";
 import { useUndoToast } from "../undo/UndoToastContext";
 
 type ProjectTabId = "overview" | "schedule" | "budget" | "quality" | "site" | "ai";
@@ -270,6 +271,58 @@ const PROJECT_TABS: { id: ProjectTabId; label: string }[] = [
   { id: "site", label: "Site & Records" },
   { id: "ai", label: "AI Assistant" },
 ];
+
+// One entry per panel rendered in that tab below — same order top to bottom,
+// each id matching the wrapper <div> around that panel's JSX. Kept as a flat
+// list per tab (rather than deriving it from the JSX) since the panels
+// themselves don't know their own display order or which tab they're in.
+const TAB_SECTIONS: Record<ProjectTabId, JumpSection[]> = {
+  overview: [
+    { id: "stakeholders", label: "Stakeholders" },
+    { id: "actions", label: "Actions & Decisions" },
+    { id: "meeting-minutes", label: "Meeting Minutes" },
+    { id: "activity", label: "Activity" },
+  ],
+  schedule: [
+    { id: "timeline", label: "Timeline" },
+    { id: "milestones", label: "Milestones" },
+    { id: "tasks", label: "Tasks" },
+    { id: "eot-claims", label: "Extension of Time" },
+    { id: "checklist", label: "Commissioning & Handover" },
+  ],
+  budget: [
+    { id: "contracts", label: "Contracts" },
+    { id: "cash-flow", label: "Cash Flow" },
+    { id: "variations", label: "Variations" },
+    { id: "payment-claims", label: "Payment Claims" },
+    { id: "insurance-warranties", label: "Insurance & Warranties" },
+    { id: "permits", label: "Permits & Approvals" },
+    { id: "tender-packages", label: "Procurement & Tenders" },
+    { id: "subcontractors", label: "Subcontractors" },
+    { id: "performance-reviews", label: "Performance Reviews" },
+  ],
+  quality: [
+    { id: "risks", label: "Risk Register" },
+    { id: "sqe", label: "Safety/Quality/Environment" },
+    { id: "environmental-monitoring", label: "Environmental Monitoring" },
+    { id: "safety-inspections", label: "Safety Inspections" },
+    { id: "defects", label: "Defects & Punch List" },
+    { id: "rfis", label: "RFIs" },
+    { id: "documents", label: "Document Register" },
+    { id: "correspondence", label: "Correspondence" },
+  ],
+  site: [
+    { id: "site-visits", label: "Site Visits" },
+    { id: "enquiries", label: "Community Enquiries" },
+    { id: "attachments", label: "Attachments" },
+    { id: "archive-links", label: "Archive Links" },
+    { id: "monthly-reports", label: "Monthly Reports" },
+    { id: "lessons-learned", label: "Lessons Learned" },
+    { id: "training-records", label: "Training Records" },
+    { id: "toolbox-talks", label: "Toolbox Talks" },
+  ],
+  ai: [],
+};
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -1302,40 +1355,50 @@ export default function ProjectDetailPage() {
         </div>
 
         <Tabs tabs={PROJECT_TABS} active={activeTab} onChange={setActiveTab} />
+        <SectionJumpNav sections={TAB_SECTIONS[activeTab]} />
 
         <div className="space-y-6">
           {activeTab === "overview" && (
             <>
-              <StakeholdersPanel
-                stakeholders={stakeholders}
-                onCreate={handleCreateStakeholder}
-                onUpdate={handleUpdateStakeholder}
-                onDelete={handleDeleteStakeholder}
-              />
+              <div id="stakeholders">
+                <StakeholdersPanel
+                  stakeholders={stakeholders}
+                  onCreate={handleCreateStakeholder}
+                  onUpdate={handleUpdateStakeholder}
+                  onDelete={handleDeleteStakeholder}
+                />
+              </div>
 
-              <ActionsPanel
-                actionItems={actionItems}
-                onCreate={handleCreateActionItem}
-                onUpdate={handleUpdateActionItem}
-                onDelete={handleDeleteActionItem}
-              />
+              <div id="actions">
+                <ActionsPanel
+                  actionItems={actionItems}
+                  onCreate={handleCreateActionItem}
+                  onUpdate={handleUpdateActionItem}
+                  onDelete={handleDeleteActionItem}
+                />
+              </div>
 
-              <MeetingMinutesPanel
-                projectName={project.name}
-                meetings={meetingMinutes}
-                attachments={attachments}
-                actionItems={actionItems}
-                onCreate={handleCreateMeetingMinutes}
-                onUpdate={handleUpdateMeetingMinutes}
-                onDelete={handleDeleteMeetingMinutes}
-                onUploadAttachment={handleUploadMeetingAttachment}
-                onDeleteAttachment={handleDeleteAttachment}
-                onCreateAction={handleCreateActionItem}
-                onExtractActions={handleExtractMeetingActions}
-                onGenerateDraft={handleGenerateMeetingMinutesDraft}
-              />
+              <div id="meeting-minutes">
+                <MeetingMinutesPanel
+                  projectName={project.name}
+                  meetings={meetingMinutes}
+                  attachments={attachments}
+                  actionItems={actionItems}
+                  onCreate={handleCreateMeetingMinutes}
+                  onUpdate={handleUpdateMeetingMinutes}
+                  onDelete={handleDeleteMeetingMinutes}
+                  onUploadAttachment={handleUploadMeetingAttachment}
+                  onDeleteAttachment={handleDeleteAttachment}
+                  onCreateAction={handleCreateActionItem}
+                  onExtractActions={handleExtractMeetingActions}
+                  onGenerateDraft={handleGenerateMeetingMinutesDraft}
+                />
+              </div>
 
-              <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
+              <div
+                id="activity"
+                className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4"
+              >
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
                   Activity
                 </h2>
@@ -1346,235 +1409,295 @@ export default function ProjectDetailPage() {
 
           {activeTab === "schedule" && (
             <>
-              <ProjectTimeline
-                project={project}
-                milestones={milestones}
-                tasks={project.tasks ?? []}
-                onUpdateMilestone={handleUpdateMilestone}
-              />
+              <div id="timeline">
+                <ProjectTimeline
+                  project={project}
+                  milestones={milestones}
+                  tasks={project.tasks ?? []}
+                  onUpdateMilestone={handleUpdateMilestone}
+                />
+              </div>
 
-              <MilestonesPanel
-                milestones={milestones}
-                onCreate={handleCreateMilestone}
-                onUpdate={handleUpdateMilestone}
-                onDelete={handleDeleteMilestone}
-                onReorder={handleReorderMilestone}
-              />
+              <div id="milestones">
+                <MilestonesPanel
+                  milestones={milestones}
+                  onCreate={handleCreateMilestone}
+                  onUpdate={handleUpdateMilestone}
+                  onDelete={handleDeleteMilestone}
+                  onReorder={handleReorderMilestone}
+                />
+              </div>
 
-              <ApplyTaskTemplateControl onApply={handleApplyTaskTemplate} />
+              <div id="tasks" className="space-y-3">
+                <ApplyTaskTemplateControl onApply={handleApplyTaskTemplate} />
 
-              <TaskList
-                tasks={project.tasks ?? []}
-                onAdd={handleAddTask}
-                onUpdate={handleUpdateTask}
-                onDelete={handleDeleteTask}
-              />
+                <TaskList
+                  tasks={project.tasks ?? []}
+                  onAdd={handleAddTask}
+                  onUpdate={handleUpdateTask}
+                  onDelete={handleDeleteTask}
+                />
+              </div>
 
-              <EotPanel
-                claims={eotClaims}
-                onCreate={handleCreateEotClaim}
-                onUpdate={handleUpdateEotClaim}
-                onDelete={handleDeleteEotClaim}
-              />
+              <div id="eot-claims">
+                <EotPanel
+                  claims={eotClaims}
+                  onCreate={handleCreateEotClaim}
+                  onUpdate={handleUpdateEotClaim}
+                  onDelete={handleDeleteEotClaim}
+                />
+              </div>
 
-              <ChecklistPanel
-                items={checklistItems}
-                onCreate={handleCreateChecklistItem}
-                onUpdate={handleUpdateChecklistItem}
-                onDelete={handleDeleteChecklistItem}
-              />
+              <div id="checklist">
+                <ChecklistPanel
+                  items={checklistItems}
+                  onCreate={handleCreateChecklistItem}
+                  onUpdate={handleUpdateChecklistItem}
+                  onDelete={handleDeleteChecklistItem}
+                />
+              </div>
             </>
           )}
 
           {activeTab === "budget" && (
             <>
-              <ContractsPanel
-                contracts={contracts}
-                onCreate={handleCreateContract}
-                onUpdate={handleUpdateContract}
-                onDelete={handleDeleteContract}
-              />
+              <div id="contracts">
+                <ContractsPanel
+                  contracts={contracts}
+                  onCreate={handleCreateContract}
+                  onUpdate={handleUpdateContract}
+                  onDelete={handleDeleteContract}
+                />
+              </div>
 
-              <CashFlowPanel
-                project={project}
-                entries={cashFlowEntries}
-                variations={variations}
-                onUpsert={handleUpsertCashFlowEntry}
-                onDelete={handleDeleteCashFlowEntry}
-              />
+              <div id="cash-flow">
+                <CashFlowPanel
+                  project={project}
+                  entries={cashFlowEntries}
+                  variations={variations}
+                  onUpsert={handleUpsertCashFlowEntry}
+                  onDelete={handleDeleteCashFlowEntry}
+                />
+              </div>
 
-              <VariationsPanel
-                variations={variations}
-                onCreate={handleCreateVariation}
-                onUpdate={handleUpdateVariation}
-                onDelete={handleDeleteVariation}
-              />
+              <div id="variations">
+                <VariationsPanel
+                  variations={variations}
+                  onCreate={handleCreateVariation}
+                  onUpdate={handleUpdateVariation}
+                  onDelete={handleDeleteVariation}
+                />
+              </div>
 
-              <PaymentClaimsPanel
-                claims={paymentClaims}
-                onCreate={handleCreatePaymentClaim}
-                onUpdate={handleUpdatePaymentClaim}
-                onDelete={handleDeletePaymentClaim}
-              />
+              <div id="payment-claims">
+                <PaymentClaimsPanel
+                  claims={paymentClaims}
+                  onCreate={handleCreatePaymentClaim}
+                  onUpdate={handleUpdatePaymentClaim}
+                  onDelete={handleDeletePaymentClaim}
+                />
+              </div>
 
-              <InsuranceWarrantiesPanel
-                items={insuranceWarranties}
-                onCreate={handleCreateInsuranceWarranty}
-                onUpdate={handleUpdateInsuranceWarranty}
-                onDelete={handleDeleteInsuranceWarranty}
-              />
+              <div id="insurance-warranties">
+                <InsuranceWarrantiesPanel
+                  items={insuranceWarranties}
+                  onCreate={handleCreateInsuranceWarranty}
+                  onUpdate={handleUpdateInsuranceWarranty}
+                  onDelete={handleDeleteInsuranceWarranty}
+                />
+              </div>
 
-              <PermitsPanel
-                permits={permits}
-                onCreate={handleCreatePermit}
-                onUpdate={handleUpdatePermit}
-                onDelete={handleDeletePermit}
-              />
+              <div id="permits">
+                <PermitsPanel
+                  permits={permits}
+                  onCreate={handleCreatePermit}
+                  onUpdate={handleUpdatePermit}
+                  onDelete={handleDeletePermit}
+                />
+              </div>
 
-              <TenderPackagesPanel
-                tenderPackages={tenderPackages}
-                onCreate={handleCreateTenderPackage}
-                onUpdate={handleUpdateTenderPackage}
-                onDelete={handleDeleteTenderPackage}
-              />
+              <div id="tender-packages">
+                <TenderPackagesPanel
+                  tenderPackages={tenderPackages}
+                  onCreate={handleCreateTenderPackage}
+                  onUpdate={handleUpdateTenderPackage}
+                  onDelete={handleDeleteTenderPackage}
+                />
+              </div>
 
-              <SubcontractorsPanel
-                subcontractors={subcontractors}
-                onCreate={handleCreateSubcontractor}
-                onUpdate={handleUpdateSubcontractor}
-                onDelete={handleDeleteSubcontractor}
-              />
+              <div id="subcontractors">
+                <SubcontractorsPanel
+                  subcontractors={subcontractors}
+                  onCreate={handleCreateSubcontractor}
+                  onUpdate={handleUpdateSubcontractor}
+                  onDelete={handleDeleteSubcontractor}
+                />
+              </div>
 
-              <PerformanceReviewsPanel
-                items={performanceReviews}
-                onCreate={handleCreatePerformanceReview}
-                onUpdate={handleUpdatePerformanceReview}
-                onDelete={handleDeletePerformanceReview}
-              />
+              <div id="performance-reviews">
+                <PerformanceReviewsPanel
+                  items={performanceReviews}
+                  onCreate={handleCreatePerformanceReview}
+                  onUpdate={handleUpdatePerformanceReview}
+                  onDelete={handleDeletePerformanceReview}
+                />
+              </div>
             </>
           )}
 
           {activeTab === "quality" && (
             <>
-              <RisksPanel
-                risks={risks}
-                onCreate={handleCreateRisk}
-                onUpdate={handleUpdateRisk}
-                onDelete={handleDeleteRisk}
-              />
+              <div id="risks">
+                <RisksPanel
+                  risks={risks}
+                  onCreate={handleCreateRisk}
+                  onUpdate={handleUpdateRisk}
+                  onDelete={handleDeleteRisk}
+                />
+              </div>
 
-              <SqePanel
-                records={sqeRecords}
-                onCreate={handleCreateSqeRecord}
-                onUpdate={handleUpdateSqeRecord}
-                onDelete={handleDeleteSqeRecord}
-              />
+              <div id="sqe">
+                <SqePanel
+                  records={sqeRecords}
+                  onCreate={handleCreateSqeRecord}
+                  onUpdate={handleUpdateSqeRecord}
+                  onDelete={handleDeleteSqeRecord}
+                />
+              </div>
 
-              <EnvironmentalMonitoringPanel
-                records={environmentalMonitoring}
-                onCreate={handleCreateEnvironmentalMonitoring}
-                onUpdate={handleUpdateEnvironmentalMonitoring}
-                onDelete={handleDeleteEnvironmentalMonitoring}
-              />
+              <div id="environmental-monitoring">
+                <EnvironmentalMonitoringPanel
+                  records={environmentalMonitoring}
+                  onCreate={handleCreateEnvironmentalMonitoring}
+                  onUpdate={handleUpdateEnvironmentalMonitoring}
+                  onDelete={handleDeleteEnvironmentalMonitoring}
+                />
+              </div>
 
-              <SafetyInspectionsPanel
-                inspections={safetyInspections}
-                onCreate={handleCreateSafetyInspection}
-                onUpdate={handleUpdateSafetyInspection}
-                onDelete={handleDeleteSafetyInspection}
-              />
+              <div id="safety-inspections">
+                <SafetyInspectionsPanel
+                  inspections={safetyInspections}
+                  onCreate={handleCreateSafetyInspection}
+                  onUpdate={handleUpdateSafetyInspection}
+                  onDelete={handleDeleteSafetyInspection}
+                />
+              </div>
 
-              <DefectsPanel
-                defects={defects}
-                onCreate={handleCreateDefect}
-                onUpdate={handleUpdateDefect}
-                onDelete={handleDeleteDefect}
-              />
+              <div id="defects">
+                <DefectsPanel
+                  defects={defects}
+                  onCreate={handleCreateDefect}
+                  onUpdate={handleUpdateDefect}
+                  onDelete={handleDeleteDefect}
+                />
+              </div>
 
-              <RfisPanel
-                rfis={rfis}
-                onCreate={handleCreateRfi}
-                onUpdate={handleUpdateRfi}
-                onDelete={handleDeleteRfi}
-              />
+              <div id="rfis">
+                <RfisPanel
+                  rfis={rfis}
+                  onCreate={handleCreateRfi}
+                  onUpdate={handleUpdateRfi}
+                  onDelete={handleDeleteRfi}
+                />
+              </div>
 
-              <DocumentsPanel
-                documents={documents}
-                onCreate={handleCreateDocument}
-                onUpdate={handleUpdateDocument}
-                onDelete={handleDeleteDocument}
-              />
+              <div id="documents">
+                <DocumentsPanel
+                  documents={documents}
+                  onCreate={handleCreateDocument}
+                  onUpdate={handleUpdateDocument}
+                  onDelete={handleDeleteDocument}
+                />
+              </div>
 
-              <CorrespondencePanel
-                items={correspondence}
-                onCreate={handleCreateCorrespondence}
-                onUpdate={handleUpdateCorrespondence}
-                onDelete={handleDeleteCorrespondence}
-              />
+              <div id="correspondence">
+                <CorrespondencePanel
+                  items={correspondence}
+                  onCreate={handleCreateCorrespondence}
+                  onUpdate={handleUpdateCorrespondence}
+                  onDelete={handleDeleteCorrespondence}
+                />
+              </div>
             </>
           )}
 
           {activeTab === "site" && (
             <>
-              <SiteVisitsPanel
-                siteVisits={siteVisits}
-                photosByVisit={groupPhotosByVisit(sitePhotos)}
-                allPhotos={sitePhotos}
-                onCreate={handleCreateSiteVisit}
-                onUpdate={handleUpdateSiteVisit}
-                onDelete={handleDeleteSiteVisit}
-                onUploadPhotos={handleUploadSiteVisitPhotos}
-                onDeletePhoto={handleDeleteSiteVisitPhoto}
-                onSyncPhotoToArchive={handleSyncPhotoToArchive}
-              />
+              <div id="site-visits">
+                <SiteVisitsPanel
+                  siteVisits={siteVisits}
+                  photosByVisit={groupPhotosByVisit(sitePhotos)}
+                  allPhotos={sitePhotos}
+                  onCreate={handleCreateSiteVisit}
+                  onUpdate={handleUpdateSiteVisit}
+                  onDelete={handleDeleteSiteVisit}
+                  onUploadPhotos={handleUploadSiteVisitPhotos}
+                  onDeletePhoto={handleDeleteSiteVisitPhoto}
+                  onSyncPhotoToArchive={handleSyncPhotoToArchive}
+                />
+              </div>
 
-              <EnquiriesPanel
-                enquiries={communityEnquiries}
-                onCreate={handleCreateCommunityEnquiry}
-                onUpdate={handleUpdateCommunityEnquiry}
-                onDelete={handleDeleteCommunityEnquiry}
-              />
+              <div id="enquiries">
+                <EnquiriesPanel
+                  enquiries={communityEnquiries}
+                  onCreate={handleCreateCommunityEnquiry}
+                  onUpdate={handleUpdateCommunityEnquiry}
+                  onDelete={handleDeleteCommunityEnquiry}
+                />
+              </div>
 
-              <AttachmentsPanel
-                attachments={attachments}
-                onUpload={handleUploadAttachment}
-                onDelete={handleDeleteAttachment}
-              />
+              <div id="attachments">
+                <AttachmentsPanel
+                  attachments={attachments}
+                  onUpload={handleUploadAttachment}
+                  onDelete={handleDeleteAttachment}
+                />
+              </div>
 
-              <ArchiveLinksPanel
-                links={archiveLinks}
-                onCreate={handleCreateArchiveLink}
-                onDelete={handleDeleteArchiveLink}
-              />
+              <div id="archive-links">
+                <ArchiveLinksPanel
+                  links={archiveLinks}
+                  onCreate={handleCreateArchiveLink}
+                  onDelete={handleDeleteArchiveLink}
+                />
+              </div>
 
-              <MonthlyReportsPanel
-                reports={reports}
-                currentUser={user}
-                onCreate={handleCreateReport}
-                onUpdate={handleUpdateReport}
-                onDelete={handleDeleteReport}
-              />
+              <div id="monthly-reports">
+                <MonthlyReportsPanel
+                  reports={reports}
+                  currentUser={user}
+                  onCreate={handleCreateReport}
+                  onUpdate={handleUpdateReport}
+                  onDelete={handleDeleteReport}
+                />
+              </div>
 
-              <LessonsLearnedPanel
-                lessons={lessons}
-                onCreate={handleCreateLesson}
-                onUpdate={handleUpdateLesson}
-                onDelete={handleDeleteLesson}
-              />
+              <div id="lessons-learned">
+                <LessonsLearnedPanel
+                  lessons={lessons}
+                  onCreate={handleCreateLesson}
+                  onUpdate={handleUpdateLesson}
+                  onDelete={handleDeleteLesson}
+                />
+              </div>
 
-              <TrainingRecordsPanel
-                items={trainingRecords}
-                onCreate={handleCreateTrainingRecord}
-                onUpdate={handleUpdateTrainingRecord}
-                onDelete={handleDeleteTrainingRecord}
-              />
+              <div id="training-records">
+                <TrainingRecordsPanel
+                  items={trainingRecords}
+                  onCreate={handleCreateTrainingRecord}
+                  onUpdate={handleUpdateTrainingRecord}
+                  onDelete={handleDeleteTrainingRecord}
+                />
+              </div>
 
-              <ToolboxTalksPanel
-                talks={toolboxTalks}
-                onCreate={handleCreateToolboxTalk}
-                onUpdate={handleUpdateToolboxTalk}
-                onDelete={handleDeleteToolboxTalk}
-              />
+              <div id="toolbox-talks">
+                <ToolboxTalksPanel
+                  talks={toolboxTalks}
+                  onCreate={handleCreateToolboxTalk}
+                  onUpdate={handleUpdateToolboxTalk}
+                  onDelete={handleDeleteToolboxTalk}
+                />
+              </div>
             </>
           )}
 
