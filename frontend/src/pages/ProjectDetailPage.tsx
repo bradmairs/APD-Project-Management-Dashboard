@@ -253,12 +253,13 @@ import HealthBadge from "../components/HealthBadge";
 import { computeProjectHealth } from "../health";
 import { revisedCompletionDate } from "../eot";
 import { STATUS_COLORS, STATUS_LABELS } from "../statusMeta";
-import { formatCurrency, formatDate } from "../format";
+import { formatCurrency, formatDate, formatReportMonth } from "../format";
 import { canModifyProject } from "../permissions";
 import UserMenu from "../components/UserMenu";
 import { useAuth } from "../auth/AuthContext";
 import GvwLogo from "../components/GvwLogo";
 import SectionJumpNav, { JumpSection } from "../components/SectionJumpNav";
+import { useUndoToast } from "../undo/UndoToastContext";
 
 type ProjectTabId = "overview" | "schedule" | "budget" | "quality" | "site" | "ai";
 
@@ -327,6 +328,7 @@ export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { notifyUndo } = useUndoToast();
   const [project, setProject] = useState<Project | null>(null);
   const [activity, setActivity] = useState<ActivityLogEntry[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -520,6 +522,10 @@ export default function ProjectDetailPage() {
   async function handleDeleteTask(task: Task) {
     await deleteTask(task.id);
     await load();
+    notifyUndo(`Task "${task.title}" deleted.`, async () => {
+      await createTask(project!.id, task);
+      await load();
+    });
   }
 
   async function handleApplyTaskTemplate(templateId: string) {
@@ -554,6 +560,13 @@ export default function ProjectDetailPage() {
     if (!confirm(`Remove the link to "${link.label}"? This only removes the link, not the item itself in the Archive.`)) return;
     await deleteArchiveLink(link.id);
     await load();
+    notifyUndo(`Archive link "${link.label}" removed.`, () =>
+      handleCreateArchiveLink({
+        archiveType: link.archiveType,
+        archiveId: link.archiveId,
+        label: link.label,
+      })
+    );
   }
 
   async function handleSyncPhotoToArchive(photoId: string) {
@@ -578,6 +591,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteReport(report: MonthlyReport) {
     await deleteMonthlyReport(report.id);
     await load();
+    notifyUndo(`Monthly report for ${formatReportMonth(report.reportingMonth)} deleted.`, () =>
+      handleCreateReport(report)
+    );
   }
 
   async function handleCreateMilestone(data: Partial<MilestoneInput>) {
@@ -597,6 +613,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteMilestone(milestone: Milestone) {
     await deleteMilestone(milestone.id);
     await load();
+    notifyUndo(`Milestone "${milestone.taskActivity}" deleted.`, () =>
+      handleCreateMilestone(milestone)
+    );
   }
 
   async function handleReorderMilestone(
@@ -616,6 +635,10 @@ export default function ProjectDetailPage() {
   async function handleDeleteCashFlowEntry(entry: CashFlowEntry) {
     await deleteCashFlowEntry(entry.id);
     await load();
+    notifyUndo(
+      `${formatReportMonth(entry.month)} ${entry.type.toLowerCase()} entry deleted.`,
+      () => handleUpsertCashFlowEntry(entry)
+    );
   }
 
   async function handleCreateSiteVisit(data: Partial<SiteVisitInput>) {
@@ -635,6 +658,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteSiteVisit(siteVisit: SiteVisit) {
     await deleteSiteVisit(siteVisit.id);
     await load();
+    notifyUndo(`Site visit at "${siteVisit.location}" deleted.`, () =>
+      handleCreateSiteVisit(siteVisit)
+    );
   }
 
   async function handleUploadSiteVisitPhotos(siteVisit: SiteVisit, files: File[]) {
@@ -664,6 +690,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteVariation(variation: Variation) {
     await deleteVariation(variation.id);
     await load();
+    notifyUndo(`Variation "${variation.title}" deleted.`, () =>
+      handleCreateVariation(variation)
+    );
   }
 
   async function handleCreateRisk(data: Partial<RiskInput>) {
@@ -680,6 +709,7 @@ export default function ProjectDetailPage() {
   async function handleDeleteRisk(risk: Risk) {
     await deleteRisk(risk.id);
     await load();
+    notifyUndo(`Risk "${risk.title}" deleted.`, () => handleCreateRisk(risk));
   }
 
   async function handleCreateActionItem(data: Partial<ActionItemInput>) {
@@ -699,6 +729,7 @@ export default function ProjectDetailPage() {
   async function handleDeleteActionItem(actionItem: ActionItem) {
     await deleteActionItem(actionItem.id);
     await load();
+    notifyUndo(`"${actionItem.title}" deleted.`, () => handleCreateActionItem(actionItem));
   }
 
   async function handleCreateStakeholder(data: Partial<StakeholderInput>) {
@@ -718,6 +749,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteStakeholder(stakeholder: Stakeholder) {
     await deleteStakeholder(stakeholder.id);
     await load();
+    notifyUndo(`Stakeholder "${stakeholder.name}" deleted.`, () =>
+      handleCreateStakeholder(stakeholder)
+    );
   }
 
   async function handleCreatePermit(data: Partial<PermitInput>) {
@@ -734,6 +768,7 @@ export default function ProjectDetailPage() {
   async function handleDeletePermit(permit: Permit) {
     await deletePermit(permit.id);
     await load();
+    notifyUndo(`Permit "${permit.title}" deleted.`, () => handleCreatePermit(permit));
   }
 
   async function handleCreateLesson(data: Partial<LessonLearnedInput>) {
@@ -753,6 +788,7 @@ export default function ProjectDetailPage() {
   async function handleDeleteLesson(lesson: LessonLearned) {
     await deleteLessonLearned(lesson.id);
     await load();
+    notifyUndo(`Lesson "${lesson.title}" deleted.`, () => handleCreateLesson(lesson));
   }
 
   async function handleCreateSqeRecord(data: Partial<SqeRecordInput>) {
@@ -772,6 +808,7 @@ export default function ProjectDetailPage() {
   async function handleDeleteSqeRecord(record: SqeRecord) {
     await deleteSqeRecord(record.id);
     await load();
+    notifyUndo(`SQE record "${record.title}" deleted.`, () => handleCreateSqeRecord(record));
   }
 
   async function handleCreateEnvironmentalMonitoring(
@@ -793,6 +830,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteEnvironmentalMonitoring(record: EnvironmentalMonitoringRecord) {
     await deleteEnvironmentalMonitoring(record.id);
     await load();
+    notifyUndo(`"${record.parameter}" reading deleted.`, () =>
+      handleCreateEnvironmentalMonitoring(record)
+    );
   }
 
   async function handleCreateSafetyInspection(data: Partial<SafetyInspectionInput>) {
@@ -812,6 +852,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteSafetyInspection(inspection: SafetyInspection) {
     await deleteSafetyInspection(inspection.id);
     await load();
+    notifyUndo(`"${inspection.inspectionType}" inspection deleted.`, () =>
+      handleCreateSafetyInspection(inspection)
+    );
   }
 
   async function handleCreateTenderPackage(data: Partial<TenderPackageInput>) {
@@ -831,6 +874,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteTenderPackage(tenderPackage: TenderPackage) {
     await deleteTenderPackage(tenderPackage.id);
     await load();
+    notifyUndo(`Tender package "${tenderPackage.title}" deleted.`, () =>
+      handleCreateTenderPackage(tenderPackage)
+    );
   }
 
   async function handleCreateEotClaim(data: Partial<EotClaimInput>) {
@@ -847,6 +893,7 @@ export default function ProjectDetailPage() {
   async function handleDeleteEotClaim(claim: EotClaim) {
     await deleteEotClaim(claim.id);
     await load();
+    notifyUndo(`EOT claim "${claim.title}" deleted.`, () => handleCreateEotClaim(claim));
   }
 
   async function handleCreateChecklistItem(data: Partial<ChecklistItemInput>) {
@@ -863,6 +910,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteChecklistItem(item: ChecklistItem) {
     await deleteChecklistItem(item.id);
     await load();
+    notifyUndo(`Checklist item "${item.title}" deleted.`, () =>
+      handleCreateChecklistItem(item)
+    );
   }
 
   async function handleCreateDefect(data: Partial<DefectItemInput>) {
@@ -879,6 +929,7 @@ export default function ProjectDetailPage() {
   async function handleDeleteDefect(defect: DefectItem) {
     await deleteDefect(defect.id);
     await load();
+    notifyUndo(`Defect "${defect.title}" deleted.`, () => handleCreateDefect(defect));
   }
 
   async function handleCreatePaymentClaim(data: Partial<PaymentClaimInput>) {
@@ -898,6 +949,9 @@ export default function ProjectDetailPage() {
   async function handleDeletePaymentClaim(claim: PaymentClaim) {
     await deletePaymentClaim(claim.id);
     await load();
+    notifyUndo(`Payment claim "${claim.claimNumber}" deleted.`, () =>
+      handleCreatePaymentClaim(claim)
+    );
   }
 
   async function handleCreateInsuranceWarranty(data: Partial<InsuranceWarrantyInput>) {
@@ -917,6 +971,7 @@ export default function ProjectDetailPage() {
   async function handleDeleteInsuranceWarranty(item: InsuranceWarranty) {
     await deleteInsuranceWarranty(item.id);
     await load();
+    notifyUndo(`"${item.title}" deleted.`, () => handleCreateInsuranceWarranty(item));
   }
 
   async function handleCreateRfi(data: Partial<RfiInput>) {
@@ -933,6 +988,7 @@ export default function ProjectDetailPage() {
   async function handleDeleteRfi(rfi: Rfi) {
     await deleteRfi(rfi.id);
     await load();
+    notifyUndo(`RFI "${rfi.subject}" deleted.`, () => handleCreateRfi(rfi));
   }
 
   async function handleCreateCorrespondence(data: Partial<CorrespondenceInput>) {
@@ -952,6 +1008,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteCorrespondence(item: Correspondence) {
     await deleteCorrespondence(item.id);
     await load();
+    notifyUndo(`Correspondence "${item.subject}" deleted.`, () =>
+      handleCreateCorrespondence(item)
+    );
   }
 
   async function handleCreateTrainingRecord(data: Partial<TrainingRecordInput>) {
@@ -971,6 +1030,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteTrainingRecord(item: TrainingRecord) {
     await deleteTrainingRecord(item.id);
     await load();
+    notifyUndo(`Training record for "${item.personName}" deleted.`, () =>
+      handleCreateTrainingRecord(item)
+    );
   }
 
   async function handleCreatePerformanceReview(data: Partial<PerformanceReviewInput>) {
@@ -990,6 +1052,9 @@ export default function ProjectDetailPage() {
   async function handleDeletePerformanceReview(item: PerformanceReview) {
     await deletePerformanceReview(item.id);
     await load();
+    notifyUndo(`Performance review for "${item.revieweeName}" deleted.`, () =>
+      handleCreatePerformanceReview(item)
+    );
   }
 
   async function handleCreateToolboxTalk(data: Partial<ToolboxTalkInput>) {
@@ -1006,6 +1071,7 @@ export default function ProjectDetailPage() {
   async function handleDeleteToolboxTalk(item: ToolboxTalk) {
     await deleteToolboxTalk(item.id);
     await load();
+    notifyUndo(`Toolbox talk "${item.topic}" deleted.`, () => handleCreateToolboxTalk(item));
   }
 
   async function handleCreateDocument(data: Partial<DocumentRecordInput>) {
@@ -1025,6 +1091,7 @@ export default function ProjectDetailPage() {
   async function handleDeleteDocument(document: DocumentRecord) {
     await deleteDocument(document.id);
     await load();
+    notifyUndo(`Document "${document.title}" deleted.`, () => handleCreateDocument(document));
   }
 
   async function handleCreateCommunityEnquiry(data: Partial<CommunityEnquiryInput>) {
@@ -1044,6 +1111,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteCommunityEnquiry(enquiry: CommunityEnquiry) {
     await deleteCommunityEnquiry(enquiry.id);
     await load();
+    notifyUndo(`Community enquiry "${enquiry.reference ?? enquiry.description}" deleted.`, () =>
+      handleCreateCommunityEnquiry(enquiry)
+    );
   }
 
   async function handleCreateSubcontractor(data: Partial<SubcontractorInput>) {
@@ -1063,6 +1133,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteSubcontractor(subcontractor: Subcontractor) {
     await deleteSubcontractor(subcontractor.id);
     await load();
+    notifyUndo(`Subcontractor "${subcontractor.companyName}" deleted.`, () =>
+      handleCreateSubcontractor(subcontractor)
+    );
   }
 
   async function handleCreateContract(data: Partial<ContractRecordInput>) {
@@ -1082,6 +1155,9 @@ export default function ProjectDetailPage() {
   async function handleDeleteContract(contract: ContractRecord) {
     await deleteContract(contract.id);
     await load();
+    notifyUndo(`Contract with "${contract.partyName}" deleted.`, () =>
+      handleCreateContract(contract)
+    );
   }
 
   async function handleCreateMeetingMinutes(
@@ -1105,6 +1181,12 @@ export default function ProjectDetailPage() {
   async function handleDeleteMeetingMinutes(meeting: MeetingMinutes) {
     await deleteMeetingMinutes(meeting.id);
     await load();
+    notifyUndo(
+      `Meeting minutes for ${formatDate(meeting.meetingDate)} deleted (any attachments and linked actions are not restored).`,
+      async () => {
+        await handleCreateMeetingMinutes(meeting);
+      }
+    );
   }
 
   async function handleUploadMeetingAttachment(meetingId: string, file: File) {
