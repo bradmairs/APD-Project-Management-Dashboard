@@ -47,6 +47,7 @@ projectContractsRouter.post("/", async (req: Request<ProjectParams>, res: Respon
     contractNumber,
     contractForm,
     contractValue,
+    contingency,
     retentionPercent,
     defectsLiabilityMonths,
     executionDate,
@@ -75,6 +76,7 @@ projectContractsRouter.post("/", async (req: Request<ProjectParams>, res: Respon
       contractNumber: (contractNumber as string) || null,
       contractForm: (contractForm as string) || null,
       contractValue: parseNumber(contractValue) ?? null,
+      contingency: parseNumber(contingency) ?? null,
       retentionPercent: parseNumber(retentionPercent) ?? null,
       defectsLiabilityMonths: parseInteger(defectsLiabilityMonths) ?? null,
       executionDate: parseDate(executionDate) ?? null,
@@ -115,6 +117,7 @@ contractsRouter.put("/:id", async (req, res) => {
     contractNumber,
     contractForm,
     contractValue,
+    contingency,
     retentionPercent,
     defectsLiabilityMonths,
     executionDate,
@@ -143,6 +146,8 @@ contractsRouter.put("/:id", async (req, res) => {
   if (contractForm !== undefined) data.contractForm = contractForm || null;
   const value = parseNumber(contractValue);
   if (value !== undefined) data.contractValue = value;
+  const contingencyValue = parseNumber(contingency);
+  if (contingencyValue !== undefined) data.contingency = contingencyValue;
   const retention = parseNumber(retentionPercent);
   if (retention !== undefined) data.retentionPercent = retention;
   const dlp = parseInteger(defectsLiabilityMonths);

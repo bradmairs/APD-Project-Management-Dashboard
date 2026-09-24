@@ -166,6 +166,18 @@ export function getUpcomingTasks(): Promise<Task[]> {
   return fetch(`${API_BASE}/tasks/upcoming`).then((res) => handle(res));
 }
 
+export function getPortfolioTasks(): Promise<Task[]> {
+  return fetch(`${API_BASE}/tasks/portfolio`).then((res) => handle(res));
+}
+
+export function createPortfolioTask(data: Partial<TaskInput>): Promise<Task> {
+  return fetch(`${API_BASE}/tasks/portfolio`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
 export function createTask(
   projectId: string,
   data: Partial<TaskInput>

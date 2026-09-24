@@ -35,14 +35,18 @@ export type ProjectStatus =
   | "CANCELLED";
 
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE";
+export type TaskRecurrence = "NONE" | "DAILY" | "WEEKLY" | "MONTHLY";
 
 export interface Task {
   id: string;
-  projectId: string;
+  // Null for a portfolio-wide task — relevant to every project rather than
+  // scoped to one (e.g. "Complete monthly reports").
+  projectId: string | null;
   title: string;
   description: string | null;
   status: TaskStatus;
   dueDate: string | null;
+  recurrence: TaskRecurrence;
   createdAt: string;
   updatedAt: string;
   project?: { id: string; name: string };
@@ -98,7 +102,6 @@ export interface Project {
   contractor: string | null;
   budget: string | null;
   latestApprovedBudget: string | null;
-  contingency: string | null;
   contractValue: string | null;
   startDate: string | null;
   targetCompletionDate: string | null;
@@ -828,6 +831,7 @@ export interface ContractRecord {
   contractNumber: string | null;
   contractForm: string | null;
   contractValue: string | null;
+  contingency: string | null;
   retentionPercent: string | null;
   defectsLiabilityMonths: number | null;
   executionDate: string | null;

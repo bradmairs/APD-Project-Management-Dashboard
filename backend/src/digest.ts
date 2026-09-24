@@ -15,8 +15,9 @@ interface DigestItem {
   title: string;
   date: Date;
   overdue: boolean;
+  // Null for a portfolio-wide task, which has no project to link to.
   projectName: string;
-  projectId: string;
+  projectId: string | null;
 }
 
 // Mirrors the thresholds and overdue/due-soon logic the frontend's
@@ -60,8 +61,8 @@ export async function buildDigestItems(): Promise<DigestItem[]> {
       title: t.title,
       date: t.dueDate,
       overdue: t.dueDate < now,
-      projectName: t.project.name,
-      projectId: t.project.id,
+      projectName: t.project?.name ?? "Portfolio",
+      projectId: t.project?.id ?? null,
     });
   }
   for (const p of permits) {
@@ -109,9 +110,10 @@ function renderDigestHtml(items: DigestItem[], baseUrl: string | null): string {
   const rows = items
     .map((item) => {
       const dateLabel = item.date.toISOString().substring(0, 10);
-      const projectLabel = baseUrl
-        ? `<a href="${baseUrl.replace(/\/$/, "")}/projects/${item.projectId}">${escapeHtml(item.projectName)}</a>`
-        : escapeHtml(item.projectName);
+      const projectLabel =
+        baseUrl && item.projectId
+          ? `<a href="${baseUrl.replace(/\/$/, "")}/projects/${item.projectId}">${escapeHtml(item.projectName)}</a>`
+          : escapeHtml(item.projectName);
       return `<tr>
         <td style="padding:4px 8px;color:#64748b;font-size:12px;">${item.kind}</td>
         <td style="padding:4px 8px;">${escapeHtml(item.title)}</td>
