@@ -968,14 +968,18 @@ consultancy agreement or the head contractor's construction contract. A
 contract has a Party Type (Consultant or Contractor), Party Name,
 Discipline/Scope (e.g. "Structural Design"), an optional Contract Number
 and Contract Form (free text, with suggestions like "AS4000-1997" or
-"NEC4"), Contract Value, Retention (%), a Defects Liability Period in
-months, Execution/Start/Completion dates, a Status of
+"NEC4"), Contract Value, Contingency, Retention (%), a Defects Liability
+Period in months, Execution/Start/Completion dates, a Status of
 Active/Complete/Terminated (changeable inline), and Notes. This is
 distinct from `Project.contractor`/`Project.contractValue` (a single
 freeform pair of fields kept on the project itself for a quick-glance
 summary) — a project can have any number of Contracts records, e.g. one
-per design consultant plus the head construction contract. Open to any
-logged-in user to edit.
+per design consultant plus the head construction contract. Contingency in
+particular is deliberately scoped per contract rather than to the project
+as a whole — each contract's own risk allowance, not a single portfolio
+rollup — so it's entered here and nowhere else (not on the project's Edit
+form, and not among the Budget & Contract tab's cash flow stats). Open to
+any logged-in user to edit.
 
 ## Performance Reviews
 
@@ -1091,9 +1095,11 @@ already has one of that type overwrites it rather than erroring, so
 correcting a figure is just re-entering it.
 
 Above the entry list, a stat row shows Original Budget, Latest Approved
-Budget (when set), and Included Contingency (from the project's own
-fields) alongside three figures computed live from the entries, matching
-the "(formula)" cells in the source report:
+Budget (when set), and Contract Value (when set — relocated here from the
+project's top summary, since it belongs with the rest of the budget
+figures rather than the header shown on every tab) alongside three
+figures computed live from the entries, matching the "(formula)" cells in
+the source report:
 
 - **Expenditure to Date** — the sum of all Actual entries
 - **Forecast Total** — the Estimate at Completion: every month's Actual
@@ -1525,6 +1531,30 @@ status and due date: **Edit** on any task switches that row to an inline
 form for its title and description, with **Save**/**Cancel** — the same
 `PUT /api/tasks/:id` endpoint status/due-date changes already used,
 just with more fields.
+
+### Recurring Tasks
+
+Any task — a project's own or a Portfolio Task (below) — can be set to
+repeat Daily, Weekly, or Monthly via the same "Repeat" selector used when
+adding or editing it. Recurrence works by **recreating**, not by tracking
+an ongoing series: marking a recurring task Done immediately creates the
+next occurrence (same title/description, due date advanced by one
+interval from the completed task's own due date, or from today if it had
+none) as a new To Do row, while the completed one stays exactly as
+completed history. This mirrors the delete-undo toast's "recreate, don't
+restore" approach — no separate schedule/series model, just one extra
+field on `Task` (`recurrence`) and a few lines in the status-update route.
+
+### Portfolio Tasks
+
+The Dashboard's Projects tab opens with a **Portfolio Tasks** panel —
+the same task list component as a project's own Tasks, but for
+reminders relevant to every project rather than any single one (e.g.
+"Complete monthly reports for all projects"). A portfolio task is just a
+`Task` row with no `projectId` at all, so it supports the same editing,
+recurrence, and delete-undo as a project task; it's fetched and created
+through `/api/tasks/portfolio` rather than a project's nested `/tasks`
+route.
 
 ## Task Templates
 

@@ -29,6 +29,18 @@ enum TaskStatus {
   DONE
 }
 
+// How a Task repeats. Completing a task whose recurrence isn't NONE
+// creates the next occurrence (see routes/tasks.ts) rather than tracking
+// an ongoing series — the same "recreate, don't restore" philosophy as the
+// delete-undo toast, which keeps this a one-line addition instead of a
+// separate series/schedule model.
+enum TaskRecurrence {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
 enum Role {
   ADMIN
   MEMBER
@@ -358,7 +370,6 @@ model Project {
   // frontend/src/variations.ts), this is entered directly rather than
   // computed, since not every budget revision is raised as a Variation.
   latestApprovedBudget           Decimal?                        @db.Decimal(14, 2)
-  contingency                    Decimal?                        @db.Decimal(14, 2)
   contractValue                  Decimal?                        @db.Decimal(14, 2)
   startDate                      DateTime?
   targetCompletionDate           DateTime?
@@ -439,16 +450,22 @@ model TaskTemplateItem {
   @@index([templateId])
 }
 
+// projectId is nullable so a task can be portfolio-wide — relevant to every
+// project (e.g. "Complete monthly reports") — rather than scoped to one.
+// Such a task has no project relation at all, so it's unaffected by any
+// single project's lifecycle and is listed/managed separately from that
+// project's own Task list (see routes/tasks.ts's /portfolio endpoints).
 model Task {
-  id          String     @id @default(cuid())
-  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId   String
+  id          String         @id @default(cuid())
+  project     Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String?
   title       String
   description String?
-  status      TaskStatus @default(TODO)
+  status      TaskStatus     @default(TODO)
   dueDate     DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  recurrence  TaskRecurrence @default(NONE)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   @@index([projectId])
 }
@@ -637,17 +654,17 @@ model SiteVisitPhoto {
 // ENGINEERING_ARCHIVE_PUBLIC_URL rather than built fresh by the frontend,
 // so the frontend needs no archive-specific configuration of its own.
 model ArchiveLink {
-  id             String      @id @default(cuid())
-  project        Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId      String
-  archiveType    ArchiveItemType
-  archiveId      String
-  label          String
-  url            String
-  createdBy      User?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  createdById    String?
-  createdByName  String
-  createdAt      DateTime    @default(now())
+  id            String          @id @default(cuid())
+  project       Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String
+  archiveType   ArchiveItemType
+  archiveId     String
+  label         String
+  url           String
+  createdBy     User?           @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdById   String?
+  createdByName String
+  createdAt     DateTime        @default(now())
 
   @@index([projectId])
 }
@@ -1182,6 +1199,9 @@ model ContractRecord {
   contractNumber         String?
   contractForm           String?
   contractValue          Decimal?          @db.Decimal(14, 2)
+  // Contingency is tracked per contract, not as a single project-wide
+  // figure — each contract's own risk allowance, not a portfolio rollup.
+  contingency            Decimal?          @db.Decimal(14, 2)
   retentionPercent       Decimal?          @db.Decimal(5, 2)
   defectsLiabilityMonths Int?
   executionDate          DateTime?

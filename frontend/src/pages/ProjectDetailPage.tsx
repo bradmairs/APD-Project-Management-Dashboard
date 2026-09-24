@@ -64,6 +64,7 @@ import {
   SuggestedAction,
   Task,
   TaskInput,
+  TaskRecurrence,
   TaskStatus,
   TenderPackage,
   TenderPackageInput,
@@ -508,9 +509,13 @@ export default function ProjectDetailPage() {
     navigate("/");
   }
 
-  async function handleAddTask(title: string, dueDate: string | null) {
+  async function handleAddTask(
+    title: string,
+    dueDate: string | null,
+    recurrence: TaskRecurrence
+  ) {
     if (!project) return;
-    await createTask(project.id, { title, dueDate, status: "TODO" });
+    await createTask(project.id, { title, dueDate, status: "TODO", recurrence });
     await load();
   }
 
@@ -1331,10 +1336,6 @@ export default function ProjectDetailPage() {
               value={formatCurrency(project.latestApprovedBudget)}
             />
           )}
-          <Field
-            label="Contract Value"
-            value={formatCurrency(project.contractValue)}
-          />
           <Field label="Start Date" value={formatDate(project.startDate)} />
           <Field
             label="Target Completion"

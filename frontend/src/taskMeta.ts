@@ -1,4 +1,13 @@
-import { Task } from "./types";
+import { Task, TaskRecurrence } from "./types";
+
+export const ALL_TASK_RECURRENCES: TaskRecurrence[] = ["NONE", "DAILY", "WEEKLY", "MONTHLY"];
+
+export const TASK_RECURRENCE_LABELS: Record<TaskRecurrence, string> = {
+  NONE: "Does not repeat",
+  DAILY: "Repeats daily",
+  WEEKLY: "Repeats weekly",
+  MONTHLY: "Repeats monthly",
+};
 
 export function isTaskOverdue(task: Task): boolean {
   if (!task.dueDate || task.status === "DONE") return false;

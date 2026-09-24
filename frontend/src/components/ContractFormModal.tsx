@@ -27,6 +27,7 @@ export default function ContractFormModal({ contract, onClose, onSave }: Props) 
   const [contractNumber, setContractNumber] = useState(contract?.contractNumber ?? "");
   const [contractForm, setContractForm] = useState(contract?.contractForm ?? "");
   const [contractValue, setContractValue] = useState(contract?.contractValue ?? "");
+  const [contingency, setContingency] = useState(contract?.contingency ?? "");
   const [retentionPercent, setRetentionPercent] = useState(contract?.retentionPercent ?? "");
   const [defectsLiabilityMonths, setDefectsLiabilityMonths] = useState(
     contract?.defectsLiabilityMonths ?? ""
@@ -55,6 +56,7 @@ export default function ContractFormModal({ contract, onClose, onSave }: Props) 
         contractNumber: contractNumber || null,
         contractForm: contractForm || null,
         contractValue: contractValue || null,
+        contingency: contingency || null,
         retentionPercent: retentionPercent || null,
         defectsLiabilityMonths:
           defectsLiabilityMonths === "" ? null : Number(defectsLiabilityMonths),
@@ -177,7 +179,7 @@ export default function ContractFormModal({ contract, onClose, onSave }: Props) 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="min-w-0">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Contract Value
@@ -187,6 +189,19 @@ export default function ContractFormModal({ contract, onClose, onSave }: Props) 
                 step="0.01"
                 value={contractValue}
                 onChange={(e) => setContractValue(e.target.value)}
+                placeholder="Optional"
+                className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="min-w-0">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Contingency
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={contingency}
+                onChange={(e) => setContingency(e.target.value)}
                 placeholder="Optional"
                 className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
               />

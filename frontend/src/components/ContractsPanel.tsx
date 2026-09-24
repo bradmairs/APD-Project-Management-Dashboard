@@ -113,6 +113,9 @@ export default function ContractsPanel({ contracts, onCreate, onUpdate, onDelete
                       {contract.contractValue && (
                         <span>{formatCurrency(contract.contractValue)}</span>
                       )}
+                      {contract.contingency && (
+                        <span>Contingency: {formatCurrency(contract.contingency)}</span>
+                      )}
                       {contract.contractNumber && <span>{contract.contractNumber}</span>}
                       {contract.startDate && <span>Started {formatDate(contract.startDate)}</span>}
                     </div>

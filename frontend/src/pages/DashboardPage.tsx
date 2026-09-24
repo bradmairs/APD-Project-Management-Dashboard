@@ -21,14 +21,18 @@ import {
   Risk,
   SqeRecord,
   Task,
+  TaskInput,
+  TaskRecurrence,
   TenderPackage,
   PerformanceReview,
   TrainingRecord,
   Variation,
 } from "../types";
 import {
+  createPortfolioTask,
   createProject,
   deleteProject,
+  deleteTask,
   getAllActionItems,
   getAllCashFlowEntries,
   getAllCommunityEnquiries,
@@ -49,12 +53,15 @@ import {
   getAllPerformanceReviews,
   getAllTrainingRecords,
   getAllVariations,
+  getPortfolioTasks,
   getProjects,
   getRecentActivity,
   getUpcomingTasks,
   updateProject,
+  updateTask,
 } from "../api";
 import StatCards from "../components/StatCards";
+import TaskList from "../components/TaskList";
 import ProjectTable from "../components/ProjectTable";
 import ProjectFormModal from "../components/ProjectFormModal";
 import UpcomingDeadlines from "../components/UpcomingDeadlines";
@@ -92,6 +99,7 @@ import ExportCsvButton from "../components/ExportCsvButton";
 import { formatCurrency, formatDate } from "../format";
 import { DashboardView, addSavedView, loadSavedViews, removeSavedView } from "../savedViews";
 import { RagStatus } from "../types";
+import { useUndoToast } from "../undo/UndoToastContext";
 
 const RAG_LABELS: Record<RagStatus, string> = { GREEN: "Green", AMBER: "Amber", RED: "Red" };
 
@@ -109,8 +117,10 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, isViewer } = useAuth();
   const { theme } = useTheme();
+  const { notifyUndo } = useUndoToast();
   const [projects, setProjects] = useState<Project[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
+  const [portfolioTasks, setPortfolioTasks] = useState<Task[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityLogEntry[]>([]);
   const [cashFlowEntries, setCashFlowEntries] = useState<CashFlowEntry[]>([]);
   const [variations, setVariations] = useState<Variation[]>([]);
@@ -158,6 +168,7 @@ export default function DashboardPage() {
       const [
         projectData,
         taskData,
+        portfolioTaskData,
         activityData,
         cashFlowData,
         variationData,
@@ -181,6 +192,7 @@ export default function DashboardPage() {
       ] = await Promise.all([
         getProjects(),
         getUpcomingTasks(),
+        getPortfolioTasks(),
         getRecentActivity(),
         getAllCashFlowEntries(),
         getAllVariations(),
@@ -204,6 +216,7 @@ export default function DashboardPage() {
       ]);
       setProjects(projectData);
       setUpcomingTasks(taskData);
+      setPortfolioTasks(portfolioTaskData);
       setRecentActivity(activityData);
       setCashFlowEntries(cashFlowData);
       setVariations(variationData);
@@ -344,6 +357,29 @@ export default function DashboardPage() {
     await loadData();
   }
 
+  async function handleAddPortfolioTask(
+    title: string,
+    dueDate: string | null,
+    recurrence: TaskRecurrence
+  ) {
+    await createPortfolioTask({ title, dueDate, status: "TODO", recurrence });
+    await loadData();
+  }
+
+  async function handleUpdatePortfolioTask(task: Task, changes: Partial<TaskInput>) {
+    await updateTask(task.id, changes);
+    await loadData();
+  }
+
+  async function handleDeletePortfolioTask(task: Task) {
+    await deleteTask(task.id);
+    await loadData();
+    notifyUndo(`Task "${task.title}" deleted.`, async () => {
+      await createPortfolioTask(task);
+      await loadData();
+    });
+  }
+
   return (
     <div className="min-h-screen">
       <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
@@ -398,6 +434,17 @@ export default function DashboardPage() {
 
         {activeTab === "projects" && (
           <div className="space-y-6">
+            {!loading && (
+              <TaskList
+                tasks={portfolioTasks}
+                title="Portfolio Tasks"
+                description="Relevant to every project — not tied to any single one."
+                onAdd={handleAddPortfolioTask}
+                onUpdate={handleUpdatePortfolioTask}
+                onDelete={handleDeletePortfolioTask}
+              />
+            )}
+
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
               <div className="flex gap-2 flex-wrap">
                 <button

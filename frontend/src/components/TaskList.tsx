@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
-import { Task, TaskInput, TaskStatus } from "../types";
-import { isTaskOverdue } from "../taskMeta";
+import { Task, TaskInput, TaskRecurrence, TaskStatus } from "../types";
+import { ALL_TASK_RECURRENCES, TASK_RECURRENCE_LABELS, isTaskOverdue } from "../taskMeta";
 
 const STATUS_ORDER: TaskStatus[] = ["TODO", "IN_PROGRESS", "DONE"];
 
@@ -17,18 +17,33 @@ function formatDate(value: string | null): string {
 
 interface Props {
   tasks: Task[];
-  onAdd: (title: string, dueDate: string | null) => Promise<void>;
+  title?: string;
+  description?: string;
+  onAdd: (
+    title: string,
+    dueDate: string | null,
+    recurrence: TaskRecurrence
+  ) => Promise<void>;
   onUpdate: (task: Task, changes: Partial<TaskInput>) => Promise<void>;
   onDelete: (task: Task) => Promise<void>;
 }
 
-export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
+export default function TaskList({
+  tasks,
+  title = "Tasks",
+  description,
+  onAdd,
+  onUpdate,
+  onDelete,
+}: Props) {
   const [newTitle, setNewTitle] = useState("");
   const [newDueDate, setNewDueDate] = useState("");
+  const [newRecurrence, setNewRecurrence] = useState<TaskRecurrence>("NONE");
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editRecurrence, setEditRecurrence] = useState<TaskRecurrence>("NONE");
   const [savingEdit, setSavingEdit] = useState(false);
 
   async function handleAdd(e: FormEvent) {
@@ -38,10 +53,12 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
     try {
       await onAdd(
         newTitle.trim(),
-        newDueDate ? new Date(newDueDate).toISOString() : null
+        newDueDate ? new Date(newDueDate).toISOString() : null,
+        newRecurrence
       );
       setNewTitle("");
       setNewDueDate("");
+      setNewRecurrence("NONE");
     } finally {
       setAdding(false);
     }
@@ -51,6 +68,7 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
     setEditingId(task.id);
     setEditTitle(task.title);
     setEditDescription(task.description ?? "");
+    setEditRecurrence(task.recurrence);
   }
 
   function cancelEdit() {
@@ -64,6 +82,7 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
       await onUpdate(task, {
         title: editTitle.trim(),
         description: editDescription.trim() || null,
+        recurrence: editRecurrence,
       });
       setEditingId(null);
     } finally {
@@ -76,9 +95,16 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          Tasks
-        </h2>
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {title}
+          </h2>
+          {description && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {description}
+            </p>
+          )}
+        </div>
         {tasks.length > 0 && (
           <span className="text-xs text-slate-500 dark:text-slate-400">
             {done}/{tasks.length} complete
@@ -112,6 +138,17 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
                       rows={2}
                       className="w-full text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1"
                     />
+                    <select
+                      value={editRecurrence}
+                      onChange={(e) => setEditRecurrence(e.target.value as TaskRecurrence)}
+                      className="text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1"
+                    >
+                      {ALL_TASK_RECURRENCES.map((r) => (
+                        <option key={r} value={r}>
+                          {TASK_RECURRENCE_LABELS[r]}
+                        </option>
+                      ))}
+                    </select>
                     <div className="flex justify-end gap-3">
                       <button
                         onClick={cancelEdit}
@@ -141,14 +178,21 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
                       className="h-4 w-4"
                     />
                     <div className="flex-1 min-w-0">
-                      <div
-                        className={`text-sm ${
-                          task.status === "DONE"
-                            ? "line-through text-slate-400 dark:text-slate-500"
-                            : "text-slate-900 dark:text-slate-100"
-                        }`}
-                      >
-                        {task.title}
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-sm ${
+                            task.status === "DONE"
+                              ? "line-through text-slate-400 dark:text-slate-500"
+                              : "text-slate-900 dark:text-slate-100"
+                          }`}
+                        >
+                          {task.title}
+                        </span>
+                        {task.recurrence !== "NONE" && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 shrink-0">
+                            {TASK_RECURRENCE_LABELS[task.recurrence]}
+                          </span>
+                        )}
                       </div>
                       {task.description && (
                         <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
@@ -218,6 +262,17 @@ export default function TaskList({ tasks, onAdd, onUpdate, onDelete }: Props) {
           onChange={(e) => setNewDueDate(e.target.value)}
           className="text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1.5"
         />
+        <select
+          value={newRecurrence}
+          onChange={(e) => setNewRecurrence(e.target.value as TaskRecurrence)}
+          className="text-sm rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-2 py-1.5"
+        >
+          {ALL_TASK_RECURRENCES.map((r) => (
+            <option key={r} value={r}>
+              {TASK_RECURRENCE_LABELS[r]}
+            </option>
+          ))}
+        </select>
         <button
           type="submit"
           disabled={adding || !newTitle.trim()}

@@ -189,10 +189,12 @@ export default function MonthlyReportViewPage() {
                   value={formatCurrency(project.latestApprovedBudget)}
                 />
               )}
-              <ReportField
-                label="Included Contingency"
-                value={formatCurrency(project.contingency)}
-              />
+              {project.contractValue !== null && (
+                <ReportField
+                  label="Contract Value"
+                  value={formatCurrency(project.contractValue)}
+                />
+              )}
               <ReportField
                 label="Expenditure to Date"
                 value={formatCurrency(expenditureToDate)}

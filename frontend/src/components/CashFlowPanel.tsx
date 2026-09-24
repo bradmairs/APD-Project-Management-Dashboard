@@ -85,7 +85,9 @@ export default function CashFlowPanel({
             <Stat label="Revised Budget" value={formatCurrency(currentBudget)} />
           </>
         )}
-        <Stat label="Contingency" value={formatCurrency(project.contingency)} />
+        {project.contractValue !== null && (
+          <Stat label="Contract Value" value={formatCurrency(project.contractValue)} />
+        )}
         <Stat label="Expenditure to Date" value={formatCurrency(expenditure)} />
         <Stat label="Forecast Total" value={formatCurrency(forecastTotal)} />
         <Stat
