@@ -1616,6 +1616,32 @@ through the same error-message UI every form already has. AI Assistant
 queries and organization-switching are intentionally exempt from the
 block, since neither mutates project data.
 
+## Undo for Deletes
+
+Every delete across the project detail page's registers — tasks,
+milestones, cash flow entries, risks, actions, stakeholders, permits,
+lessons learned, meeting minutes, and every other register — shows a brief
+"Deleted. Undo" toast in the bottom-right of the screen for 8 seconds.
+Clicking **Undo** recreates the row from the data it had just before
+deletion; letting the toast expire (or dismissing it with the × button)
+discards it as before. Deleting several rows in a row stacks a toast for
+each, so an earlier delete's undo window isn't lost when a later one
+appears.
+
+The mechanism is `UndoToastProvider`/`useUndoToast()`
+(`frontend/src/undo/UndoToastContext.tsx`), mounted once at the app root
+alongside the other cross-cutting providers, so any page's delete handler
+can call `notifyUndo(message, onUndo)` without prop-drilling. "Undo" is
+implemented as **recreate**, not a true restore: it calls back into the
+same create endpoint the row's Add form already uses, so the restored row
+gets a new ID and creation timestamp. Two categories are deliberately left
+without undo — deleting a whole Project (too destructive/cascading to
+safely reverse), and deleting an Attachment or a Site Visit Photo (the
+underlying file is removed from disk immediately, so there's nothing left
+to restore). Undoing a Meeting Minutes deletion restores the record's own
+fields, but its cascade-deleted Attachments and any linked Action Items
+are not restored — the toast's message says so explicitly.
+
 ## Roadmap ideas (not built yet)
 
 This is intentionally a starting point. Natural next steps to discuss:
