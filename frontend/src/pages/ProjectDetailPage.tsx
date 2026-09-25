@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ActionItem,
@@ -371,9 +371,22 @@ export default function ProjectDetailPage() {
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<ProjectTabId>("overview");
 
+  // Which project's data is currently on screen, and which load is the
+  // latest — see load() below.
+  const loadedIdRef = useRef<string | null>(null);
+  const loadSeqRef = useRef(0);
+
+  // Every save/edit/delete handler on this page ends with `await load()`.
+  // Only the FIRST load of a project (or a switch to another) shows the
+  // full-page "Loading…" screen; every later call is a background refresh
+  // that swaps the new data in place. Showing "Loading…" each time unmounted
+  // the whole page — snapping the scroll position back to the top and wiping
+  // any in-progress state in the panels — after every single change.
   async function load() {
     if (!id) return;
-    setLoading(true);
+    const seq = ++loadSeqRef.current;
+    const initial = loadedIdRef.current !== id;
+    if (initial) setLoading(true);
     setError(null);
     try {
       const [
@@ -447,6 +460,9 @@ export default function ProjectDetailPage() {
         getSafetyInspections(id),
         getTenderPackages(id),
       ]);
+      // Two quick saves overlap two refreshes — only the newest one's
+      // result is applied, so an older response can't overwrite it.
+      if (seq !== loadSeqRef.current) return;
       setProject(data);
       setActivity(activityData);
       setAttachments(attachmentData);
@@ -481,12 +497,19 @@ export default function ProjectDetailPage() {
       setEnvironmentalMonitoring(environmentalMonitoringData);
       setSafetyInspections(safetyInspectionData);
       setTenderPackages(tenderPackageData);
+      loadedIdRef.current = id;
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load project"
-      );
+      if (seq !== loadSeqRef.current) return;
+      if (initial) {
+        setError(err instanceof Error ? err.message : "Failed to load project");
+      } else {
+        // A failed background refresh keeps the (slightly stale) page rather
+        // than replacing it with an error screen; the next action will
+        // surface a real connectivity problem itself.
+        console.error("Background refresh failed", err);
+      }
     } finally {
-      setLoading(false);
+      if (seq === loadSeqRef.current && initial) setLoading(false);
     }
   }
 
@@ -631,15 +654,30 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  // A cash flow change can only affect its own rows (and, through them, the
+  // project's health badges and charts, which are derived from state here)
+  // plus the activity feed — so refresh just those two rather than the ~30
+  // requests a full load() makes. Cash flow is the most frequent edit on this
+  // page (a forecast or actual per month), which is why it gets this.
+  async function refreshCashFlow() {
+    if (!id) return;
+    const [entries, activityData] = await Promise.all([
+      getCashFlowEntries(id),
+      getProjectActivity(id),
+    ]);
+    setCashFlowEntries(entries);
+    setActivity(activityData);
+  }
+
   async function handleUpsertCashFlowEntry(data: Partial<CashFlowEntryInput>) {
     if (!project) return;
     await upsertCashFlowEntry(project.id, data);
-    await load();
+    await refreshCashFlow();
   }
 
   async function handleDeleteCashFlowEntry(entry: CashFlowEntry) {
     await deleteCashFlowEntry(entry.id);
-    await load();
+    await refreshCashFlow();
     notifyUndo(
       `${formatReportMonth(entry.month)} ${entry.type.toLowerCase()} entry deleted.`,
       () => handleUpsertCashFlowEntry(entry)

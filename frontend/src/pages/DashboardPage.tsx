@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ActionItem,
@@ -161,8 +161,15 @@ export default function DashboardPage() {
     setSavedViews(loadSavedViews());
   }, []);
 
+  const hasLoadedRef = useRef(false);
+
+  // Only the very first load shows the "Loading…" state; after a project is
+  // created/edited/deleted this refreshes in the background so the table,
+  // alerts and charts don't blank out and collapse the page (jumping the
+  // scroll position) on every change.
   async function loadData() {
-    setLoading(true);
+    const initial = !hasLoadedRef.current;
+    if (initial) setLoading(true);
     setError(null);
     try {
       const [
@@ -237,10 +244,12 @@ export default function DashboardPage() {
       setEnvironmentalMonitoring(environmentalMonitoringData);
       setSafetyInspections(safetyInspectionData);
       setTenderPackages(tenderPackageData);
+      hasLoadedRef.current = true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data");
+      if (initial) setError(err instanceof Error ? err.message : "Failed to load data");
+      else console.error("Background refresh failed", err);
     } finally {
-      setLoading(false);
+      if (initial) setLoading(false);
     }
   }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   CmpMeetingMinutes,
@@ -57,15 +57,29 @@ export default function CmpProjectDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
+  const loadedIdRef = useRef<string | null>(null);
+  const loadSeqRef = useRef(0);
+
+  // Only the first load of a project shows the full-page "Loading…" screen;
+  // the save/edit/delete handlers' later `await load()` calls refresh in the
+  // background, so the page keeps its scroll position instead of unmounting
+  // and jumping back to the top after every change.
   async function load() {
     if (!id) return;
-    setLoading(true);
+    const seq = ++loadSeqRef.current;
+    const initial = loadedIdRef.current !== id;
+    if (initial) setLoading(true);
     try {
-      setProject(await getCmpProject(id));
+      const data = await getCmpProject(id);
+      if (seq !== loadSeqRef.current) return;
+      setProject(data);
+      loadedIdRef.current = id;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load project");
+      if (seq !== loadSeqRef.current) return;
+      if (initial) setError(err instanceof Error ? err.message : "Failed to load project");
+      else console.error("Background refresh failed", err);
     } finally {
-      setLoading(false);
+      if (seq === loadSeqRef.current && initial) setLoading(false);
     }
   }
 
