@@ -1203,6 +1203,7 @@ export default function ProjectDetailPage() {
   async function handleGenerateMeetingMinutesDraft(input: {
     text?: string;
     file?: File;
+    onProgress?: (message: string) => void;
   }): Promise<MeetingMinutesDraft> {
     if (!project) throw new Error("Project not loaded");
     return generateMeetingMinutesDraft(project.id, input);

@@ -1159,17 +1159,37 @@ export function extractMeetingActions(
   }).then((res) => handle(res));
 }
 
-export function generateMeetingMinutesDraft(
+// Generation runs as a background job on the server (a long transcript takes
+// longer than a proxy will hold one request open), so this starts it and then
+// polls until it finishes — callers still just await a draft.
+export async function generateMeetingMinutesDraft(
   projectId: string,
-  input: { text?: string; file?: File }
+  input: { text?: string; file?: File; onProgress?: (message: string) => void }
 ): Promise<MeetingMinutesDraft> {
   const formData = new FormData();
   if (input.text) formData.append("text", input.text);
   if (input.file) formData.append("file", input.file);
-  return fetch(`${API_BASE}/projects/${projectId}/meeting-minutes/ai/generate-draft`, {
-    method: "POST",
-    body: formData,
-  }).then((res) => handle(res));
+  const base = `${API_BASE}/projects/${projectId}/meeting-minutes/ai/generate-draft`;
+  const { jobId } = await fetch(base, { method: "POST", body: formData }).then((res) =>
+    handle<{ jobId: string }>(res)
+  );
+
+  const deadline = Date.now() + 20 * 60 * 1000;
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const job = await fetch(`${base}/${jobId}`).then((res) =>
+      handle<{
+        status: "running" | "done" | "error";
+        progress: string;
+        draft?: MeetingMinutesDraft;
+        error?: string;
+      }>(res)
+    );
+    if (job.status === "done" && job.draft) return job.draft;
+    if (job.status === "error") throw new Error(job.error || "Failed to generate from transcript");
+    input.onProgress?.(job.progress);
+  }
+  throw new Error("Generating the minutes took too long — please try again");
 }
 
 export function getCorrespondence(projectId: string): Promise<Correspondence[]> {

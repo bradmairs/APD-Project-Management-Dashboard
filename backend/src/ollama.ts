@@ -16,6 +16,12 @@ const OLLAMA_CHAT_MODEL =
   process.env.OLLAMA_CHAT_MODEL || process.env.OLLAMA_MODEL || "llama3.1";
 const OLLAMA_VISION_MODEL = process.env.OLLAMA_VISION_MODEL || "llava";
 
+// Ollama's own default context window is small (a few thousand tokens) and
+// it silently drops the oldest text when a prompt exceeds it — fine for a
+// short question, not for a transcript or a whole-portfolio summary. Pinned
+// explicitly so behaviour doesn't depend on whatever the server defaults to.
+const OLLAMA_NUM_CTX = Number(process.env.OLLAMA_NUM_CTX) || 8192;
+
 export class OllamaError extends Error {}
 
 interface OllamaChatResponse {
@@ -26,7 +32,8 @@ async function chatRequest(
   model: string,
   systemPrompt: string,
   userPrompt: string,
-  images?: string[]
+  images?: string[],
+  opts: { json?: boolean; temperature?: number } = {}
 ): Promise<string> {
   let res: Response;
   try {
@@ -40,6 +47,14 @@ async function chatRequest(
           { role: "user", content: userPrompt, ...(images ? { images } : {}) },
         ],
         stream: false,
+        // Constrains the model to emit syntactically valid JSON, which a
+        // free-text prompt alone ("respond with ONLY JSON") doesn't reliably
+        // get from an 8B local model.
+        ...(opts.json ? { format: "json" } : {}),
+        options: {
+          num_ctx: OLLAMA_NUM_CTX,
+          ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
+        },
       }),
     });
   } catch (err) {
@@ -70,6 +85,16 @@ async function chatRequest(
 // portfolio questions to turning a transcript into structured minutes.
 export async function askOllama(systemPrompt: string, userPrompt: string): Promise<string> {
   return chatRequest(OLLAMA_CHAT_MODEL, systemPrompt, userPrompt);
+}
+
+// Same chat model, but constrained to valid JSON output at a low temperature
+// — for structured extraction (minutes, actions) where a stray sentence or a
+// creative rewording breaks the parser or invents content.
+export async function askOllamaJson(systemPrompt: string, userPrompt: string): Promise<string> {
+  return chatRequest(OLLAMA_CHAT_MODEL, systemPrompt, userPrompt, undefined, {
+    json: true,
+    temperature: 0.2,
+  });
 }
 
 // Image-in, text-out — the vision model, used to read a photo of

@@ -28,7 +28,11 @@ interface Props {
   onDeleteAttachment: (attachment: Attachment) => Promise<void>;
   onCreateAction: (data: Partial<ActionItemInput>) => Promise<void>;
   onExtractActions: (meetingId: string) => Promise<SuggestedAction[]>;
-  onGenerateDraft: (input: { text?: string; file?: File }) => Promise<MeetingMinutesDraft>;
+  onGenerateDraft: (input: {
+    text?: string;
+    file?: File;
+    onProgress?: (message: string) => void;
+  }) => Promise<MeetingMinutesDraft>;
 }
 
 // The attachments/actions sub-sections below are the "attach the record,

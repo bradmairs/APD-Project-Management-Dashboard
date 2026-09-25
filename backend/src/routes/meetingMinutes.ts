@@ -1,7 +1,8 @@
 import { Request, Response, Router } from "express";
 import { prisma } from "../prisma";
 import { describeMeetingMinutesUpdate, logActivity } from "../activityLog";
-import { askOllama, askOllamaVision, OllamaError } from "../ollama";
+import { randomUUID } from "crypto";
+import { askOllama, askOllamaJson, askOllamaVision, OllamaError } from "../ollama";
 import { extractTextFromDocument, isImageUpload } from "../transcriptExtraction";
 import { transcriptUpload } from "../upload";
 
@@ -83,26 +84,49 @@ const EXTRACT_ACTIONS_SYSTEM_PROMPT =
   "text, otherwise null. If the notes contain no follow-up items, respond with an empty array [].";
 
 // A raw transcript (auto-generated captions, a typed record, or OCR output
-// from a photo of notes) is messier than the summary/notes a PM would type
-// by hand — filler speech, no clear structure. This asks the chat model to
-// do in one pass what a PM would otherwise do by hand after the meeting:
-// write the minutes and pull out the actions.
-const GENERATE_MINUTES_SYSTEM_PROMPT =
+// from a photo of notes) is messier than the minutes a PM would write by
+// hand — filler speech, no structure, and often far longer than one model
+// call can hold. Generation therefore runs in passes (see runDraftJob):
+// each section of the transcript is read for its discussion items and
+// actions, the sections are merged, and a short final pass writes the
+// overview from the merged items. Asking for "topics with their talking
+// points" is a task a small local model does far more completely than
+// "write detailed notes", which tends to collapse to one thin paragraph.
+const EXTRACT_SECTION_SYSTEM_PROMPT =
   "You are an assistant embedded in a project management dashboard for Goulburn Valley Water, " +
-  "a water utility. You turn a raw meeting transcript — which may be messy, auto-generated, or " +
-  "include filler speech — into structured meeting minutes for a construction or infrastructure " +
-  "project delivered by consultants and contractors. Respond with ONLY a JSON object, no other " +
-  'text and no markdown code fences, of the shape {"meetingType": string or null, "summary": ' +
-  'string or null, "attendees": string or null, "notes": string or null, "actions": [{"title": ' +
-  'string, "ownerName": string or null, "dueDateHint": string or null}]}. meetingType is a short ' +
-  'label like "Progress Meeting" or "Design Review" if inferable, otherwise null. summary is a ' +
-  "2-4 sentence overview of what was discussed. attendees is a comma-separated list of names " +
-  "mentioned as present, otherwise null. notes is a more detailed account of discussion points, " +
-  "decisions, and context, using short paragraphs or bullet-style lines. actions is every " +
-  "follow-up or action item mentioned, each with its owner and any due date mentioned, in the " +
-  "same format meeting-notes action extraction already uses elsewhere in this app. If the " +
-  "transcript contains no useful content, return null for the text fields and an empty array " +
-  "for actions rather than inventing information.";
+  "a water utility. You read a meeting transcript — auto-generated captions, a typed record, or " +
+  "transcribed handwritten notes, which may be messy or full of filler speech — for a " +
+  "construction or infrastructure project delivered by consultants and contractors, and pull out " +
+  "what was discussed. Respond with ONLY a JSON object of the shape " +
+  '{"attendees": string or null, "discussionItems": [{"topic": string, "points": [string], ' +
+  '"decision": string or null}], "actions": [{"title": string, "ownerName": string or null, ' +
+  '"dueDateHint": string or null}]}. ' +
+  "attendees is a comma-separated list of names mentioned as present, otherwise null. " +
+  "discussionItems lists each distinct subject discussed, in the order it came up: topic is a " +
+  "short heading (2-6 words); points are the talking points under it — each one a complete, " +
+  "concise sentence in the third person and past tense saying WHO raised, reported or agreed " +
+  "WHAT (for example 'Sam confirmed the handrails will be delivered on Friday 3 October.'), " +
+  "keeping the specifics (names, quantities, dates, figures, concerns raised). Never copy " +
+  "speech word for word or use I, we, me or you, and leave out greetings, filler and chit-chat. " +
+  "decision is what was agreed or decided on that subject, only if something actually was, " +
+  "otherwise null — do not repeat the decision as one of the points. " +
+  "actions lists EVERY follow-up task someone committed to or was asked to do — including " +
+  "promises like 'I will…', 'we\'ll…' or 'will do' (the owner is whoever is speaking, or the " +
+  "person or company they speak for, when the speaker is named) and requests like 'X, please…' " +
+  "or 'X to…': title is a short description of the task; ownerName is the person who has to DO " +
+  "it (if 'Alan asked Brad to chase the permit', the owner is Brad, not Alan); dueDateHint is " +
+  "any date or timeframe mentioned, as free text, otherwise null. Use only what the transcript says — never " +
+  "invent topics, people, dates or actions. If the text is one section of a longer transcript, " +
+  "cover only this section. If it contains nothing useful, return null, [] and [].";
+
+const SUMMARISE_MINUTES_SYSTEM_PROMPT =
+  "You are an assistant embedded in a project management dashboard for Goulburn Valley Water, " +
+  "a water utility. You are given the discussion items recorded at a construction or " +
+  'infrastructure project meeting. Respond with ONLY a JSON object {"meetingType": string or ' +
+  'null, "summary": string or null}. meetingType is a short label such as "Progress Meeting", ' +
+  '"Design Review" or "Site Meeting" if inferable, otherwise null. summary is a 2-4 sentence ' +
+  "overview for someone who was not there: the main subjects covered and any key decisions. " +
+  "Use only the information given.";
 
 const OCR_TRANSCRIPT_SYSTEM_PROMPT =
   "You transcribe text from a photo of handwritten or printed meeting notes for a construction " +
@@ -126,51 +150,309 @@ function coerceDraftText(value: unknown): string | null {
     : null;
 }
 
-// Same defensive strategy as parseSuggestedActions above (whole response,
-// then the bracketed/braced substring, code-fence stripping implicit in
-// both) — a local model asked for JSON doesn't always give only JSON.
-function parseMinutesDraft(raw: string): MeetingMinutesDraft {
-  const attempts: string[] = [raw];
-  const braceMatch = raw.match(/\{[\s\S]*\}/);
-  if (braceMatch) attempts.push(braceMatch[0]);
-
+function parseJsonObject(raw: string): Record<string, unknown> | null {
+  const attempts = [raw, raw.match(/\{[\s\S]*\}/)?.[0]];
   for (const attempt of attempts) {
+    if (!attempt) continue;
     try {
       const parsed = JSON.parse(attempt);
       if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        const rawActions = (parsed as Record<string, unknown>).actions;
-        const actions = Array.isArray(rawActions)
-          ? rawActions
-              .map(coerceSuggestedAction)
-              .filter((a): a is SuggestedAction => a !== null)
-              .slice(0, MAX_SUGGESTED_ACTIONS)
-          : [];
-        return {
-          meetingType: coerceDraftText((parsed as Record<string, unknown>).meetingType)?.slice(
-            0,
-            MAX_TITLE_LENGTH
-          ) ?? null,
-          summary: coerceDraftText((parsed as Record<string, unknown>).summary),
-          attendees: coerceDraftText((parsed as Record<string, unknown>).attendees),
-          notes: coerceDraftText((parsed as Record<string, unknown>).notes),
-          actions,
-        };
+        return parsed as Record<string, unknown>;
       }
     } catch {
       // try the next attempt
     }
   }
+  return null;
+}
 
-  // Couldn't parse structured JSON at all — fall back to treating the
-  // whole response as notes rather than discarding it silently.
+interface DiscussionItem {
+  topic: string;
+  points: string[];
+  decision: string | null;
+}
+
+const MAX_DISCUSSION_ITEMS = 40;
+const MAX_POINTS_PER_ITEM = 10;
+const MAX_POINT_LENGTH = 600;
+const MAX_DRAFT_ACTIONS = 25;
+
+function coerceDiscussionItem(value: unknown): DiscussionItem | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  const topic = typeof raw.topic === "string" ? raw.topic.trim().slice(0, MAX_TITLE_LENGTH) : "";
+  const points = Array.isArray(raw.points)
+    ? raw.points
+        .filter((p): p is string => typeof p === "string" && p.trim().length > 0)
+        .map((p) => p.trim().slice(0, MAX_POINT_LENGTH))
+        .slice(0, MAX_POINTS_PER_ITEM)
+    : [];
+  const decision = coerceDraftText(raw.decision)?.slice(0, MAX_POINT_LENGTH) ?? null;
+  // Models often restate the decision as a bullet too; show it once.
+  const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  if (decision) {
+    const key = norm(decision.replace(/^decision\s*:?\s*/i, ""));
+    points.splice(0, points.length, ...points.filter((p) => !norm(p).includes(key) && !key.includes(norm(p))));
+  }
+  if (!topic || (points.length === 0 && !decision)) return null;
+  return { topic, points, decision };
+}
+
+interface TranscriptSection {
+  attendees: string[];
+  items: DiscussionItem[];
+  actions: SuggestedAction[];
+}
+
+function parseSection(raw: string): TranscriptSection | null {
+  const parsed = parseJsonObject(raw);
+  if (!parsed) return null;
   return {
-    meetingType: null,
-    summary: null,
-    attendees: null,
-    notes: coerceDraftText(raw),
-    actions: [],
+    attendees:
+      typeof parsed.attendees === "string"
+        ? parsed.attendees.split(/[,;\n]/).map((a) => a.trim()).filter(Boolean)
+        : [],
+    items: Array.isArray(parsed.discussionItems)
+      ? parsed.discussionItems.map(coerceDiscussionItem).filter((i): i is DiscussionItem => i !== null)
+      : [],
+    actions: Array.isArray(parsed.actions)
+      ? parsed.actions.map(coerceSuggestedAction).filter((a): a is SuggestedAction => a !== null)
+      : [],
   };
 }
+
+const ACTION_STOPWORDS = new Set(["the", "and", "for", "with", "from", "that", "this", "into", "about", "then"]);
+
+// The model rewords the same verb between passes; fold the common ones
+// together so "issue the programme" and "send the programme" compare equal.
+const ACTION_VERB_SYNONYMS: Record<string, string> = {
+  issue: "send",
+  email: "send",
+  forward: "send",
+  submit: "send",
+  phone: "call",
+  ring: "call",
+  contact: "call",
+};
+
+function actionTokens(title: string): Set<string> {
+  return new Set(
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 2 && !ACTION_STOPWORDS.has(w))
+      .map((w) => ACTION_VERB_SYNONYMS[w] ?? w)
+  );
+}
+
+// A closing recap ("to summarise the actions…") or a section boundary makes
+// the model list the same follow-up twice in different words, so exact-title
+// matching leaves duplicates. Two titles count as the same action when the
+// smaller one's meaningful words are (almost) all contained in the other's.
+function isSameAction(a: SuggestedAction, b: SuggestedAction): boolean {
+  const ta = actionTokens(a.title);
+  const tb = actionTokens(b.title);
+  const smaller = Math.min(ta.size, tb.size);
+  if (smaller < 2) return a.title.toLowerCase() === b.title.toLowerCase();
+  let shared = 0;
+  for (const t of ta) if (tb.has(t)) shared++;
+  return shared / smaller >= 0.75;
+}
+
+// "Alan" and "Alan Tyson" in the same list are one person.
+function dedupeAttendees(names: string[]): string[] {
+  const unique = [...new Map(names.map((n) => [n.toLowerCase(), n])).values()];
+  return unique.filter(
+    (name) =>
+      !(
+        !name.includes(" ") &&
+        unique.some((other) => other !== name && other.toLowerCase().startsWith(`${name.toLowerCase()} `))
+      )
+  );
+}
+
+// The same subject often runs across a section boundary (or comes up twice),
+// so sections are merged by topic and de-duplicated rather than concatenated.
+function mergeSections(sections: TranscriptSection[]): TranscriptSection {
+  const attendees: string[] = [];
+  const items = new Map<string, DiscussionItem>();
+  const actions: SuggestedAction[] = [];
+
+  for (const section of sections) {
+    attendees.push(...section.attendees);
+    for (const item of section.items) {
+      const key = item.topic.toLowerCase();
+      const existing = items.get(key);
+      if (!existing) {
+        items.set(key, { ...item, points: [...item.points] });
+        continue;
+      }
+      const seen = new Set(existing.points.map((p) => p.toLowerCase()));
+      for (const point of item.points) {
+        if (!seen.has(point.toLowerCase())) existing.points.push(point);
+      }
+      if (item.decision && item.decision !== existing.decision) {
+        existing.decision = existing.decision ? `${existing.decision}; ${item.decision}` : item.decision;
+      }
+    }
+    for (const action of section.actions) {
+      if (!actions.some((existing) => isSameAction(existing, action))) actions.push(action);
+    }
+  }
+
+  return {
+    attendees: dedupeAttendees(attendees),
+    items: [...items.values()].slice(0, MAX_DISCUSSION_ITEMS),
+    actions: actions.slice(0, MAX_DRAFT_ACTIONS),
+  };
+}
+
+// Plain text on purpose: it lands in the Notes textarea (and the saved PDF)
+// for the PM to edit, so it reads as ordinary minutes rather than markup.
+function formatDiscussionNotes(items: DiscussionItem[]): string {
+  return items
+    .map((item) => {
+      const lines = [item.topic, ...item.points.map((p) => `- ${p}`)];
+      if (item.decision) lines.push(`Decision: ${item.decision}`);
+      return lines.join("\n");
+    })
+    .join("\n\n");
+}
+
+const TRANSCRIPT_SECTION_CHARS = 10000;
+const MAX_TRANSCRIPT_CHARS = 150000;
+
+// Splits on line, then sentence, then hard-slice boundaries so a transcript
+// pasted as one enormous line still ends up in bounded sections.
+function splitTranscript(text: string): string[] {
+  const limit = TRANSCRIPT_SECTION_CHARS;
+  const pieces = text.split(/\n+/).flatMap((line) => {
+    if (line.length <= limit) return [line];
+    return line.split(/(?<=[.!?])\s+/).flatMap((sentence) => {
+      if (sentence.length <= limit) return [sentence];
+      return sentence.match(new RegExp(`.{1,${limit}}`, "g")) ?? [];
+    });
+  });
+  const sections: string[] = [];
+  let current = "";
+  for (const piece of pieces) {
+    if (current && current.length + piece.length + 1 > limit) {
+      sections.push(current);
+      current = piece;
+    } else {
+      current = current ? `${current}\n${piece}` : piece;
+    }
+  }
+  if (current) sections.push(current);
+  return sections;
+}
+
+// A long transcript takes minutes on a local model, which is longer than the
+// reverse proxies in front of this app will hold a single request open (60s
+// by default) — so generation runs as an in-memory background job the client
+// polls. A restart just drops running jobs; the client sees "expired" and
+// the user retries.
+interface DraftJob {
+  userId: string;
+  status: "running" | "done" | "error";
+  progress: string;
+  draft?: MeetingMinutesDraft;
+  error?: string;
+  createdAt: number;
+}
+
+const draftJobs = new Map<string, DraftJob>();
+const DRAFT_JOB_TTL_MS = 30 * 60 * 1000;
+
+function pruneDraftJobs() {
+  const cutoff = Date.now() - DRAFT_JOB_TTL_MS;
+  for (const [id, job] of draftJobs) {
+    if (job.createdAt < cutoff) draftJobs.delete(id);
+  }
+}
+
+async function runDraftJob(
+  job: DraftJob,
+  source: { pastedText: string; file?: Express.Multer.File }
+) {
+  try {
+    let fileText = "";
+    if (source.file) {
+      job.progress = "Reading the uploaded file…";
+      try {
+        fileText = isImageUpload(source.file)
+          ? await askOllamaVision(
+              OCR_TRANSCRIPT_SYSTEM_PROMPT,
+              "Transcribe all text visible in this image of meeting notes.",
+              source.file.buffer.toString("base64")
+            )
+          : await extractTextFromDocument(source.file);
+      } catch (err) {
+        if (err instanceof OllamaError) throw err;
+        throw new DraftInputError(
+          err instanceof Error ? err.message : "Could not read the uploaded file"
+        );
+      }
+    }
+
+    const transcript = [fileText.trim(), source.pastedText].filter(Boolean).join("\n\n");
+    if (!transcript) {
+      throw new DraftInputError("Provide a transcript — paste text, or upload a file or a photo of notes");
+    }
+    if (transcript.length > MAX_TRANSCRIPT_CHARS) {
+      throw new DraftInputError(
+        `That transcript is too long to process in one go (${transcript.length.toLocaleString()} characters; the limit is ${MAX_TRANSCRIPT_CHARS.toLocaleString()}). Split it into parts and generate each separately.`
+      );
+    }
+
+    const parts = splitTranscript(transcript);
+    const sections: TranscriptSection[] = [];
+    const unparsed: string[] = [];
+    for (let i = 0; i < parts.length; i++) {
+      job.progress =
+        parts.length > 1 ? `Reading part ${i + 1} of ${parts.length}…` : "Reading the transcript…";
+      const raw = await askOllamaJson(
+        EXTRACT_SECTION_SYSTEM_PROMPT,
+        parts.length > 1 ? `This is part ${i + 1} of ${parts.length} of a longer transcript.\n\n${parts[i]}` : parts[i]
+      );
+      const section = parseSection(raw);
+      if (section) sections.push(section);
+      else unparsed.push(raw);
+    }
+
+    const merged = mergeSections(sections);
+    const notes = merged.items.length > 0 ? formatDiscussionNotes(merged.items) : null;
+
+    let meetingType: string | null = null;
+    let summary: string | null = null;
+    if (notes) {
+      job.progress = "Writing the summary…";
+      const overview = parseJsonObject(await askOllamaJson(SUMMARISE_MINUTES_SYSTEM_PROMPT, notes));
+      meetingType = coerceDraftText(overview?.meetingType)?.slice(0, MAX_TITLE_LENGTH) ?? null;
+      summary = coerceDraftText(overview?.summary);
+    }
+
+    job.draft = {
+      meetingType,
+      summary,
+      attendees: merged.attendees.length > 0 ? merged.attendees.join(", ").slice(0, MAX_FREE_TEXT_LENGTH) : null,
+      // If the model never produced usable structure, keep what it did say
+      // rather than discarding it silently.
+      notes: notes ?? (sections.length === 0 ? coerceDraftText(unparsed.join("\n\n")) : null),
+      actions: merged.actions,
+    };
+    job.status = "done";
+  } catch (err) {
+    job.status = "error";
+    job.error =
+      err instanceof OllamaError || err instanceof DraftInputError
+        ? err.message
+        : "Failed to generate meeting minutes from the transcript";
+  }
+}
+
+class DraftInputError extends Error {}
 
 const projectMeetingMinutesRouter = Router({ mergeParams: true });
 
@@ -222,14 +504,8 @@ projectMeetingMinutesRouter.post("/", async (req: Request<ProjectParams>, res: R
   res.status(201).json(meeting);
 });
 
-const MAX_TRANSCRIPT_CHARS = 12000;
-
-// Generates a draft — meetingType/summary/attendees/notes plus suggested
-// actions — from a transcript, without saving anything. The caller (the
-// "New Meeting" form) reviews and edits the draft before it ever becomes a
-// real MeetingMinutes row, the same way AI-suggested actions are reviewed
-// before being added. Lives on the project-scoped router, not the
-// per-meeting one below, since there's no meeting yet at this point.
+// Starts a background generation job and returns its id right away — see
+// DraftJob for why this isn't a single request/response.
 projectMeetingMinutesRouter.post(
   "/ai/generate-draft",
   transcriptUpload.single("file"),
@@ -239,42 +515,38 @@ projectMeetingMinutesRouter.post(
 
     const pastedText = typeof req.body.text === "string" ? req.body.text.trim() : "";
     const file = req.file;
-
-    let fileText = "";
-    try {
-      if (file && isImageUpload(file)) {
-        fileText = await askOllamaVision(
-          OCR_TRANSCRIPT_SYSTEM_PROMPT,
-          "Transcribe all text visible in this image of meeting notes.",
-          file.buffer.toString("base64")
-        );
-      } else if (file) {
-        fileText = await extractTextFromDocument(file);
-      }
-    } catch (err) {
-      if (err instanceof OllamaError) return res.status(502).json({ error: err.message });
-      return res
-        .status(400)
-        .json({ error: err instanceof Error ? err.message : "Could not read the uploaded file" });
-    }
-
-    const transcript = [fileText.trim(), pastedText].filter(Boolean).join("\n\n");
-    if (!transcript) {
+    if (!pastedText && !file) {
       return res.status(400).json({
         error: "Provide a transcript — paste text, or upload a file or a photo of notes",
       });
     }
 
-    try {
-      const raw = await askOllama(
-        GENERATE_MINUTES_SYSTEM_PROMPT,
-        transcript.slice(0, MAX_TRANSCRIPT_CHARS)
-      );
-      res.json(parseMinutesDraft(raw));
-    } catch (err) {
-      if (err instanceof OllamaError) return res.status(502).json({ error: err.message });
-      res.status(500).json({ error: "Failed to generate meeting minutes from the transcript" });
+    pruneDraftJobs();
+    const jobId = randomUUID();
+    const job: DraftJob = {
+      userId: req.user!.sub,
+      status: "running",
+      progress: "Starting…",
+      createdAt: Date.now(),
+    };
+    draftJobs.set(jobId, job);
+    void runDraftJob(job, { pastedText, file });
+    res.status(202).json({ jobId });
+  }
+);
+
+projectMeetingMinutesRouter.get(
+  "/ai/generate-draft/:jobId",
+  (req: Request<ProjectParams & { jobId: string }>, res: Response) => {
+    const job = draftJobs.get(req.params.jobId);
+    // Same 404 for "not yours" as "doesn't exist" — don't confirm another
+    // user's job id is real.
+    if (!job || job.userId !== req.user!.sub) {
+      return res
+        .status(404)
+        .json({ error: "That generation has expired — please generate again" });
     }
+    res.json({ status: job.status, progress: job.progress, draft: job.draft, error: job.error });
   }
 );
 

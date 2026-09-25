@@ -13,7 +13,11 @@ interface Props {
   meeting: MeetingMinutes | null;
   onClose: () => void;
   onSave: (data: Partial<MeetingMinutesInput>) => Promise<MeetingMinutes>;
-  onGenerateDraft: (input: { text?: string; file?: File }) => Promise<MeetingMinutesDraft>;
+  onGenerateDraft: (input: {
+    text?: string;
+    file?: File;
+    onProgress?: (message: string) => void;
+  }) => Promise<MeetingMinutesDraft>;
   onCreateAction: (data: Partial<ActionItemInput>) => Promise<void>;
   onUploadAttachment: (meetingId: string, file: File) => Promise<void>;
 }
@@ -61,6 +65,7 @@ export default function MeetingMinutesFormModal({
   const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [generateProgress, setGenerateProgress] = useState<string | null>(null);
   const [draftActions, setDraftActions] = useState<SuggestedAction[] | null>(null);
   const [selectedActions, setSelectedActions] = useState<Set<number>>(new Set());
   const [wasGenerated, setWasGenerated] = useState(false);
@@ -76,6 +81,7 @@ export default function MeetingMinutesFormModal({
       const draft = await onGenerateDraft({
         text: transcriptText.trim() || undefined,
         file: transcriptFile ?? undefined,
+        onProgress: setGenerateProgress,
       });
       if (draft.meetingType) setMeetingType(draft.meetingType);
       if (draft.attendees) setAttendees(draft.attendees);
@@ -88,6 +94,7 @@ export default function MeetingMinutesFormModal({
       setGenerateError(err instanceof Error ? err.message : "Failed to generate from transcript");
     } finally {
       setGenerating(false);
+      setGenerateProgress(null);
     }
   }
 
@@ -235,6 +242,10 @@ export default function MeetingMinutesFormModal({
                     </button>
                   </div>
 
+                  {generating && generateProgress && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{generateProgress}</p>
+                  )}
+
                   {generateError && (
                     <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs rounded p-2">
                       {generateError}
@@ -358,7 +369,7 @@ export default function MeetingMinutesFormModal({
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              rows={2}
+              rows={14}
               className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
             />
           </div>
