@@ -43,7 +43,10 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
       FRONTEND_URL: ${FRONTEND_URL:-}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      OLLAMA_CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-llama3.1}
+      # OLLAMA_MODEL is the legacy name for the chat slot (see backend/src/ollama.ts) —
+      # falling back to it here, rather than straight to a default, is what keeps a
+      # deployment that only ever set OLLAMA_MODEL working.
+      OLLAMA_CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-${OLLAMA_MODEL:-llama3.1}}
       OLLAMA_VISION_MODEL: ${OLLAMA_VISION_MODEL:-llava}
       ENGINEERING_ARCHIVE_BASE_URL: ${ENGINEERING_ARCHIVE_BASE_URL:-}
       ENGINEERING_ARCHIVE_PUBLIC_URL: ${ENGINEERING_ARCHIVE_PUBLIC_URL:-}
