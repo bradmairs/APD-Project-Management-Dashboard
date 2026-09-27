@@ -443,17 +443,6 @@ export default function DashboardPage() {
 
         {activeTab === "projects" && (
           <div className="space-y-6">
-            {!loading && (
-              <TaskList
-                tasks={portfolioTasks}
-                title="Portfolio Tasks"
-                description="Relevant to every project — not tied to any single one."
-                onAdd={handleAddPortfolioTask}
-                onUpdate={handleUpdatePortfolioTask}
-                onDelete={handleDeletePortfolioTask}
-              />
-            )}
-
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
               <div className="flex gap-2 flex-wrap">
                 <button
@@ -593,6 +582,17 @@ export default function DashboardPage() {
                 onOpen={(project) => navigate(`/projects/${project.id}`)}
                 onEdit={openEditProject}
                 onDelete={handleDelete}
+              />
+            )}
+
+            {!loading && (
+              <TaskList
+                tasks={portfolioTasks}
+                title="Portfolio Tasks"
+                description="Relevant to every project — not tied to any single one."
+                onAdd={handleAddPortfolioTask}
+                onUpdate={handleUpdatePortfolioTask}
+                onDelete={handleDeletePortfolioTask}
               />
             )}
           </div>
