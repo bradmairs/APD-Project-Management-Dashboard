@@ -977,8 +977,10 @@ consultancy agreement or the head contractor's construction contract. A
 contract has a Party Type (Consultant or Contractor), Party Name,
 Discipline/Scope (e.g. "Structural Design"), an optional Contract Number
 and Contract Form (free text, with suggestions like "AS4000-1997" or
-"NEC4"), Contract Value, Contingency, Retention (%), a Defects Liability
-Period in months, Execution/Start/Completion dates, a Status of
+"NEC4"), Contract Value, Contingency, PO Value and Provisional Items
+(optional money values — a purchase order raised against the contract
+and the provisional-items allowance within it), Retention (%), a Defects
+Liability Period in months, Execution/Start/Completion dates, a Status of
 Active/Complete/Terminated (changeable inline), and Notes. This is
 distinct from `Project.contractor`/`Project.contractValue` (a single
 freeform pair of fields kept on the project itself for a quick-glance
