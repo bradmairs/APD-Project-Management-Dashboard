@@ -1027,10 +1027,18 @@ model PaymentClaim {
   raisedById      String?
   raisedByName    String
   notes           String?
+  // Which Contracts register entry this claim draws down, so the contract
+  // can show its remaining value (contractValue minus claims to date).
+  // Optional and SetNull on delete — a claim isn't required to be against
+  // a formal Contract record, and losing the contract shouldn't take the
+  // claim's own history with it.
+  contract        ContractRecord?    @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  contractId      String?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
   @@index([projectId])
+  @@index([contractId])
 }
 
 // An insurance policy or product/workmanship warranty held against the
@@ -1212,6 +1220,7 @@ model ContractRecord {
   addedBy                User?             @relation(fields: [addedById], references: [id], onDelete: SetNull)
   addedById              String?
   addedByName            String
+  paymentClaims          PaymentClaim[]
   createdAt              DateTime          @default(now())
   updatedAt              DateTime          @updatedAt
 

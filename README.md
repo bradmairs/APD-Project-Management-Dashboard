@@ -648,6 +648,15 @@ alongside the other exception panels, listing every claim across the
 portfolio still awaiting certification or payment with a link back to
 its project. Open to any logged-in user to edit.
 
+A claim can optionally be linked to a specific entry in the project's
+**Contracts** register via an optional `contractId` foreign key
+(`onDelete: SetNull`, since a claim isn't required to be against a
+formal Contract record and losing the contract shouldn't take the
+claim's history with it — the backend also rejects a `contractId` that
+doesn't belong to the same project). Linking claims this way is what
+lets each Contracts row show its **Remaining** value — see the
+**Contracts** section above.
+
 ## Risks & Opportunities
 
 Each project has a **Risks & Opportunities** register — one shared `Risk`
@@ -980,6 +989,16 @@ as a whole — each contract's own risk allowance, not a single portfolio
 rollup — so it's entered here and nowhere else (not on the project's Edit
 form, and not among the Budget & Contract tab's cash flow stats). Open to
 any logged-in user to edit.
+
+Each contract can have Payment Claims linked against it (see
+**Payment Claims** below), and its row shows a computed **Remaining**
+figure — Contract Value minus the sum of claimed amounts for its linked,
+non-disputed claims — right alongside the value and contingency. It's
+computed client-side (`remainingContractValue()` in
+`frontend/src/contractMeta.ts`) from the same `contracts` and
+`paymentClaims` arrays the page already loads, the same
+compute-not-store pattern used elsewhere in the app, and shown in red
+when the contract is over-claimed (remaining is negative).
 
 ## Performance Reviews
 

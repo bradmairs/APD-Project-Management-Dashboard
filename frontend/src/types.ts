@@ -634,6 +634,7 @@ export interface PaymentClaim {
   raisedById: string | null;
   raisedByName: string;
   notes: string | null;
+  contractId: string | null;
   createdAt: string;
   updatedAt: string;
   project?: { id: string; name: string };

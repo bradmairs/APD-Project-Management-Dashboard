@@ -1,9 +1,10 @@
 import { FormEvent, useState } from "react";
-import { PaymentClaim, PaymentClaimInput, PaymentClaimStatus } from "../types";
+import { ContractRecord, PaymentClaim, PaymentClaimInput, PaymentClaimStatus } from "../types";
 import { ALL_PAYMENT_CLAIM_STATUSES, PAYMENT_CLAIM_STATUS_LABELS } from "../paymentClaimMeta";
 
 interface Props {
   claim: PaymentClaim | null;
+  contracts: ContractRecord[];
   onClose: () => void;
   onSave: (data: Partial<PaymentClaimInput>) => Promise<void>;
 }
@@ -13,8 +14,9 @@ function toDateInputValue(value: string | null): string {
   return value.substring(0, 10);
 }
 
-export default function PaymentClaimFormModal({ claim, onClose, onSave }: Props) {
+export default function PaymentClaimFormModal({ claim, contracts, onClose, onSave }: Props) {
   const [claimNumber, setClaimNumber] = useState(claim?.claimNumber ?? "");
+  const [contractId, setContractId] = useState(claim?.contractId ?? "");
   const [periodEnding, setPeriodEnding] = useState(
     toDateInputValue(claim?.periodEnding ?? null)
   );
@@ -45,6 +47,7 @@ export default function PaymentClaimFormModal({ claim, onClose, onSave }: Props)
         status,
         dateSubmitted: new Date(dateSubmitted).toISOString(),
         notes: notes || null,
+        contractId: contractId || null,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save payment claim");
@@ -91,6 +94,24 @@ export default function PaymentClaimFormModal({ claim, onClose, onSave }: Props)
                 className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
               />
             </div>
+          </div>
+
+          <div className="min-w-0">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Contract
+            </label>
+            <select
+              value={contractId}
+              onChange={(e) => setContractId(e.target.value)}
+              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
+            >
+              <option value="">— None —</option>
+              {contracts.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.partyName}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

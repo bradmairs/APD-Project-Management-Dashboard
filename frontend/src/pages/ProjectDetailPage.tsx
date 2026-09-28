@@ -1504,6 +1504,7 @@ export default function ProjectDetailPage() {
               <div id="contracts">
                 <ContractsPanel
                   contracts={contracts}
+                  paymentClaims={paymentClaims}
                   onCreate={handleCreateContract}
                   onUpdate={handleUpdateContract}
                   onDelete={handleDeleteContract}
@@ -1532,6 +1533,7 @@ export default function ProjectDetailPage() {
               <div id="payment-claims">
                 <PaymentClaimsPanel
                   claims={paymentClaims}
+                  contracts={contracts}
                   onCreate={handleCreatePaymentClaim}
                   onUpdate={handleUpdatePaymentClaim}
                   onDelete={handleDeletePaymentClaim}

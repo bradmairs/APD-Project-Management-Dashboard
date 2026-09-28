@@ -1,4 +1,4 @@
-import { ContractPartyType, ContractStatus } from "./types";
+import { ContractPartyType, ContractRecord, ContractStatus, PaymentClaim } from "./types";
 
 export const ALL_CONTRACT_PARTY_TYPES: ContractPartyType[] = ["CONSULTANT", "CONTRACTOR"];
 
@@ -45,4 +45,18 @@ const STATUS_RANK: Record<ContractStatus, number> = {
 // subcontractorMeta.ts's subcontractorStatusRank.
 export function contractStatusRank(status: ContractStatus): number {
   return STATUS_RANK[status];
+}
+
+// Contract value minus costs claimed to date against it. Disputed claims
+// are excluded since a certifier hasn't agreed the amount is owed yet.
+// Returns null when the contract has no value on record to draw down.
+export function remainingContractValue(
+  contract: ContractRecord,
+  claims: PaymentClaim[]
+): number | null {
+  if (!contract.contractValue) return null;
+  const claimedToDate = claims
+    .filter((claim) => claim.contractId === contract.id && claim.status !== "DISPUTED")
+    .reduce((sum, claim) => sum + Number(claim.claimedAmount), 0);
+  return Number(contract.contractValue) - claimedToDate;
 }
