@@ -24,6 +24,21 @@ function parseOptionalNumber(value: unknown): number | null | undefined {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+// A claim can only be linked to a Contracts register entry belonging to
+// the same project, otherwise "remaining contract value" math would leak
+// across projects.
+async function resolveContractId(
+  contractId: unknown,
+  projectId: string
+): Promise<string | null | undefined> {
+  if (contractId === undefined) return undefined;
+  if (contractId === null || contractId === "") return null;
+  if (typeof contractId !== "string") return null;
+  const contract = await prisma.contractRecord.findUnique({ where: { id: contractId } });
+  if (!contract || contract.projectId !== projectId) return null;
+  return contract.id;
+}
+
 const projectPaymentClaimsRouter = Router({ mergeParams: true });
 
 type ProjectParams = { id: string };
@@ -48,6 +63,7 @@ projectPaymentClaimsRouter.post("/", async (req: Request<ProjectParams>, res: Re
     status,
     dateSubmitted,
     notes,
+    contractId,
   } = req.body as Record<string, unknown>;
 
   if (typeof claimNumber !== "string" || !claimNumber.trim()) {
@@ -69,6 +85,7 @@ projectPaymentClaimsRouter.post("/", async (req: Request<ProjectParams>, res: Re
 
   const resolvedStatus = (status as PaymentClaimStatus) ?? "SUBMITTED";
   const certifies = CERTIFIED_IMPLYING_STATUSES.includes(resolvedStatus);
+  const resolvedContractId = await resolveContractId(contractId, req.params.id);
 
   const claim = await prisma.paymentClaim.create({
     data: {
@@ -84,6 +101,7 @@ projectPaymentClaimsRouter.post("/", async (req: Request<ProjectParams>, res: Re
       raisedById: req.user!.sub,
       raisedByName: req.user!.name,
       notes: (notes as string) || null,
+      contractId: resolvedContractId ?? null,
     },
   });
 
@@ -125,6 +143,7 @@ paymentClaimsRouter.put("/:id", async (req, res) => {
     status,
     dateSubmitted,
     notes,
+    contractId,
   } = req.body as Record<string, unknown>;
 
   const data: Record<string, unknown> = {};
@@ -145,6 +164,9 @@ paymentClaimsRouter.put("/:id", async (req, res) => {
     data.claimedAmount = parsed;
   }
   if (certifiedAmount !== undefined) data.certifiedAmount = parseOptionalNumber(certifiedAmount);
+  if (contractId !== undefined) {
+    data.contractId = await resolveContractId(contractId, before.projectId);
+  }
   const submitted = parseDate(dateSubmitted);
   if (submitted !== undefined) data.dateSubmitted = submitted ?? before.dateSubmitted;
   if (notes !== undefined) data.notes = notes || null;

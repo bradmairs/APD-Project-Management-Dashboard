@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PaymentClaim, PaymentClaimInput, PaymentClaimStatus } from "../types";
+import { ContractRecord, PaymentClaim, PaymentClaimInput, PaymentClaimStatus } from "../types";
 import { formatCurrency, formatDate } from "../format";
 import {
   ALL_PAYMENT_CLAIM_STATUSES,
@@ -11,12 +11,19 @@ import PaymentClaimFormModal from "./PaymentClaimFormModal";
 
 interface Props {
   claims: PaymentClaim[];
+  contracts: ContractRecord[];
   onCreate: (data: Partial<PaymentClaimInput>) => Promise<void>;
   onUpdate: (claim: PaymentClaim, data: Partial<PaymentClaimInput>) => Promise<void>;
   onDelete: (claim: PaymentClaim) => Promise<void>;
 }
 
-export default function PaymentClaimsPanel({ claims, onCreate, onUpdate, onDelete }: Props) {
+export default function PaymentClaimsPanel({
+  claims,
+  contracts,
+  onCreate,
+  onUpdate,
+  onDelete,
+}: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<PaymentClaim | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -59,6 +66,11 @@ export default function PaymentClaimsPanel({ claims, onCreate, onUpdate, onDelet
     (a, b) => paymentClaimStatusRank(a.status) - paymentClaimStatusRank(b.status)
   );
 
+  function contractName(claim: PaymentClaim): string | null {
+    if (!claim.contractId) return null;
+    return contracts.find((c) => c.id === claim.contractId)?.partyName ?? null;
+  }
+
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
       <div className="flex items-center justify-between mb-3">
@@ -89,6 +101,7 @@ export default function PaymentClaimsPanel({ claims, onCreate, onUpdate, onDelet
         <ul className="divide-y divide-slate-100 dark:divide-slate-700">
           {sorted.map((claim) => {
             const isExpanded = expandedId === claim.id;
+            const against = contractName(claim);
             return (
               <li key={claim.id} className="py-3">
                 <div className="flex items-start justify-between gap-3">
@@ -114,6 +127,7 @@ export default function PaymentClaimsPanel({ claims, onCreate, onUpdate, onDelet
                       {claim.periodEnding && (
                         <span>Period ending {formatDate(claim.periodEnding)}</span>
                       )}
+                      {against && <span>Against {against}</span>}
                     </div>
                   </button>
                   <div className="flex items-center gap-2 shrink-0 pt-0.5">
@@ -171,6 +185,7 @@ export default function PaymentClaimsPanel({ claims, onCreate, onUpdate, onDelet
       {showModal && (
         <PaymentClaimFormModal
           claim={editing}
+          contracts={contracts}
           onClose={() => {
             setShowModal(false);
             setEditing(null);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ContractRecord, ContractRecordInput, ContractStatus } from "../types";
+import { ContractRecord, ContractRecordInput, ContractStatus, PaymentClaim } from "../types";
 import { formatCurrency, formatDate } from "../format";
 import {
   ALL_CONTRACT_STATUSES,
@@ -8,17 +8,25 @@ import {
   CONTRACT_STATUS_COLORS,
   CONTRACT_STATUS_LABELS,
   contractStatusRank,
+  remainingContractValue,
 } from "../contractMeta";
 import ContractFormModal from "./ContractFormModal";
 
 interface Props {
   contracts: ContractRecord[];
+  paymentClaims: PaymentClaim[];
   onCreate: (data: Partial<ContractRecordInput>) => Promise<void>;
   onUpdate: (contract: ContractRecord, data: Partial<ContractRecordInput>) => Promise<void>;
   onDelete: (contract: ContractRecord) => Promise<void>;
 }
 
-export default function ContractsPanel({ contracts, onCreate, onUpdate, onDelete }: Props) {
+export default function ContractsPanel({
+  contracts,
+  paymentClaims,
+  onCreate,
+  onUpdate,
+  onDelete,
+}: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<ContractRecord | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -82,6 +90,7 @@ export default function ContractsPanel({ contracts, onCreate, onUpdate, onDelete
         <ul className="divide-y divide-slate-100 dark:divide-slate-700">
           {sorted.map((contract) => {
             const isExpanded = expandedId === contract.id;
+            const remaining = remainingContractValue(contract, paymentClaims);
             return (
               <li key={contract.id} className="py-3">
                 <div className="flex items-start justify-between gap-3">
@@ -115,6 +124,17 @@ export default function ContractsPanel({ contracts, onCreate, onUpdate, onDelete
                       )}
                       {contract.contingency && (
                         <span>Contingency: {formatCurrency(contract.contingency)}</span>
+                      )}
+                      {remaining !== null && (
+                        <span
+                          className={
+                            remaining < 0
+                              ? "text-red-600 dark:text-red-400 font-medium"
+                              : "text-slate-500 dark:text-slate-400"
+                          }
+                        >
+                          Remaining: {formatCurrency(remaining)}
+                        </span>
                       )}
                       {contract.contractNumber && <span>{contract.contractNumber}</span>}
                       {contract.startDate && <span>Started {formatDate(contract.startDate)}</span>}
