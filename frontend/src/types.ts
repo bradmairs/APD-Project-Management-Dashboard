@@ -833,6 +833,8 @@ export interface ContractRecord {
   contractForm: string | null;
   contractValue: string | null;
   contingency: string | null;
+  poValue: string | null;
+  provisionalItemsValue: string | null;
   retentionPercent: string | null;
   defectsLiabilityMonths: number | null;
   executionDate: string | null;

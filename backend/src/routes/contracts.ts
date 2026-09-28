@@ -48,6 +48,8 @@ projectContractsRouter.post("/", async (req: Request<ProjectParams>, res: Respon
     contractForm,
     contractValue,
     contingency,
+    poValue,
+    provisionalItemsValue,
     retentionPercent,
     defectsLiabilityMonths,
     executionDate,
@@ -77,6 +79,8 @@ projectContractsRouter.post("/", async (req: Request<ProjectParams>, res: Respon
       contractForm: (contractForm as string) || null,
       contractValue: parseNumber(contractValue) ?? null,
       contingency: parseNumber(contingency) ?? null,
+      poValue: parseNumber(poValue) ?? null,
+      provisionalItemsValue: parseNumber(provisionalItemsValue) ?? null,
       retentionPercent: parseNumber(retentionPercent) ?? null,
       defectsLiabilityMonths: parseInteger(defectsLiabilityMonths) ?? null,
       executionDate: parseDate(executionDate) ?? null,
@@ -118,6 +122,8 @@ contractsRouter.put("/:id", async (req, res) => {
     contractForm,
     contractValue,
     contingency,
+    poValue,
+    provisionalItemsValue,
     retentionPercent,
     defectsLiabilityMonths,
     executionDate,
@@ -148,6 +154,10 @@ contractsRouter.put("/:id", async (req, res) => {
   if (value !== undefined) data.contractValue = value;
   const contingencyValue = parseNumber(contingency);
   if (contingencyValue !== undefined) data.contingency = contingencyValue;
+  const po = parseNumber(poValue);
+  if (po !== undefined) data.poValue = po;
+  const provisionalItems = parseNumber(provisionalItemsValue);
+  if (provisionalItems !== undefined) data.provisionalItemsValue = provisionalItems;
   const retention = parseNumber(retentionPercent);
   if (retention !== undefined) data.retentionPercent = retention;
   const dlp = parseInteger(defectsLiabilityMonths);

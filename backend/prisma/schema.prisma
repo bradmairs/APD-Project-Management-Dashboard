@@ -1210,6 +1210,8 @@ model ContractRecord {
   // Contingency is tracked per contract, not as a single project-wide
   // figure — each contract's own risk allowance, not a portfolio rollup.
   contingency            Decimal?          @db.Decimal(14, 2)
+  poValue                Decimal?          @db.Decimal(14, 2)
+  provisionalItemsValue  Decimal?          @db.Decimal(14, 2)
   retentionPercent       Decimal?          @db.Decimal(5, 2)
   defectsLiabilityMonths Int?
   executionDate          DateTime?
