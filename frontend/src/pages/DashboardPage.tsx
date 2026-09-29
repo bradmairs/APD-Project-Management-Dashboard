@@ -57,6 +57,7 @@ import {
   getProjects,
   getRecentActivity,
   getUpcomingTasks,
+  updateActionItem,
   updateProject,
   updateTask,
 } from "../api";
@@ -64,10 +65,9 @@ import StatCards from "../components/StatCards";
 import TaskList from "../components/TaskList";
 import ProjectTable from "../components/ProjectTable";
 import ProjectFormModal from "../components/ProjectFormModal";
-import UpcomingDeadlines from "../components/UpcomingDeadlines";
 import ActivityFeed from "../components/ActivityFeed";
 import TopRisksPanel from "../components/TopRisksPanel";
-import OpenActionsPanel from "../components/OpenActionsPanel";
+import TodayAndUpcomingPanel from "../components/TodayAndUpcomingPanel";
 import ExpiringPermitsPanel from "../components/ExpiringPermitsPanel";
 import ExpiringInsuranceWarrantiesPanel from "../components/ExpiringInsuranceWarrantiesPanel";
 import OpenSqePanel from "../components/OpenSqePanel";
@@ -103,10 +103,11 @@ import { useUndoToast } from "../undo/UndoToastContext";
 
 const RAG_LABELS: Record<RagStatus, string> = { GREEN: "Green", AMBER: "Amber", RED: "Red" };
 
-type DashboardTabId = "projects" | "alerts" | "charts" | "activity" | "ai";
+type DashboardTabId = "projects" | "today" | "alerts" | "charts" | "activity" | "ai";
 
 const DASHBOARD_TABS: { id: DashboardTabId; label: string }[] = [
   { id: "projects", label: "Projects" },
+  { id: "today", label: "Today & Upcoming" },
   { id: "alerts", label: "Alerts" },
   { id: "charts", label: "Charts" },
   { id: "activity", label: "Activity" },
@@ -389,6 +390,16 @@ export default function DashboardPage() {
     });
   }
 
+  async function handleCompleteTask(task: Task) {
+    await updateTask(task.id, { status: "DONE" });
+    await loadData();
+  }
+
+  async function handleCompleteAction(actionItem: ActionItem) {
+    await updateActionItem(actionItem.id, { status: "DONE" });
+    await loadData();
+  }
+
   return (
     <div className="min-h-screen">
       <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
@@ -598,10 +609,18 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {activeTab === "today" && !loading && (
+          <TodayAndUpcomingPanel
+            tasks={upcomingTasks}
+            actionItems={actionItems}
+            onCompleteTask={handleCompleteTask}
+            onCompleteAction={handleCompleteAction}
+          />
+        )}
+
         {activeTab === "alerts" && !loading && projects.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
             <NeedsAttentionPanel projects={projects} healthByProjectId={healthByProjectId} />
-            <OpenActionsPanel actionItems={actionItems} />
             <ExpiringPermitsPanel permits={permits} />
             <OpenSqePanel records={sqeRecords} />
             <EnvironmentalExceedancesPanel records={environmentalMonitoring} />
@@ -641,7 +660,6 @@ export default function DashboardPage() {
 
         {activeTab === "activity" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <UpcomingDeadlines tasks={upcomingTasks} />
             <TopRisksPanel risks={risks} />
             {recentActivity.length > 0 && (
               <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">

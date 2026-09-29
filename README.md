@@ -71,9 +71,9 @@ passing that date is expected by then.
 
 Each project also has a list of **Tasks** (visible on its detail page, opened
 by clicking a row): title, status (To Do / In Progress / Done), and an
-optional due date. Tasks with the nearest due dates across all projects show
-up in the "Upcoming Deadlines" panel on the main dashboard, and in the
-notification bell described below.
+optional due date. Tasks with a due date show up in the dashboard's
+**Today & Upcoming** tab (see below) and in the notification bell described
+below.
 
 See `backend/prisma/schema.prisma` for the source of truth.
 
@@ -617,9 +617,9 @@ ahead of rectified-but-unverified, verified ones last) and its header
 shows a running "N outstanding of total" count.
 
 The Dashboard has a portfolio-wide **Open Defects** panel alongside
-Needs Attention, Open Actions, Expiring Permits, and Open SQE Issues,
-listing every non-verified defect across the portfolio with a link back
-to its project. Open to any logged-in user to edit.
+Needs Attention, Expiring Permits, and Open SQE Issues, listing every
+non-verified defect across the portfolio with a link back to its
+project. Open to any logged-in user to edit.
 
 ## Payment Claims
 
@@ -778,8 +778,8 @@ closing dates.
 
 The dashboard's portfolio-wide **Open SQE Issues** panel lists every
 open issue across every project, most severe first, linking back to its
-project — sitting alongside Needs Attention, Open Actions, and Permits
-Expiring Soon as a fourth view into what needs a PM's attention today.
+project — sitting alongside Needs Attention and Permits Expiring Soon
+as a view into what needs a PM's attention today.
 
 Like the other registers, an SQE record is live data with no per-month
 snapshot. Open to any logged-in user to edit.
@@ -804,12 +804,10 @@ starting point, not what's allowed. `dateClosed` stamps automatically
 the moment status becomes Done, and clears if it moves off Done again —
 the same pattern `dateDecided` uses on a Variation.
 
-The Dashboard has its own portfolio-wide **Open Actions** panel, listing
-every open Action/Decision across every project — the ones with a due
-date first, soonest (or most overdue) at the top — each linking back to
-its project. It sits beside the Needs Attention panel since both answer
-the same question: what does a PM need to look at today, across the
-whole portfolio, without opening every project one by one.
+Every open Action/Decision across the portfolio shows up in the
+Dashboard's **Today & Upcoming** tab (see below), merged in alongside
+Tasks — there's no separate portfolio-wide Actions panel, since that
+would just be the same data shown twice.
 
 Like Risks and Variations, an action item is live data with no per-month
 snapshot. Open to any logged-in user to edit, matching Tasks,
@@ -1480,10 +1478,12 @@ Both now split their content into a horizontal tab bar
 so a screen only ever shows one section at a time:
 
 - **Dashboard** — Projects (the filterable/searchable project table),
-  Alerts (the eight portfolio-wide "needs attention" panels), Charts
-  (spend-vs-budget and projects-by-status), Activity (upcoming deadlines,
-  top risks, recent activity feed). The header and the four stat cards
-  stay above the tabs, visible on every tab.
+  Today & Upcoming (every open Task and Action/Decision across the
+  portfolio, merged and bucketed by urgency), Alerts (the portfolio-wide
+  "needs attention" panels for compliance/register items), Charts
+  (spend-vs-budget and projects-by-status), Activity (top risks, recent
+  activity feed). The header and the four stat cards stay above the
+  tabs, visible on every tab.
 - **Project detail page** — Overview (Stakeholders, Actions & Decisions,
   Activity), Schedule (Milestones, Tasks, EOT Claims, Commissioning &
   Handover), Budget & Contract (Cash Flow, Variations, Payment Claims,
@@ -1513,6 +1513,37 @@ first. Each panel is wrapped in a `<div id="...">` in
 than derived from the JSX, since the panel components themselves don't
 know their own tab or position. A tab with only one section (AI Assistant)
 shows no jump row at all, since there'd be nowhere else to jump to.
+
+### Today & Upcoming
+
+The Dashboard's **Today & Upcoming** tab (`TodayAndUpcomingPanel.tsx`) is
+the single place to see and clear everything a PM needs to act on across
+the whole portfolio, rather than checking a tasks panel and an actions
+panel separately. It merges every open Task and open Action/Decision —
+the same `upcomingTasks`/`actionItems` data the page already loads — into
+one list, bucketed by urgency: **Overdue → Due Today → Due This Week →
+Later → No Due Date** (the last bucket only ever holds Actions, since a
+Task without a due date never appears in the upcoming-tasks feed at all).
+Buckets are computed from calendar-day comparisons, not raw timestamp
+deltas, so a due date and "now" on the same day is Due Today rather than
+Overdue.
+
+Each row shows a type badge (Task / Action / Decision), the title, a link
+to its project (portfolio-wide tasks have none), an owner (Actions only),
+and the due date in red once it's overdue. A checkbox on each row marks
+it complete inline — `updateTask`/`updateActionItem` with `status: "DONE"`,
+the same calls their own project-level panels use — so clearing something
+doesn't require leaving the dashboard to open its project.
+
+This tab fully supersedes two panels that used to show the same
+underlying data less usefully: the Activity tab's "Upcoming Deadlines"
+(Tasks only, no Actions, no inline completion) and the Alerts tab's "Open
+Actions" (Actions only, no Tasks) were both removed rather than kept
+alongside it — the same data in three places would be clutter, not
+redundancy for safety. `GET /api/tasks/upcoming`'s result cap was raised
+from 10 to 50 to match: that endpoint also feeds the notification bell,
+where 10 was enough, but a dedicated tracking tab needs to show more than
+the very next few before anything falls off the list.
 
 ## CSV Export
 
