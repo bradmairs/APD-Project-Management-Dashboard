@@ -75,7 +75,7 @@ tasksRouter.get("/upcoming", async (_req, res) => {
   const tasks = await prisma.task.findMany({
     where: { status: { not: "DONE" }, dueDate: { not: null } },
     orderBy: { dueDate: "asc" },
-    take: 10,
+    take: 50,
     include: { project: { select: { id: true, name: true } } },
   });
   res.json(tasks);
