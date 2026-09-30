@@ -17,3 +17,16 @@ export function revisedBudget(
   if (project.budget === null) return null;
   return Number(project.budget) + approvedVariationsTotal(variations);
 }
+
+// The budget to measure actuals against: the manually-tracked Latest
+// Approved Budget when a PM has entered one, since it already reflects
+// every negotiated change (not all of which get raised as a Variation),
+// falling back to the Original Budget as revised by approved Variations
+// otherwise.
+export function effectiveBudget(
+  project: Pick<Project, "budget" | "latestApprovedBudget">,
+  variations: Variation[]
+): number | null {
+  if (project.latestApprovedBudget !== null) return Number(project.latestApprovedBudget);
+  return revisedBudget(project, variations);
+}

@@ -1,6 +1,6 @@
 import { CashFlowEntry, Project, Variation } from "../types";
 import { formatCurrency } from "../format";
-import { revisedBudget } from "../variations";
+import { effectiveBudget } from "../variations";
 import { BUDGET_LATEST_APPROVED, CHART_TEXT_MUTED } from "./palette";
 import CumulativeSpendChartView, { BudgetLine } from "./CumulativeSpendChartView";
 import {
@@ -61,10 +61,7 @@ export default function CumulativeSpendChart({
   );
 
   const originalBudget = project.budget !== null ? Number(project.budget) : null;
-  const latestApprovedBudget =
-    project.latestApprovedBudget !== null
-      ? Number(project.latestApprovedBudget)
-      : revisedBudget(project, variations);
+  const latestApprovedBudget = effectiveBudget(project, variations);
 
   const budgetLines: BudgetLine[] = [];
   if (originalBudget !== null) {
