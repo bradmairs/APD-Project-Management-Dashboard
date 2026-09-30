@@ -1,6 +1,6 @@
 import { CashFlowEntry, Project, Variation } from "../types";
 import { formatCurrency } from "../format";
-import { revisedBudget } from "../variations";
+import { effectiveBudget } from "../variations";
 import { BUDGET_LATEST_APPROVED, CHART_TEXT_MUTED } from "./palette";
 import CumulativeSpendChartView, { BudgetLine } from "./CumulativeSpendChartView";
 import {
@@ -94,11 +94,7 @@ export default function PortfolioCumulativeSpendChart({
     originalBudgets.length === 0 ? null : originalBudgets.reduce((sum, b) => sum + b, 0);
 
   const latestApprovedBudgets = projects
-    .map((p) =>
-      p.latestApprovedBudget !== null
-        ? Number(p.latestApprovedBudget)
-        : revisedBudget(p, variationsByProject.get(p.id) ?? [])
-    )
+    .map((p) => effectiveBudget(p, variationsByProject.get(p.id) ?? []))
     .filter((b): b is number => b !== null);
   const totalLatestApprovedBudget =
     latestApprovedBudgets.length === 0

@@ -2,7 +2,7 @@ import { CashFlowEntry, EotClaim, Project, RagStatus, Risk, Variation } from "./
 import { STATUS_LABELS, STATUSES_EXEMPT_FROM_OVERDUE } from "./statusMeta";
 import { formatCurrency, formatDate } from "./format";
 import { forecastAtCompletion } from "./cashflow";
-import { revisedBudget } from "./variations";
+import { effectiveBudget } from "./variations";
 import { revisedCompletionDate } from "./eot";
 import { riskBand, riskScore } from "./riskScoring";
 
@@ -56,7 +56,7 @@ interface RagResult {
 
 // Uses the project's completion date as revised by any approved EOT
 // claims, not the raw contractual date — the same reasoning budgetHealth
-// uses revisedBudget instead of the raw budget. This is deliberately
+// uses effectiveBudget instead of the raw budget. This is deliberately
 // different from statusMeta's isProjectOverdue (used by the dashboard's
 // "Overdue" stat and the project table), which always reflects the
 // original contractual date; Health is the exception-surfacing signal
@@ -100,7 +100,7 @@ function budgetHealth(
   entries: CashFlowEntry[],
   variations: Variation[]
 ): RagResult {
-  const budget = revisedBudget(project, variations);
+  const budget = effectiveBudget(project, variations);
   if (budget === null || budget <= 0) {
     return { status: "GREEN", reason: "No approved budget set." };
   }
@@ -110,9 +110,11 @@ function budgetHealth(
 
   const forecastTotal = forecastAtCompletion(entries);
   const pctOfBudget = Math.round((forecastTotal / budget) * 100);
+  const budgetLabel =
+    project.latestApprovedBudget !== null ? "latest approved budget" : "approved budget";
   return {
     status: ragForPercentOf(forecastTotal, budget),
-    reason: `Forecast total ${formatCurrency(forecastTotal)} is ${pctOfBudget}% of the approved budget (${formatCurrency(budget)}).`,
+    reason: `Forecast total ${formatCurrency(forecastTotal)} is ${pctOfBudget}% of the ${budgetLabel} (${formatCurrency(budget)}).`,
   };
 }
 

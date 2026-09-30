@@ -1091,8 +1091,13 @@ isn't yet the same signal as one running materially over:
   dashboard's "Overdue" stat and the project table, which always reflect
   the literal contractual date rather than the revised one
 - **Budget** — the percentage is the Forecast Total (from Cash Flow) over
-  the project's current budget (revised by any approved Variations);
-  Green when there's no cash flow data yet rather than guessing
+  the project's effective budget: the manually-tracked **Latest Approved
+  Budget** when one has been entered on the project, since it already
+  reflects every negotiated change (not all of which get raised as a
+  Variation); otherwise the **Original Budget** as revised by any approved
+  Variations (`effectiveBudget()` in `frontend/src/variations.ts`, also
+  used by the Cumulative Spend charts' reference lines). Green when
+  there's no cash flow data yet rather than guessing
 - **Risk** — Red if any open Risk (not an Opportunity, not Closed) has a
   Critical inherent score; Amber for High; Green otherwise. Unlike
   Schedule and Budget, Risk isn't on the percentage scale above
