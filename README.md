@@ -1499,18 +1499,27 @@ and back always starts from the default tab. Every panel that was already
 on these pages is still there; this only changed which section of the
 page shows it.
 
-### Sticky, Clickable Dashboard Header
+### Sticky, Clickable Header
 
-Both main dashboards — GVW's (`/`) and CMP's (`/cmp`) — have `sticky
-top-0 z-30` on their `<header>`, so it stays pinned at the top of the
-viewport as the tab content beneath it scrolls, rather than scrolling
-out of view on a long Projects table or a busy Alerts tab. The logo and
-title/subtitle block is wrapped in a `Link` back to that dashboard's own
-root (`/` for GVW, `/cmp` for CMP), so clicking either always returns
-home, matching the common "click the logo to go home" convention. This
-is scoped to the two dashboard pages only — a project detail page's own
-header (with its "Back to dashboard" link, project name, and Edit/Delete
-buttons) is a different header entirely and wasn't touched.
+Every page's `<header>` — both main dashboards (`/` and `/cmp`), both
+project detail pages, and the standalone GVW pages (Admin Users, Task
+Templates, Lessons Learned, Reports) — has `sticky top-0 z-30`, so it
+stays pinned at the top of the viewport as the content beneath it
+scrolls, rather than scrolling out of view on a long Projects table, a
+busy Alerts tab, or a page full of panels.
+
+On the two main dashboards, the logo and title/subtitle block is
+wrapped in a `Link` back to that dashboard's own root (`/` for GVW,
+`/cmp` for CMP), so clicking either always returns home, matching the
+common "click the logo to go home" convention. On every other GVW page
+that shows the GVW logo in its header (project detail, Admin Users,
+Task Templates, Lessons Learned, Reports), just the logo itself is
+wrapped in that same `Link` back to `/` — the page's own title (e.g.
+the project name) is left as plain text since it isn't a "go home"
+affordance. The CMP project detail page's header has no logo, so it
+only picked up the sticky behavior. The two printable report pages
+(Monthly Report view, Closeout Report) have no persistent header at
+all — just a "back" link and a Print button — so they're unaffected.
 
 ### Jump To
 
