@@ -48,7 +48,7 @@ export default function LessonsLearnedPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+      <header className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5">
           <Link
             to="/"
@@ -58,7 +58,9 @@ export default function LessonsLearnedPage() {
           </Link>
           <div className="flex flex-wrap items-center justify-between gap-y-3 mt-2">
             <div className="flex items-center gap-4">
-              <GvwLogo className="h-14" />
+              <Link to="/" className="hover:opacity-90">
+                <GvwLogo className="h-14" />
+              </Link>
               <div>
                 <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
                   Lessons Learned
