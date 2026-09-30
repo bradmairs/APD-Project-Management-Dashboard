@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Milestone, MilestoneInput } from "../types";
 import { formatDate } from "../format";
 import MilestoneFormModal from "./MilestoneFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   milestones: Milestone[];
@@ -52,8 +53,10 @@ export default function MilestonesPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(milestone: Milestone) {
-    if (!confirm(`Delete milestone "${milestone.taskActivity}"? This cannot be undone.`))
+    if (!await confirm(`Delete milestone "${milestone.taskActivity}"? This cannot be undone.`))
       return;
     await onDelete(milestone);
   }

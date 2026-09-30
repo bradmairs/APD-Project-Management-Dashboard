@@ -122,8 +122,10 @@ const EXTRACT_SECTION_SYSTEM_PROMPT =
 const SUMMARISE_MINUTES_SYSTEM_PROMPT =
   "You are an assistant embedded in a project management dashboard for Goulburn Valley Water, " +
   "a water utility. You are given the discussion items recorded at a construction or " +
-  'infrastructure project meeting. Respond with ONLY a JSON object {"meetingType": string or ' +
-  'null, "summary": string or null}. meetingType is a short label such as "Progress Meeting", ' +
+  'infrastructure project meeting. Respond with ONLY a JSON object {"title": string or null, ' +
+  '"meetingType": string or null, "summary": string or null}. title is a short, specific ' +
+  "heading for this meeting (3-8 words) naming its main subject, such as \"Pump Station Stage 2 " +
+  'Handover Planning", otherwise null. meetingType is a short label such as "Progress Meeting", ' +
   '"Design Review" or "Site Meeting" if inferable, otherwise null. summary is a 2-4 sentence ' +
   "overview for someone who was not there: the main subjects covered and any key decisions. " +
   "Use only the information given.";
@@ -135,6 +137,7 @@ const OCR_TRANSCRIPT_SYSTEM_PROMPT =
   "transcription'. If the image contains no legible text, respond with an empty string.";
 
 interface MeetingMinutesDraft {
+  title: string | null;
   meetingType: string | null;
   summary: string | null;
   attendees: string | null;
@@ -424,16 +427,19 @@ async function runDraftJob(
     const merged = mergeSections(sections);
     const notes = merged.items.length > 0 ? formatDiscussionNotes(merged.items) : null;
 
+    let title: string | null = null;
     let meetingType: string | null = null;
     let summary: string | null = null;
     if (notes) {
       job.progress = "Writing the summary…";
       const overview = parseJsonObject(await askOllamaJson(SUMMARISE_MINUTES_SYSTEM_PROMPT, notes));
+      title = coerceDraftText(overview?.title)?.slice(0, MAX_TITLE_LENGTH) ?? null;
       meetingType = coerceDraftText(overview?.meetingType)?.slice(0, MAX_TITLE_LENGTH) ?? null;
       summary = coerceDraftText(overview?.summary);
     }
 
     job.draft = {
+      title,
       meetingType,
       summary,
       attendees: merged.attendees.length > 0 ? merged.attendees.join(", ").slice(0, MAX_FREE_TEXT_LENGTH) : null,
@@ -470,7 +476,7 @@ projectMeetingMinutesRouter.post("/", async (req: Request<ProjectParams>, res: R
   const project = await prisma.project.findUnique({ where: { id: req.params.id } });
   if (!project) return res.status(404).json({ error: "Project not found" });
 
-  const { meetingDate, meetingType, location, attendees, summary, nextMeetingDate, notes } =
+  const { title, meetingDate, meetingType, location, attendees, summary, nextMeetingDate, notes } =
     req.body as Record<string, unknown>;
 
   const parsedMeetingDate = parseRequiredDate(meetingDate);
@@ -481,6 +487,7 @@ projectMeetingMinutesRouter.post("/", async (req: Request<ProjectParams>, res: R
   const meeting = await prisma.meetingMinutes.create({
     data: {
       projectId: req.params.id,
+      title: typeof title === "string" && title.trim() ? title.trim() : null,
       meetingDate: parsedMeetingDate,
       meetingType: (meetingType as string) || null,
       location: (location as string) || null,
@@ -498,7 +505,9 @@ projectMeetingMinutesRouter.post("/", async (req: Request<ProjectParams>, res: R
     projectName: project.name,
     userId: req.user!.sub,
     userName: req.user!.name,
-    action: `recorded meeting minutes${meeting.meetingType ? ` for a ${meeting.meetingType}` : ""}`,
+    action: meeting.title
+      ? `recorded meeting minutes "${meeting.title}"`
+      : `recorded meeting minutes${meeting.meetingType ? ` for a ${meeting.meetingType}` : ""}`,
   });
 
   res.status(201).json(meeting);
@@ -564,7 +573,7 @@ meetingMinutesRouter.post("/:id/ai/extract-actions", async (req, res) => {
   }
 
   const userPrompt = [
-    `Meeting: ${meeting.meetingType || "Meeting"} on ${meeting.meetingDate.toISOString().slice(0, 10)}`,
+    `Meeting: ${meeting.title || meeting.meetingType || "Meeting"} on ${meeting.meetingDate.toISOString().slice(0, 10)}`,
     meeting.attendees ? `Attendees: ${meeting.attendees}` : null,
     meeting.summary ? `Summary:\n${meeting.summary}` : null,
     meeting.notes ? `Notes:\n${meeting.notes}` : null,
@@ -591,11 +600,12 @@ meetingMinutesRouter.put("/:id", async (req, res) => {
   });
   if (!before) return res.status(404).json({ error: "Meeting minutes not found" });
 
-  const { meetingDate, meetingType, location, attendees, summary, nextMeetingDate, notes } =
+  const { title, meetingDate, meetingType, location, attendees, summary, nextMeetingDate, notes } =
     req.body as Record<string, unknown>;
 
   const data: Record<string, unknown> = {};
 
+  if (title !== undefined) data.title = typeof title === "string" && title.trim() ? title.trim() : null;
   const date = parseDate(meetingDate);
   if (date !== undefined) data.meetingDate = date ?? before.meetingDate;
   if (meetingType !== undefined) data.meetingType = meetingType || null;
@@ -636,7 +646,9 @@ meetingMinutesRouter.delete("/:id", async (req, res) => {
     projectName: meeting.project.name,
     userId: req.user!.sub,
     userName: req.user!.name,
-    action: `deleted meeting minutes${meeting.meetingType ? ` for a ${meeting.meetingType}` : ""}`,
+    action: meeting.title
+      ? `deleted meeting minutes "${meeting.title}"`
+      : `deleted meeting minutes${meeting.meetingType ? ` for a ${meeting.meetingType}` : ""}`,
   });
   await prisma.meetingMinutes.delete({ where: { id: req.params.id } });
   res.status(204).send();

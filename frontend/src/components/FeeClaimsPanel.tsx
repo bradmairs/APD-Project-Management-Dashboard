@@ -3,6 +3,7 @@ import { FeeClaim, FeeClaimInput } from "../cmpTypes";
 import { DESIGN_STAGE_LABELS, FEE_CLAIM_STATUS_COLORS, FEE_CLAIM_STATUS_LABELS } from "../cmpStatusMeta";
 import { formatCurrency, formatDate } from "../format";
 import FeeClaimFormModal from "./FeeClaimFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   claims: FeeClaim[];
@@ -35,8 +36,10 @@ export default function FeeClaimsPanel({ claims, onCreate, onUpdate, onDelete }:
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(claim: FeeClaim) {
-    if (!confirm(`Delete fee claim ${claim.claimNumber}? This cannot be undone.`)) return;
+    if (!await confirm(`Delete fee claim ${claim.claimNumber}? This cannot be undone.`)) return;
     await onDelete(claim);
   }
 

@@ -231,6 +231,7 @@ model CmpMeetingMinutes {
   id              String    @id @default(cuid())
   project         CmpProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId       String
+  title           String?
   meetingDate     DateTime
   meetingType     String?
   location        String?

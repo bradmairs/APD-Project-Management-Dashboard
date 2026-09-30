@@ -445,6 +445,7 @@ export function describeContractUpdate(
 }
 
 export function describeMeetingMinutesUpdate(before: MeetingMinutes): string {
+  if (before.title) return `updated meeting minutes "${before.title}"`;
   return before.meetingType
     ? `updated meeting minutes for a ${before.meetingType}`
     : "updated meeting minutes";

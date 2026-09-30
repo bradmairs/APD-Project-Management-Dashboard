@@ -47,6 +47,7 @@ export interface Task {
   status: TaskStatus;
   dueDate: string | null;
   recurrence: TaskRecurrence;
+  meetingMinutesId: string | null;
   createdAt: string;
   updatedAt: string;
   project?: { id: string; name: string };
@@ -387,6 +388,7 @@ export interface SuggestedAction {
 // and edit before it's saved as a real MeetingMinutes record, using the
 // same SuggestedAction shape the existing extract-actions feature returns.
 export interface MeetingMinutesDraft {
+  title: string | null;
   meetingType: string | null;
   summary: string | null;
   attendees: string | null;
@@ -863,6 +865,7 @@ export type ContractRecordInput = Omit<
 export interface MeetingMinutes {
   id: string;
   projectId: string;
+  title: string | null;
   meetingDate: string;
   meetingType: string | null;
   location: string | null;

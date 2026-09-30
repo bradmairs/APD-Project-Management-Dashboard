@@ -5,8 +5,18 @@ import {
   MeetingMinutesDraft,
   MeetingMinutesInput,
   SuggestedAction,
+  TaskInput,
 } from "../types";
 import { buildMeetingMinutesPdf } from "../meetingMinutesPdf";
+import { useAuth } from "../auth/AuthContext";
+import {
+  SuggestionDestination,
+  defaultDestinations,
+  meetingLabel,
+  suggestionToAction,
+  suggestionToTask,
+} from "../meetingActionRouting";
+import SuggestedActionList from "./SuggestedActionList";
 
 interface Props {
   projectName: string;
@@ -19,6 +29,7 @@ interface Props {
     onProgress?: (message: string) => void;
   }) => Promise<MeetingMinutesDraft>;
   onCreateAction: (data: Partial<ActionItemInput>) => Promise<void>;
+  onCreateTask: (data: Partial<TaskInput>) => Promise<void>;
   onUploadAttachment: (meetingId: string, file: File) => Promise<void>;
 }
 
@@ -40,11 +51,14 @@ export default function MeetingMinutesFormModal({
   onSave,
   onGenerateDraft,
   onCreateAction,
+  onCreateTask,
   onUploadAttachment,
 }: Props) {
+  const { user } = useAuth();
   const [meetingDate, setMeetingDate] = useState(
     toDateInputValue(meeting?.meetingDate ?? null) || new Date().toISOString().substring(0, 10)
   );
+  const [title, setTitle] = useState(meeting?.title ?? "");
   const [meetingType, setMeetingType] = useState(meeting?.meetingType ?? "");
   const [location, setLocation] = useState(meeting?.location ?? "");
   const [attendees, setAttendees] = useState(meeting?.attendees ?? "");
@@ -68,6 +82,7 @@ export default function MeetingMinutesFormModal({
   const [generateProgress, setGenerateProgress] = useState<string | null>(null);
   const [draftActions, setDraftActions] = useState<SuggestedAction[] | null>(null);
   const [selectedActions, setSelectedActions] = useState<Set<number>>(new Set());
+  const [actionDestinations, setActionDestinations] = useState<SuggestionDestination[]>([]);
   const [wasGenerated, setWasGenerated] = useState(false);
 
   async function handleGenerate() {
@@ -83,12 +98,14 @@ export default function MeetingMinutesFormModal({
         file: transcriptFile ?? undefined,
         onProgress: setGenerateProgress,
       });
+      if (draft.title && !title.trim()) setTitle(draft.title);
       if (draft.meetingType) setMeetingType(draft.meetingType);
       if (draft.attendees) setAttendees(draft.attendees);
       if (draft.summary) setSummary(draft.summary);
       if (draft.notes) setNotes(draft.notes);
       setDraftActions(draft.actions);
       setSelectedActions(new Set(draft.actions.map((_, i) => i)));
+      setActionDestinations(defaultDestinations(draft.actions, user?.name));
       setWasGenerated(true);
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : "Failed to generate from transcript");
@@ -113,6 +130,7 @@ export default function MeetingMinutesFormModal({
     setError(null);
     try {
       const saved = await onSave({
+        title: title.trim() || null,
         meetingDate: new Date(meetingDate).toISOString(),
         meetingType: meetingType || null,
         location: location || null,
@@ -126,19 +144,18 @@ export default function MeetingMinutesFormModal({
         await onUploadAttachment(saved.id, minutesFile);
       }
 
-      const chosenActions =
-        draftActions?.filter((_, i) => selectedActions.has(i)) ?? [];
+      const chosenIndexes = (draftActions ?? [])
+        .map((_, i) => i)
+        .filter((i) => selectedActions.has(i));
+      const chosenActions = chosenIndexes.map((i) => draftActions![i]);
 
-      for (const action of chosenActions) {
-        await onCreateAction({
-          title: action.title,
-          type: "ACTION",
-          status: "OPEN",
-          dateRaised: saved.meetingDate,
-          ownerName: action.ownerName,
-          notes: action.dueDateHint ? `Suggested due: ${action.dueDateHint}` : null,
-          meetingMinutesId: saved.id,
-        });
+      for (const i of chosenIndexes) {
+        const action = draftActions![i];
+        if (actionDestinations[i] === "TASK") {
+          await onCreateTask(suggestionToTask(action, saved.id, meetingLabel(saved)));
+        } else {
+          await onCreateAction(suggestionToAction(action, saved.id, saved.meetingDate));
+        }
       }
 
       // The one-click "transcript in, saved minutes out" flow: when this
@@ -148,6 +165,7 @@ export default function MeetingMinutesFormModal({
       // fields without a separate export step.
       if (wasGenerated) {
         const pdfBlob = buildMeetingMinutesPdf(projectName, {
+          title: title.trim() || null,
           meetingDate: saved.meetingDate,
           meetingType: meetingType || null,
           location: location || null,
@@ -257,31 +275,33 @@ export default function MeetingMinutesFormModal({
                       <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         Suggested actions (added when you save)
                       </div>
-                      {draftActions.map((a, i) => (
-                        <label key={i} className="flex items-start gap-2 text-xs cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={selectedActions.has(i)}
-                            onChange={() => toggleSelectedAction(i)}
-                            className="mt-0.5"
-                          />
-                          <span>
-                            <span className="text-slate-700 dark:text-slate-300">{a.title}</span>
-                            {(a.ownerName || a.dueDateHint) && (
-                              <span className="text-slate-400 dark:text-slate-500">
-                                {" "}
-                                ({[a.ownerName, a.dueDateHint].filter(Boolean).join(", ")})
-                              </span>
-                            )}
-                          </span>
-                        </label>
-                      ))}
+                      <SuggestedActionList
+                        suggestions={draftActions}
+                        selected={selectedActions}
+                        destinations={actionDestinations}
+                        onToggleSelected={toggleSelectedAction}
+                        onChangeDestination={(i, d) =>
+                          setActionDestinations((prev) => prev.map((v, j) => (j === i ? d : v)))
+                        }
+                      />
                     </div>
                   )}
                 </div>
               )}
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Meeting Title
+            </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Optional — e.g. Stage 2 handover planning"
+              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
+            />
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="min-w-0">

@@ -9,6 +9,7 @@ import {
   tenderPackageRank,
 } from "../tenderMeta";
 import TenderPackageFormModal from "./TenderPackageFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   tenderPackages: TenderPackage[];
@@ -54,8 +55,10 @@ export default function TenderPackagesPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(tenderPackage: TenderPackage) {
-    if (!confirm(`Delete "${tenderPackage.title}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${tenderPackage.title}"? This cannot be undone.`)) return;
     await onDelete(tenderPackage);
   }
 

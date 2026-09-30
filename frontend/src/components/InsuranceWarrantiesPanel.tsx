@@ -8,6 +8,7 @@ import {
   isInsuranceWarrantyExpiringSoon,
 } from "../insuranceWarrantyMeta";
 import InsuranceWarrantyFormModal from "./InsuranceWarrantyFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   items: InsuranceWarranty[];
@@ -46,8 +47,10 @@ export default function InsuranceWarrantiesPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(item: InsuranceWarranty) {
-    if (!confirm(`Delete "${item.title}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${item.title}"? This cannot be undone.`)) return;
     await onDelete(item);
   }
 

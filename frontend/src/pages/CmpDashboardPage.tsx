@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTabParam } from "../useTabParam";
 import { CmpActivityLogEntry, CmpProject, CmpProjectInput, CmpProjectStatus } from "../cmpTypes";
 import { askCmpPortfolioAi, createCmpProject, getCmpProjects, getCmpRecentActivity } from "../cmpApi";
 import { CMP_PROJECT_STATUSES, CMP_PROJECT_STATUS_COLORS, CMP_PROJECT_STATUS_LABELS } from "../cmpStatusMeta";
@@ -44,7 +45,7 @@ export default function CmpDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<CmpProjectStatus | "ALL">("ALL");
-  const [activeTab, setActiveTab] = useState<CmpDashboardTabId>("projects");
+  const [activeTab, setActiveTab] = useTabParam(CMP_DASHBOARD_TABS, "projects");
 
   async function loadAll() {
     try {

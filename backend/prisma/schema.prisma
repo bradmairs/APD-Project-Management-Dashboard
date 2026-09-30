@@ -464,10 +464,15 @@ model Task {
   status      TaskStatus     @default(TODO)
   dueDate     DateTime?
   recurrence  TaskRecurrence @default(NONE)
+  // Optional: the meeting this task was actioned at. SetNull on delete, the
+  // same reasoning as ActionItem.meetingMinutes.
+  meetingMinutes   MeetingMinutes? @relation(fields: [meetingMinutesId], references: [id], onDelete: SetNull)
+  meetingMinutesId String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
   @@index([projectId])
+  @@index([meetingMinutesId])
 }
 
 // Files (drawings, contracts, correspondence) attached to a project.
@@ -1237,6 +1242,7 @@ model MeetingMinutes {
   id              String       @id @default(cuid())
   project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId       String
+  title           String?
   meetingDate     DateTime
   meetingType     String?
   location        String?
@@ -1251,6 +1257,7 @@ model MeetingMinutes {
   updatedAt       DateTime     @updatedAt
   attachments     Attachment[]
   actionItems     ActionItem[]
+  tasks           Task[]
 
   @@index([projectId])
 }

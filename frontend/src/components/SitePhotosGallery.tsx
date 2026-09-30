@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { SiteVisitPhoto } from "../types";
 import { siteVisitPhotoFileUrl } from "../api";
 import { formatDateTime, formatFileSize } from "../format";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   photos: SiteVisitPhoto[];
@@ -91,8 +92,10 @@ function Lightbox({ photos, index, onClose, onNavigate, onDelete }: LightboxProp
     return () => window.removeEventListener("keydown", handleKey);
   }, [index, photos.length, onClose, onNavigate]);
 
+  const confirm = useConfirm();
+
   async function handleDelete() {
-    if (!confirm("Delete this photo? This cannot be undone.")) return;
+    if (!await confirm("Delete this photo? This cannot be undone.")) return;
     setDeleting(true);
     try {
       await onDelete(photo);

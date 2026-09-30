@@ -8,6 +8,7 @@ import {
   safetyInspectionRank,
 } from "../safetyInspectionMeta";
 import SafetyInspectionFormModal from "./SafetyInspectionFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   inspections: SafetyInspection[];
@@ -51,8 +52,10 @@ export default function SafetyInspectionsPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(inspection: SafetyInspection) {
-    if (!confirm(`Delete "${inspection.inspectionType}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${inspection.inspectionType}"? This cannot be undone.`)) return;
     await onDelete(inspection);
   }
 

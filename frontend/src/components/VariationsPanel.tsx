@@ -11,6 +11,7 @@ import VariationFormModal from "./VariationFormModal";
 import ExportCsvButton from "./ExportCsvButton";
 import BulkActionsBar from "./BulkActionsBar";
 import { useSelection } from "../useSelection";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   variations: Variation[];
@@ -73,8 +74,10 @@ export default function VariationsPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(variation: Variation) {
-    if (!confirm(`Delete variation "${variation.title}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete variation "${variation.title}"? This cannot be undone.`)) return;
     await onDelete(variation);
   }
 

@@ -1,6 +1,7 @@
 import { ChangeEvent, useRef, useState } from "react";
 import { SiteVisitPhoto } from "../types";
 import { siteVisitPhotoFileUrl } from "../api";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   photos: SiteVisitPhoto[];
@@ -40,8 +41,10 @@ export default function SiteVisitPhotoGrid({ photos, onUpload, onDelete, onSyncT
     }
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(photo: SiteVisitPhoto) {
-    if (!confirm("Delete this photo? This cannot be undone.")) return;
+    if (!await confirm("Delete this photo? This cannot be undone.")) return;
     await onDelete(photo);
   }
 

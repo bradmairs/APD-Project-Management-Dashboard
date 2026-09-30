@@ -9,6 +9,7 @@ import {
   enquiryStatusRank,
 } from "../enquiryMeta";
 import EnquiryFormModal from "./EnquiryFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   enquiries: CommunityEnquiry[];
@@ -46,8 +47,10 @@ export default function EnquiriesPanel({ enquiries, onCreate, onUpdate, onDelete
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(enquiry: CommunityEnquiry) {
-    if (!confirm("Delete this enquiry? This cannot be undone.")) return;
+    if (!await confirm("Delete this enquiry? This cannot be undone.")) return;
     await onDelete(enquiry);
   }
 

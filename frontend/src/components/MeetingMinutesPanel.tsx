@@ -7,17 +7,31 @@ import {
   MeetingMinutesDraft,
   MeetingMinutesInput,
   SuggestedAction,
+  Task,
+  TaskInput,
 } from "../types";
 import { formatDate, formatFileSize } from "../format";
 import { attachmentDownloadUrl } from "../api";
 import { ACTION_STATUS_COLORS, ACTION_STATUS_LABELS } from "../actionItemMeta";
+import { useAuth } from "../auth/AuthContext";
+import {
+  SuggestionDestination,
+  defaultDestinations,
+  meetingLabel,
+  suggestionToAction,
+  suggestionToTask,
+} from "../meetingActionRouting";
 import MeetingMinutesFormModal from "./MeetingMinutesFormModal";
+import SuggestedActionList from "./SuggestedActionList";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   projectName: string;
   meetings: MeetingMinutes[];
   attachments: Attachment[];
   actionItems: ActionItem[];
+  tasks: Task[];
+  onCreateTask: (data: Partial<TaskInput>) => Promise<void>;
   onCreate: (data: Partial<MeetingMinutesInput>) => Promise<MeetingMinutes>;
   onUpdate: (
     meeting: MeetingMinutes,
@@ -125,23 +139,30 @@ function MeetingAttachments({
 function MeetingActions({
   meeting,
   actionItems,
+  tasks,
   onCreateAction,
+  onCreateTask,
   onExtractActions,
 }: {
   meeting: MeetingMinutes;
   actionItems: ActionItem[];
+  tasks: Task[];
   onCreateAction: (data: Partial<ActionItemInput>) => Promise<void>;
+  onCreateTask: (data: Partial<TaskInput>) => Promise<void>;
   onExtractActions: (meetingId: string) => Promise<SuggestedAction[]>;
 }) {
+  const { user } = useAuth();
   const [quickTitle, setQuickTitle] = useState("");
   const [adding, setAdding] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestedAction[] | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [destinations, setDestinations] = useState<SuggestionDestination[]>([]);
   const [aiError, setAiError] = useState<string | null>(null);
   const [addingSelected, setAddingSelected] = useState(false);
 
   const linked = actionItems.filter((a) => a.meetingMinutesId === meeting.id);
+  const linkedTasks = tasks.filter((t) => t.meetingMinutesId === meeting.id);
 
   async function handleQuickAdd(e: FormEvent) {
     e.preventDefault();
@@ -169,6 +190,7 @@ function MeetingActions({
       const result = await onExtractActions(meeting.id);
       setSuggestions(result);
       setSelected(new Set(result.map((_, i) => i)));
+      setDestinations(defaultDestinations(result, user?.name));
     } catch (err) {
       setAiError(err instanceof Error ? err.message : "Failed to extract actions");
     } finally {
@@ -183,15 +205,11 @@ function MeetingActions({
       for (let i = 0; i < suggestions.length; i++) {
         if (!selected.has(i)) continue;
         const s = suggestions[i];
-        await onCreateAction({
-          title: s.title,
-          type: "ACTION",
-          status: "OPEN",
-          dateRaised: meeting.meetingDate,
-          ownerName: s.ownerName,
-          notes: s.dueDateHint ? `Suggested due: ${s.dueDateHint}` : null,
-          meetingMinutesId: meeting.id,
-        });
+        if (destinations[i] === "TASK") {
+          await onCreateTask(suggestionToTask(s, meeting.id, meetingLabel(meeting)));
+        } else {
+          await onCreateAction(suggestionToAction(s, meeting.id, meeting.meetingDate));
+        }
       }
       setSuggestions(null);
     } finally {
@@ -237,25 +255,15 @@ function MeetingActions({
             </p>
           ) : (
             <>
-              {suggestions.map((s, i) => (
-                <label key={i} className="flex items-start gap-2 text-xs cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selected.has(i)}
-                    onChange={() => toggleSelected(i)}
-                    className="mt-0.5"
-                  />
-                  <span>
-                    <span className="text-slate-700 dark:text-slate-300">{s.title}</span>
-                    {(s.ownerName || s.dueDateHint) && (
-                      <span className="text-slate-400 dark:text-slate-500">
-                        {" "}
-                        ({[s.ownerName, s.dueDateHint].filter(Boolean).join(", ")})
-                      </span>
-                    )}
-                  </span>
-                </label>
-              ))}
+              <SuggestedActionList
+                suggestions={suggestions}
+                selected={selected}
+                destinations={destinations}
+                onToggleSelected={toggleSelected}
+                onChangeDestination={(i, d) =>
+                  setDestinations((prev) => prev.map((v, j) => (j === i ? d : v)))
+                }
+              />
               <div className="flex items-center gap-3 pt-1">
                 <button
                   onClick={handleAddSelected}
@@ -276,12 +284,28 @@ function MeetingActions({
         </div>
       )}
 
-      {linked.length === 0 ? (
+      {linked.length === 0 && linkedTasks.length === 0 ? (
         <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">
           No actions recorded from this meeting yet.
         </p>
       ) : (
         <ul className="space-y-1 mb-2">
+          {linkedTasks.map((t) => (
+            <li key={t.id} className="flex items-center gap-2 text-xs">
+              <span className="px-1.5 py-0.5 rounded-full shrink-0 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                My task
+              </span>
+              <span
+                className={`truncate ${
+                  t.status === "DONE"
+                    ? "line-through text-slate-400 dark:text-slate-500"
+                    : "text-slate-700 dark:text-slate-300"
+                }`}
+              >
+                {t.title}
+              </span>
+            </li>
+          ))}
           {linked.map((a) => (
             <li key={a.id} className="flex items-center gap-2 text-xs">
               <span
@@ -324,6 +348,8 @@ export default function MeetingMinutesPanel({
   meetings,
   attachments,
   actionItems,
+  tasks,
+  onCreateTask,
   onCreate,
   onUpdate,
   onDelete,
@@ -354,9 +380,11 @@ export default function MeetingMinutesPanel({
     return saved;
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(meeting: MeetingMinutes) {
     if (
-      !confirm(
+      !await confirm(
         "Delete these meeting minutes? Any attached files will be deleted too (linked actions are kept). This cannot be undone."
       )
     )
@@ -405,7 +433,18 @@ export default function MeetingMinutesPanel({
                     className="flex-1 min-w-0 text-left"
                   >
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                      {meeting.title && (
+                        <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          {meeting.title}
+                        </span>
+                      )}
+                      <span
+                        className={
+                          meeting.title
+                            ? "text-xs text-slate-500 dark:text-slate-400"
+                            : "text-sm font-medium text-slate-900 dark:text-slate-100"
+                        }
+                      >
                         {formatDate(meeting.meetingDate)}
                       </span>
                       {meeting.meetingType && (
@@ -482,7 +521,9 @@ export default function MeetingMinutesPanel({
                     <MeetingActions
                       meeting={meeting}
                       actionItems={actionItems}
+                      tasks={tasks}
                       onCreateAction={onCreateAction}
+                      onCreateTask={onCreateTask}
                       onExtractActions={onExtractActions}
                     />
 
@@ -510,6 +551,7 @@ export default function MeetingMinutesPanel({
           onSave={handleSave}
           onGenerateDraft={onGenerateDraft}
           onCreateAction={onCreateAction}
+          onCreateTask={onCreateTask}
           onUploadAttachment={onUploadAttachment}
         />
       )}

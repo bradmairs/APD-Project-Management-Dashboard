@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ToolboxTalk, ToolboxTalkInput } from "../types";
 import { formatDate } from "../format";
 import ToolboxTalkFormModal from "./ToolboxTalkFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   talks: ToolboxTalk[];
@@ -35,8 +36,10 @@ export default function ToolboxTalksPanel({ talks, onCreate, onUpdate, onDelete 
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(talk: ToolboxTalk) {
-    if (!confirm("Delete this toolbox talk? This cannot be undone.")) return;
+    if (!await confirm("Delete this toolbox talk? This cannot be undone.")) return;
     await onDelete(talk);
   }
 

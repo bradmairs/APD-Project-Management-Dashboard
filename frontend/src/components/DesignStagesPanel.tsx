@@ -3,6 +3,7 @@ import { DesignStage, DesignStageInput } from "../cmpTypes";
 import { DESIGN_STAGE_LABELS, DESIGN_STAGE_STATUS_LABELS } from "../cmpStatusMeta";
 import { formatCurrency, formatDate } from "../format";
 import DesignStageFormModal from "./DesignStageFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   stages: DesignStage[];
@@ -42,8 +43,10 @@ export default function DesignStagesPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(stage: DesignStage) {
-    if (!confirm(`Delete the ${DESIGN_STAGE_LABELS[stage.stage]} stage? This cannot be undone.`))
+    if (!await confirm(`Delete the ${DESIGN_STAGE_LABELS[stage.stage]} stage? This cannot be undone.`))
       return;
     await onDelete(stage);
   }

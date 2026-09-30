@@ -4,6 +4,7 @@ import { formatDate } from "../format";
 import { approvedEotDaysTotal } from "../eot";
 import { ALL_EOT_STATUSES, EOT_STATUS_COLORS, EOT_STATUS_LABELS } from "../eotMeta";
 import EotClaimFormModal from "./EotClaimFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   claims: EotClaim[];
@@ -40,8 +41,10 @@ export default function EotPanel({ claims, onCreate, onUpdate, onDelete }: Props
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(claim: EotClaim) {
-    if (!confirm(`Delete EOT claim "${claim.title}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete EOT claim "${claim.title}"? This cannot be undone.`)) return;
     await onDelete(claim);
   }
 

@@ -16,6 +16,7 @@ import BulkActionsBar from "./BulkActionsBar";
 import { useSelection } from "../useSelection";
 import { LIKELIHOOD_LABELS, CONSEQUENCE_LABELS } from "../riskScoring";
 import { parseImportDate, parseOptionalEnum, parseRequiredEnum, requireCell } from "../csvImport";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 const RISK_IMPORT_HEADERS = [
   "Type",
@@ -118,8 +119,10 @@ export default function RisksPanel({ risks, onCreate, onUpdate, onDelete }: Prop
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(risk: Risk) {
-    if (!confirm(`Delete "${risk.title}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${risk.title}"? This cannot be undone.`)) return;
     await onDelete(risk);
   }
 

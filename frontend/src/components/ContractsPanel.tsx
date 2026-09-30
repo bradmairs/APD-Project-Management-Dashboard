@@ -11,6 +11,7 @@ import {
   remainingContractValue,
 } from "../contractMeta";
 import ContractFormModal from "./ContractFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   contracts: ContractRecord[];
@@ -51,8 +52,10 @@ export default function ContractsPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(contract: ContractRecord) {
-    if (!confirm(`Delete the contract with "${contract.partyName}"? This cannot be undone.`))
+    if (!await confirm(`Delete the contract with "${contract.partyName}"? This cannot be undone.`))
       return;
     await onDelete(contract);
   }

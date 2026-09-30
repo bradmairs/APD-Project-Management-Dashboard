@@ -9,6 +9,7 @@ import {
   CHECKLIST_STATUS_LABELS,
 } from "../checklistMeta";
 import ChecklistItemFormModal from "./ChecklistItemFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   items: ChecklistItem[];
@@ -56,8 +57,10 @@ export default function ChecklistPanel({ items, onCreate, onUpdate, onDelete }: 
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(item: ChecklistItem) {
-    if (!confirm(`Delete "${item.title}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${item.title}"? This cannot be undone.`)) return;
     await onDelete(item);
   }
 

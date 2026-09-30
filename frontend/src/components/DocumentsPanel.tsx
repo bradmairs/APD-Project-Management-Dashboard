@@ -13,6 +13,7 @@ import ImportCsvButton from "./ImportCsvButton";
 import { parseImportDate, parseOptionalEnum, requireCell } from "../csvImport";
 import BulkActionsBar from "./BulkActionsBar";
 import { useSelection } from "../useSelection";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 const DOCUMENT_IMPORT_HEADERS = [
   "Document Number",
@@ -85,8 +86,10 @@ export default function DocumentsPanel({ documents, onCreate, onUpdate, onDelete
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(document: DocumentRecord) {
-    if (!confirm(`Delete "${document.documentNumber}: ${document.title}"? This cannot be undone.`))
+    if (!await confirm(`Delete "${document.documentNumber}: ${document.title}"? This cannot be undone.`))
       return;
     await onDelete(document);
   }

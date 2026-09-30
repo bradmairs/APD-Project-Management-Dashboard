@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTabParam } from "../useTabParam";
 import {
   ActionItem,
   ActivityLogEntry,
@@ -100,6 +101,7 @@ import { formatCurrency, formatDate } from "../format";
 import { DashboardView, addSavedView, loadSavedViews, removeSavedView } from "../savedViews";
 import { RagStatus } from "../types";
 import { useUndoToast } from "../undo/UndoToastContext";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 const RAG_LABELS: Record<RagStatus, string> = { GREEN: "Green", AMBER: "Amber", RED: "Red" };
 
@@ -154,7 +156,7 @@ export default function DashboardPage() {
   const [search, setSearch] = useState("");
   const [modalProject, setModalProject] = useState<Project | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<DashboardTabId>("projects");
+  const [activeTab, setActiveTab] = useTabParam(DASHBOARD_TABS, "projects");
   const [savedViews, setSavedViews] = useState<DashboardView[]>([]);
   const [selectedViewId, setSelectedViewId] = useState("");
 
@@ -333,10 +335,12 @@ export default function DashboardPage() {
     setSelectedViewId(updated[updated.length - 1].id);
   }
 
-  function handleDeleteView() {
+  const confirm = useConfirm();
+
+  async function handleDeleteView() {
     if (!selectedViewId) return;
     const view = savedViews.find((v) => v.id === selectedViewId);
-    if (!view || !confirm(`Delete the saved view "${view.name}"?`)) return;
+    if (!view || !await confirm(`Delete the saved view "${view.name}"?`)) return;
     setSavedViews(removeSavedView(selectedViewId));
     setSelectedViewId("");
   }
@@ -362,7 +366,7 @@ export default function DashboardPage() {
   }
 
   async function handleDelete(project: Project) {
-    if (!confirm(`Delete "${project.name}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${project.name}"? This cannot be undone.`)) return;
     await deleteProject(project.id);
     await loadData();
   }

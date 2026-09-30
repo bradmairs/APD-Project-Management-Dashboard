@@ -4,6 +4,7 @@ import { DRAWING_STATUS_LABELS } from "../cmpStatusMeta";
 import { formatDate } from "../format";
 import DrawingFormModal from "./DrawingFormModal";
 import DrawingRevisionFormModal from "./DrawingRevisionFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   drawings: Drawing[];
@@ -45,9 +46,11 @@ export default function DrawingRegisterPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(drawing: Drawing) {
     if (
-      !confirm(`Delete drawing "${drawing.drawingNumber}: ${drawing.title}"? This cannot be undone.`)
+      !await confirm(`Delete drawing "${drawing.drawingNumber}: ${drawing.title}"? This cannot be undone.`)
     )
       return;
     await onDelete(drawing);

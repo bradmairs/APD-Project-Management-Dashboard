@@ -5,6 +5,7 @@ import SiteVisitFormModal from "./SiteVisitFormModal";
 import SiteVisitPhotoGrid from "./SiteVisitPhotoGrid";
 import SitePhotosMap from "./SitePhotosMap";
 import SitePhotosGallery from "./SitePhotosGallery";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   siteVisits: SiteVisit[];
@@ -54,9 +55,11 @@ export default function SiteVisitsPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(siteVisit: SiteVisit) {
     if (
-      !confirm(`Delete the site visit at "${siteVisit.location}"? This cannot be undone.`)
+      !await confirm(`Delete the site visit at "${siteVisit.location}"? This cannot be undone.`)
     )
       return;
     await onDelete(siteVisit);
