@@ -1499,6 +1499,19 @@ and back always starts from the default tab. Every panel that was already
 on these pages is still there; this only changed which section of the
 page shows it.
 
+### Sticky, Clickable Dashboard Header
+
+Both main dashboards — GVW's (`/`) and CMP's (`/cmp`) — have `sticky
+top-0 z-30` on their `<header>`, so it stays pinned at the top of the
+viewport as the tab content beneath it scrolls, rather than scrolling
+out of view on a long Projects table or a busy Alerts tab. The logo and
+title/subtitle block is wrapped in a `Link` back to that dashboard's own
+root (`/` for GVW, `/cmp` for CMP), so clicking either always returns
+home, matching the common "click the logo to go home" convention. This
+is scoped to the two dashboard pages only — a project detail page's own
+header (with its "Back to dashboard" link, project name, and Edit/Delete
+buttons) is a different header entirely and wasn't touched.
+
 ### Jump To
 
 Several project detail tabs still stack many panels (Budget & Contract
