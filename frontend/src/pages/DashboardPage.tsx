@@ -402,9 +402,9 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+      <header className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-wrap items-center justify-between gap-y-3">
-          <div className="flex items-center gap-4">
+          <Link to="/" className="flex items-center gap-4 hover:opacity-90">
             <GvwLogo className="h-16" />
             <div>
               <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
@@ -414,7 +414,7 @@ export default function DashboardPage() {
                 Water Authority
               </p>
             </div>
-          </div>
+          </Link>
           <div className="flex flex-wrap items-center gap-3">
             <Link
               to="/lessons-learned"
