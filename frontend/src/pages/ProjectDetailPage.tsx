@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useTabParam } from "../useTabParam";
 import {
   ActionItem,
   ActionItemInput,
@@ -261,6 +262,7 @@ import { useAuth } from "../auth/AuthContext";
 import GvwLogo from "../components/GvwLogo";
 import SectionJumpNav, { JumpSection } from "../components/SectionJumpNav";
 import { useUndoToast } from "../undo/UndoToastContext";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 type ProjectTabId = "overview" | "schedule" | "budget" | "quality" | "site" | "ai";
 
@@ -369,7 +371,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<ProjectTabId>("overview");
+  const [activeTab, setActiveTab] = useTabParam(PROJECT_TABS, "overview");
 
   // Which project's data is currently on screen, and which load is the
   // latest — see load() below.
@@ -525,9 +527,11 @@ export default function ProjectDetailPage() {
     await load();
   }
 
+  const confirm = useConfirm();
+
   async function handleDeleteProject() {
     if (!project) return;
-    if (!confirm(`Delete "${project.name}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${project.name}"? This cannot be undone.`)) return;
     await deleteProject(project.id);
     navigate("/");
   }
@@ -539,6 +543,12 @@ export default function ProjectDetailPage() {
   ) {
     if (!project) return;
     await createTask(project.id, { title, dueDate, status: "TODO", recurrence });
+    await load();
+  }
+
+  async function handleCreateMeetingTask(data: Partial<TaskInput>) {
+    if (!project) return;
+    await createTask(project.id, data);
     await load();
   }
 
@@ -569,7 +579,7 @@ export default function ProjectDetailPage() {
   }
 
   async function handleDeleteAttachment(attachment: Attachment) {
-    if (!confirm(`Delete "${attachment.originalName}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${attachment.originalName}"? This cannot be undone.`)) return;
     await deleteAttachment(attachment.id);
     await load();
   }
@@ -585,7 +595,7 @@ export default function ProjectDetailPage() {
   }
 
   async function handleDeleteArchiveLink(link: ArchiveLink) {
-    if (!confirm(`Remove the link to "${link.label}"? This only removes the link, not the item itself in the Archive.`)) return;
+    if (!await confirm(`Remove the link to "${link.label}"? This only removes the link, not the item itself in the Archive.`, { confirmLabel: "Remove" })) return;
     await deleteArchiveLink(link.id);
     await load();
     notifyUndo(`Archive link "${link.label}" removed.`, () =>
@@ -1426,6 +1436,8 @@ export default function ProjectDetailPage() {
                   meetings={meetingMinutes}
                   attachments={attachments}
                   actionItems={actionItems}
+                  tasks={project.tasks ?? []}
+                  onCreateTask={handleCreateMeetingTask}
                   onCreate={handleCreateMeetingMinutes}
                   onUpdate={handleUpdateMeetingMinutes}
                   onDelete={handleDeleteMeetingMinutes}

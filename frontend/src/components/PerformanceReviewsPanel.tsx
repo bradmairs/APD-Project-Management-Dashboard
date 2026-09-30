@@ -3,6 +3,7 @@ import { PerformanceReview, PerformanceReviewInput } from "../types";
 import { formatDate } from "../format";
 import { overallScore, performanceBand, PERFORMANCE_BAND_COLORS } from "../performanceMeta";
 import PerformanceReviewFormModal from "./PerformanceReviewFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   items: PerformanceReview[];
@@ -48,9 +49,11 @@ export default function PerformanceReviewsPanel({ items, onCreate, onUpdate, onD
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(item: PerformanceReview) {
     if (
-      !confirm(`Delete the performance review for "${item.revieweeName}"? This cannot be undone.`)
+      !await confirm(`Delete the performance review for "${item.revieweeName}"? This cannot be undone.`)
     ) {
       return;
     }

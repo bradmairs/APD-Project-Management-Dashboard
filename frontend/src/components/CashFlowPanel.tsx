@@ -6,6 +6,7 @@ import { expenditureToDate, forecastAtCompletion } from "../cashflow";
 import CashFlowChart from "../charts/CashFlowChart";
 import CumulativeSpendChart from "../charts/CumulativeSpendChart";
 import CashFlowEntryFormModal from "./CashFlowEntryFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   project: Project;
@@ -47,9 +48,11 @@ export default function CashFlowPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(entry: CashFlowEntry) {
     if (
-      !confirm(
+      !await confirm(
         `Delete the ${formatReportMonth(entry.month)} ${entry.type.toLowerCase()} entry? This cannot be undone.`
       )
     )

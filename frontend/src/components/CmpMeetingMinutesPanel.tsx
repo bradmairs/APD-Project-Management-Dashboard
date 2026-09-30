@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CmpMeetingMinutes, CmpMeetingMinutesInput } from "../cmpTypes";
 import { formatDate } from "../format";
 import CmpMeetingMinutesFormModal from "./CmpMeetingMinutesFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   meetings: CmpMeetingMinutes[];
@@ -35,8 +36,10 @@ export default function CmpMeetingMinutesPanel({ meetings, onCreate, onUpdate, o
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(meeting: CmpMeetingMinutes) {
-    if (!confirm("Delete these meeting minutes? This cannot be undone.")) return;
+    if (!await confirm("Delete these meeting minutes? This cannot be undone.")) return;
     await onDelete(meeting);
   }
 
@@ -81,7 +84,18 @@ export default function CmpMeetingMinutesPanel({ meetings, onCreate, onUpdate, o
                     className="flex-1 min-w-0 text-left"
                   >
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                      {meeting.title && (
+                        <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                          {meeting.title}
+                        </span>
+                      )}
+                      <span
+                        className={
+                          meeting.title
+                            ? "text-xs text-slate-500 dark:text-slate-400"
+                            : "text-sm font-medium text-slate-900 dark:text-slate-100"
+                        }
+                      >
                         {formatDate(meeting.meetingDate)}
                       </span>
                       {meeting.meetingType && (

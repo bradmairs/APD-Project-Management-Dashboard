@@ -10,6 +10,7 @@ import {
   isCorrespondenceOverdue,
 } from "../correspondenceMeta";
 import CorrespondenceFormModal from "./CorrespondenceFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   items: Correspondence[];
@@ -45,8 +46,10 @@ export default function CorrespondencePanel({ items, onCreate, onUpdate, onDelet
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(item: Correspondence) {
-    if (!confirm(`Delete "${item.subject}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${item.subject}"? This cannot be undone.`)) return;
     await onDelete(item);
   }
 

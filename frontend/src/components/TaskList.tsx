@@ -15,6 +15,24 @@ function formatDate(value: string | null): string {
   return value.substring(0, 10);
 }
 
+const HIDE_COMPLETED_KEY = "taskList.hideCompleted";
+
+function readHideCompleted(): boolean {
+  try {
+    return localStorage.getItem(HIDE_COMPLETED_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function writeHideCompleted(value: boolean) {
+  try {
+    localStorage.setItem(HIDE_COMPLETED_KEY, String(value));
+  } catch {
+    // Preference just won't persist.
+  }
+}
+
 interface Props {
   tasks: Task[];
   title?: string;
@@ -45,6 +63,13 @@ export default function TaskList({
   const [editDescription, setEditDescription] = useState("");
   const [editRecurrence, setEditRecurrence] = useState<TaskRecurrence>("NONE");
   const [savingEdit, setSavingEdit] = useState(false);
+  const [hideCompleted, setHideCompleted] = useState(readHideCompleted);
+
+  function toggleHideCompleted() {
+    const next = !hideCompleted;
+    setHideCompleted(next);
+    writeHideCompleted(next);
+  }
 
   async function handleAdd(e: FormEvent) {
     e.preventDefault();
@@ -91,6 +116,7 @@ export default function TaskList({
   }
 
   const done = tasks.filter((t) => t.status === "DONE").length;
+  const visibleTasks = hideCompleted ? tasks.filter((t) => t.status !== "DONE") : tasks;
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-4">
@@ -106,9 +132,19 @@ export default function TaskList({
           )}
         </div>
         {tasks.length > 0 && (
-          <span className="text-xs text-slate-500 dark:text-slate-400">
-            {done}/{tasks.length} complete
-          </span>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {done}/{tasks.length} complete
+            </span>
+            {done > 0 && (
+              <button
+                onClick={toggleHideCompleted}
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {hideCompleted ? `Show completed (${done})` : "Hide completed"}
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -116,9 +152,13 @@ export default function TaskList({
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
           No tasks yet.
         </p>
+      ) : visibleTasks.length === 0 ? (
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">
+          All tasks complete.
+        </p>
       ) : (
         <ul className="divide-y divide-slate-100 dark:divide-slate-700 mb-3">
-          {tasks.map((task) => {
+          {visibleTasks.map((task) => {
             const isEditing = editingId === task.id;
             return (
               <li key={task.id} className="py-2">

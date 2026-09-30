@@ -12,6 +12,7 @@ import ActionItemFormModal from "./ActionItemFormModal";
 import ExportCsvButton from "./ExportCsvButton";
 import BulkActionsBar from "./BulkActionsBar";
 import { useSelection } from "../useSelection";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   actionItems: ActionItem[];
@@ -67,8 +68,10 @@ export default function ActionsPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(actionItem: ActionItem) {
-    if (!confirm(`Delete "${actionItem.title}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${actionItem.title}"? This cannot be undone.`)) return;
     await onDelete(actionItem);
   }
 

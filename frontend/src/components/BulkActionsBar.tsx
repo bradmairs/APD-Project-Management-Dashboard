@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props<S extends string> {
   count: number;
@@ -38,8 +39,10 @@ export default function BulkActionsBar<S extends string>({
     }
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete() {
-    if (!confirm(`Delete ${count} ${entityLabel}${count === 1 ? "" : "s"}? This cannot be undone.`)) {
+    if (!await confirm(`Delete ${count} ${entityLabel}${count === 1 ? "" : "s"}? This cannot be undone.`)) {
       return;
     }
     setBusy(true);

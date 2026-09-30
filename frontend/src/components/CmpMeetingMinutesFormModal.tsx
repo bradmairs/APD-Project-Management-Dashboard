@@ -22,6 +22,7 @@ export default function CmpMeetingMinutesFormModal({ meeting, onClose, onSave }:
   const [meetingDate, setMeetingDate] = useState(
     toDateInputValue(meeting?.meetingDate ?? null) || new Date().toISOString().substring(0, 10)
   );
+  const [title, setTitle] = useState(meeting?.title ?? "");
   const [meetingType, setMeetingType] = useState(meeting?.meetingType ?? "");
   const [location, setLocation] = useState(meeting?.location ?? "");
   const [attendees, setAttendees] = useState(meeting?.attendees ?? "");
@@ -39,6 +40,7 @@ export default function CmpMeetingMinutesFormModal({ meeting, onClose, onSave }:
     setError(null);
     try {
       await onSave({
+        title: title.trim() || null,
         meetingDate: new Date(meetingDate).toISOString(),
         meetingType: meetingType || null,
         location: location || null,
@@ -67,6 +69,18 @@ export default function CmpMeetingMinutesFormModal({ meeting, onClose, onSave }:
               {error}
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Meeting Title
+            </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Optional — e.g. Concept design sign-off"
+              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
+            />
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="min-w-0">

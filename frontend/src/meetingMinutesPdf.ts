@@ -8,6 +8,7 @@ interface MeetingMinutesPdfAction {
 }
 
 interface MeetingMinutesPdfInput {
+  title: string | null;
   meetingDate: string;
   meetingType: string | null;
   location: string | null;
@@ -55,8 +56,12 @@ export function buildMeetingMinutesPdf(projectName: string, input: MeetingMinute
 
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(16);
-  pdf.text("Meeting Minutes", marginX, y);
-  y += 8;
+  const titleLines = pdf.splitTextToSize(
+    input.title ? `Meeting Minutes: ${input.title}` : "Meeting Minutes",
+    maxWidth
+  ) as string[];
+  pdf.text(titleLines, marginX, y);
+  y += titleLines.length * 7 + 1;
 
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(10);

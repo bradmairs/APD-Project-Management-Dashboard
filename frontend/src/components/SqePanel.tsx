@@ -12,6 +12,7 @@ import {
   sqeSeverityRank,
 } from "../sqeMeta";
 import SqeFormModal from "./SqeFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   records: SqeRecord[];
@@ -47,8 +48,10 @@ export default function SqePanel({ records, onCreate, onUpdate, onDelete }: Prop
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(record: SqeRecord) {
-    if (!confirm(`Delete "${record.title}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${record.title}"? This cannot be undone.`)) return;
     await onDelete(record);
   }
 

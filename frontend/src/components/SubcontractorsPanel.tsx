@@ -15,6 +15,7 @@ import ImportCsvButton from "./ImportCsvButton";
 import { parseImportCurrency, parseImportDate, parseOptionalEnum, requireCell } from "../csvImport";
 import BulkActionsBar from "./BulkActionsBar";
 import { useSelection } from "../useSelection";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 const SUBCONTRACTOR_IMPORT_HEADERS = [
   "Company",
@@ -96,8 +97,10 @@ export default function SubcontractorsPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(subcontractor: Subcontractor) {
-    if (!confirm(`Delete "${subcontractor.companyName}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${subcontractor.companyName}"? This cannot be undone.`)) return;
     await onDelete(subcontractor);
   }
 

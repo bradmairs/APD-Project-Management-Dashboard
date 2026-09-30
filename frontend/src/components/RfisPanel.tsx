@@ -12,6 +12,7 @@ import RfiFormModal from "./RfiFormModal";
 import ExportCsvButton from "./ExportCsvButton";
 import BulkActionsBar from "./BulkActionsBar";
 import { useSelection } from "../useSelection";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   rfis: Rfi[];
@@ -62,8 +63,10 @@ export default function RfisPanel({ rfis, onCreate, onUpdate, onDelete }: Props)
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(rfi: Rfi) {
-    if (!confirm(`Delete "${rfi.rfiNumber}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${rfi.rfiNumber}"? This cannot be undone.`)) return;
     await onDelete(rfi);
   }
 

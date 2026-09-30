@@ -11,6 +11,7 @@ import DefectFormModal from "./DefectFormModal";
 import ExportCsvButton from "./ExportCsvButton";
 import BulkActionsBar from "./BulkActionsBar";
 import { useSelection } from "../useSelection";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   defects: DefectItem[];
@@ -61,8 +62,10 @@ export default function DefectsPanel({ defects, onCreate, onUpdate, onDelete }: 
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(defect: DefectItem) {
-    if (!confirm(`Delete "${defect.title}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${defect.title}"? This cannot be undone.`)) return;
     await onDelete(defect);
   }
 

@@ -7,6 +7,7 @@ import {
   trainingExpiryRank,
 } from "../trainingMeta";
 import TrainingRecordFormModal from "./TrainingRecordFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   items: TrainingRecord[];
@@ -40,8 +41,10 @@ export default function TrainingRecordsPanel({ items, onCreate, onUpdate, onDele
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(item: TrainingRecord) {
-    if (!confirm(`Delete the "${item.trainingType}" record for ${item.personName}? This cannot be undone.`)) {
+    if (!await confirm(`Delete the "${item.trainingType}" record for ${item.personName}? This cannot be undone.`)) {
       return;
     }
     await onDelete(item);

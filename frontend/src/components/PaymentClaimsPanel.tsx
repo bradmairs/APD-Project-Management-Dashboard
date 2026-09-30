@@ -8,6 +8,7 @@ import {
   paymentClaimStatusRank,
 } from "../paymentClaimMeta";
 import PaymentClaimFormModal from "./PaymentClaimFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   claims: PaymentClaim[];
@@ -53,8 +54,10 @@ export default function PaymentClaimsPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(claim: PaymentClaim) {
-    if (!confirm(`Delete claim "${claim.claimNumber}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete claim "${claim.claimNumber}"? This cannot be undone.`)) return;
     await onDelete(claim);
   }
 

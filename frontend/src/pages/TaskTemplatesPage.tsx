@@ -10,6 +10,7 @@ import { TaskTemplate, TaskTemplateInput } from "../types";
 import TaskTemplateFormModal from "../components/TaskTemplateFormModal";
 import UserMenu from "../components/UserMenu";
 import GvwLogo from "../components/GvwLogo";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 export default function TaskTemplatesPage() {
   const [templates, setTemplates] = useState<TaskTemplate[]>([]);
@@ -55,8 +56,10 @@ export default function TaskTemplatesPage() {
     await load();
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(template: TaskTemplate) {
-    if (!confirm(`Delete template "${template.name}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete template "${template.name}"? This cannot be undone.`)) return;
     await deleteTaskTemplate(template.id);
     await load();
   }

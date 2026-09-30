@@ -110,7 +110,10 @@ A search box next to the account menu — present on every page, the same
 "always available" placement as the notification bell — lets you find a
 record by keyword without knowing which project or register it's in.
 Type two or more characters and, after a short debounce, a dropdown shows
-matches grouped by type, each linking straight to its project.
+matches grouped by type, each linking straight to its project — opened on
+the tab that holds that register (an RFI opens Quality & Risk, a Variation
+opens Budget & Contract). Press **Ctrl+K** (**⌘K** on a Mac) from any page
+to jump straight into the search box; Esc closes it.
 
 It searches across Projects, Risks & Opportunities, Actions & Decisions,
 RFIs, Defects, Variations, the Document Register, Correspondence,
@@ -818,7 +821,9 @@ Attachments, Milestones, Variations, and Risks.
 Each project has a **Meeting Minutes** register — a simple log of project
 meetings (progress meetings, design reviews, site meetings), distinct
 from **Actions & Decisions** (a single decision or action, not a full
-meeting record). A meeting has a Meeting Date, Type (free text, with
+meeting record). A meeting has an optional **Meeting Title** (shown as
+the meeting's heading in the list, with the date beside it; CMP meeting
+minutes have the same field), a Meeting Date, Type (free text, with
 suggestions like "Progress Meeting" or "Design Review"), Location,
 Attendees (freeform), a Summary, an optional Next Meeting Date, and
 Notes.
@@ -857,6 +862,21 @@ for you to review, deselect, and add. If Ollama can't be reached, the
 button shows the same clear inline error as the AI Assistant rather than
 failing silently.
 
+**Your actions become Tasks.** Each suggestion in that checklist also has
+a **My task / Action** selector. Suggestions whose owner matches the
+logged-in user (full name, or first name — "Brad", "Brad Mairs") default
+to **My task** and are added to the project's own **Tasks** list
+(Schedule tab), so your to-dos stay in one place; everyone else's default
+to **Action** and go into the Actions & Decisions register as before, so
+you can still see what to follow up with others. The match is only a
+default — flip any row before adding. A task created this way is linked
+to its meeting (`Task.meetingMinutesId`, unlinked rather than deleted if
+the meeting is removed), carries "From meeting: …" and any due-date hint
+in its description, and shows under the meeting's "Actions from this
+meeting" list with a **My task** badge alongside the other actions. The
+routing logic lives in `frontend/src/meetingActionRouting.ts`, shared by
+both AI flows below.
+
 ### Generate from Transcript (AI)
 
 On **+ New Meeting**, **+ Generate from Transcript (AI)** turns a raw
@@ -865,7 +885,8 @@ upload a `.txt`/`.docx`/`.pdf` file or a photo of handwritten notes
 (`backend/src/transcriptExtraction.ts` extracts the text — `mammoth` for
 Word, `pdf-parse` for PDF; a photo instead goes through Ollama's vision
 model for OCR). The extracted text is sent to Ollama's chat model, which
-returns meeting type, summary, attendees, notes, and a suggested-actions
+returns a suggested meeting title (only filled in if you haven't typed
+one), meeting type, summary, attendees, notes, and a suggested-actions
 list — the same shape and review-before-adding pattern as **AI: Suggest
 Actions from Notes** above, filled into the form fields for you to edit
 before saving.
@@ -1498,11 +1519,18 @@ so a screen only ever shows one section at a time:
   The header, description, and project info field grid stay above the
   tabs, visible on every tab.
 
-Tab state is local to each page (`useState`, defaulting to the first tab)
-rather than reflected in the URL — switching projects or navigating away
-and back always starts from the default tab. Every panel that was already
-on these pages is still there; this only changed which section of the
-page shows it.
+The active tab lives in the URL (`?tab=schedule`, via
+`frontend/src/useTabParam.ts`; the default tab is left out to keep URLs
+clean), so refreshing or pressing Back returns to the same tab, and links
+can open a specific one — Today & Upcoming opens a task's project on its
+Schedule tab, and Global Search opens a result on its register's tab. The
+CMP dashboard's tabs work the same way. Every panel that was already on
+these pages is still there; this only changed which section of the page
+shows it.
+
+Changing page (not just tab) scrolls back to the top, so clicking the logo
+from halfway down a project page lands at the top of the dashboard rather
+than midway down it.
 
 ### Sticky, Clickable Header
 
@@ -1521,8 +1549,8 @@ that shows the GVW logo in its header (project detail, Admin Users,
 Task Templates, Lessons Learned, Reports), just the logo itself is
 wrapped in that same `Link` back to `/` — the page's own title (e.g.
 the project name) is left as plain text since it isn't a "go home"
-affordance. The CMP project detail page's header has no logo, so it
-only picked up the sticky behavior. The two printable report pages
+affordance. The CMP project detail page shows the CMP logo, linking back
+to `/cmp` the same way. The two printable report pages
 (Monthly Report view, Closeout Report) have no persistent header at
 all — just a "back" link and a Print button — so they're unaffected.
 
@@ -1610,6 +1638,11 @@ status and due date: **Edit** on any task switches that row to an inline
 form for its title and description, with **Save**/**Cancel** — the same
 `PUT /api/tasks/:id` endpoint status/due-date changes already used,
 just with more fields.
+
+Once a list has any completed tasks, a **Hide completed** link appears
+beside the "x/y complete" count (it becomes **Show completed (n)** while
+they're hidden). The choice is remembered in the browser, so it applies
+to every task list — project and portfolio — until you switch it back.
 
 ### Recurring Tasks
 
@@ -1765,6 +1798,25 @@ underlying file is removed from disk immediately, so there's nothing left
 to restore). Undoing a Meeting Minutes deletion restores the record's own
 fields, but its cascade-deleted Attachments and any linked Action Items
 are not restored — the toast's message says so explicitly.
+
+### Confirm Dialogs
+
+Every "Delete …? This cannot be undone." prompt uses an in-app dialog
+(`ConfirmProvider`/`useConfirm()` in
+`frontend/src/confirm/ConfirmContext.tsx`, mounted at the app root next to
+the undo toasts) instead of the browser's plain `window.confirm()` popup,
+so it matches the app's styling and dark mode. It keeps the same
+contract — resolves `true` to go ahead, `false` to cancel — with the
+red **Delete** (or **Remove**) button focused so Enter confirms, and Esc,
+**Cancel**, or clicking outside cancels.
+
+## Faster First Load
+
+Each page is loaded as its own chunk (`React.lazy` routes in
+`frontend/src/App.tsx`) rather than one ~1.5 MB bundle, so opening the
+dashboard no longer downloads the project page's charts, map, and PDF
+libraries up front — the initial script is now ~200 KB, with the rest
+fetched the first time a page that needs it is opened.
 
 ## Roadmap ideas (not built yet)
 

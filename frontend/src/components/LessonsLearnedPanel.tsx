@@ -2,6 +2,7 @@ import { useState } from "react";
 import { LessonLearned, LessonLearnedInput } from "../types";
 import { LESSON_TYPE_COLORS, LESSON_TYPE_LABELS } from "../lessonMeta";
 import LessonLearnedFormModal from "./LessonLearnedFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   lessons: LessonLearned[];
@@ -40,8 +41,10 @@ export default function LessonsLearnedPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(lesson: LessonLearned) {
-    if (!confirm(`Delete "${lesson.title}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${lesson.title}"? This cannot be undone.`)) return;
     await onDelete(lesson);
   }
 

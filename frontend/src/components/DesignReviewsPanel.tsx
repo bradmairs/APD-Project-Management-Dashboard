@@ -3,6 +3,7 @@ import { DesignReview, DesignReviewInput } from "../cmpTypes";
 import { DESIGN_STAGE_LABELS } from "../cmpStatusMeta";
 import { formatDate } from "../format";
 import DesignReviewFormModal from "./DesignReviewFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   reviews: DesignReview[];
@@ -47,8 +48,10 @@ export default function DesignReviewsPanel({ reviews, onCreate, onUpdate, onDele
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(review: DesignReview) {
-    if (!confirm(`Delete the design review by ${review.reviewerName}? This cannot be undone.`))
+    if (!await confirm(`Delete the design review by ${review.reviewerName}? This cannot be undone.`))
       return;
     await onDelete(review);
   }

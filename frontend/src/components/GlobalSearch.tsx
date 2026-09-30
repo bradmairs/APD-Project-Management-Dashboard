@@ -5,6 +5,28 @@ import { SearchResult } from "../types";
 
 const MIN_QUERY_LENGTH = 2;
 const DEBOUNCE_MS = 250;
+const IS_MAC = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform);
+const SHORTCUT_LABEL = IS_MAC ? "⌘K" : "Ctrl+K";
+
+// Which project tab each result type lives on, so a result opens that tab.
+const RESULT_TAB: Record<string, string> = {
+  risk: "quality",
+  action: "overview",
+  rfi: "quality",
+  defect: "quality",
+  variation: "budget",
+  document: "quality",
+  correspondence: "quality",
+  subcontractor: "budget",
+  tender: "budget",
+};
+
+function resultHref(item: SearchResult): string {
+  const tab = RESULT_TAB[item.type];
+  return tab && tab !== "overview"
+    ? `/projects/${item.projectId}?tab=${tab}`
+    : `/projects/${item.projectId}`;
+}
 
 // Self-contained like NotificationBell — no props, fetches on its own as
 // the user types. Debounced rather than fired on every keystroke since
@@ -15,6 +37,19 @@ export default function GlobalSearch() {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const requestId = useRef(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -62,6 +97,7 @@ export default function GlobalSearch() {
   return (
     <div className="relative">
       <input
+        ref={inputRef}
         type="search"
         value={query}
         onChange={(e) => {
@@ -70,9 +106,13 @@ export default function GlobalSearch() {
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={(e) => {
-          if (e.key === "Escape") close();
+          if (e.key === "Escape") {
+            close();
+            inputRef.current?.blur();
+          }
         }}
-        placeholder="Search…"
+        placeholder={`Search… (${SHORTCUT_LABEL})`}
+        title={`Search (${SHORTCUT_LABEL})`}
         aria-label="Search across projects and registers"
         className="w-40 sm:w-56 rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-1.5 text-sm"
       />
@@ -96,7 +136,7 @@ export default function GlobalSearch() {
                   {group.items.map((item) => (
                     <Link
                       key={`${item.type}-${item.id}`}
-                      to={`/projects/${item.projectId}`}
+                      to={resultHref(item)}
                       onClick={close}
                       className="block px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-700"
                     >

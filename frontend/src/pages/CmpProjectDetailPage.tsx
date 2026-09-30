@@ -40,6 +40,7 @@ import {
 } from "../cmpApi";
 import { CMP_PROJECT_STATUS_COLORS, CMP_PROJECT_STATUS_LABELS } from "../cmpStatusMeta";
 import { formatCurrency, formatDate } from "../format";
+import CmpLogo from "../components/CmpLogo";
 import CmpProjectFormModal from "../components/CmpProjectFormModal";
 import DesignStagesPanel from "../components/DesignStagesPanel";
 import DrawingRegisterPanel from "../components/DrawingRegisterPanel";
@@ -48,6 +49,7 @@ import FeeClaimsPanel from "../components/FeeClaimsPanel";
 import CmpMeetingMinutesPanel from "../components/CmpMeetingMinutesPanel";
 import AiAssistantPanel from "../components/AiAssistantPanel";
 import UserMenu from "../components/UserMenu";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 export default function CmpProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -111,8 +113,10 @@ export default function CmpProjectDetailPage() {
     await load();
   }
 
+  const confirm = useConfirm();
+
   async function handleDeleteProject() {
-    if (!confirm(`Delete "${project!.name}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete "${project!.name}"? This cannot be undone.`)) return;
     await deleteCmpProject(project!.id);
     navigate("/cmp");
   }
@@ -220,21 +224,26 @@ export default function CmpProjectDetailPage() {
             <UserMenu />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  {project.name}
-                </h1>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full ${CMP_PROJECT_STATUS_COLORS[project.status]}`}
-                >
-                  {CMP_PROJECT_STATUS_LABELS[project.status]}
-                </span>
+            <div className="flex items-center gap-4">
+              <Link to="/cmp" className="hover:opacity-90">
+                <CmpLogo />
+              </Link>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                    {project.name}
+                  </h1>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full ${CMP_PROJECT_STATUS_COLORS[project.status]}`}
+                  >
+                    {CMP_PROJECT_STATUS_LABELS[project.status]}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {project.clientName}
+                  {project.projectNumber && ` · ${project.projectNumber}`}
+                </p>
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {project.clientName}
-                {project.projectNumber && ` · ${project.projectNumber}`}
-              </p>
             </div>
             <div className="flex items-center gap-3">
               <button

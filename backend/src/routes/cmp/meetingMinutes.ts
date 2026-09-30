@@ -7,6 +7,20 @@ function parseDate(value: unknown): Date | null | undefined {
   return value ? new Date(value as string) : null;
 }
 
+function parseTitle(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function describeMinutes(
+  verb: string,
+  minutes: { title: string | null; meetingType: string | null }
+): string {
+  if (minutes.title) return `${verb} meeting minutes "${minutes.title}"`;
+  return minutes.meetingType
+    ? `${verb} meeting minutes for a ${minutes.meetingType}`
+    : `${verb} meeting minutes`;
+}
+
 const projectMeetingMinutesRouter = Router({ mergeParams: true });
 
 type ProjectParams = { id: string };
@@ -23,7 +37,7 @@ projectMeetingMinutesRouter.post("/", async (req: Request<ProjectParams>, res: R
   const project = await cmpPrisma.cmpProject.findUnique({ where: { id: req.params.id } });
   if (!project) return res.status(404).json({ error: "Project not found" });
 
-  const { meetingDate, meetingType, location, attendees, summary, nextMeetingDate, notes } =
+  const { title, meetingDate, meetingType, location, attendees, summary, nextMeetingDate, notes } =
     req.body as Record<string, unknown>;
 
   if (!meetingDate) {
@@ -33,6 +47,7 @@ projectMeetingMinutesRouter.post("/", async (req: Request<ProjectParams>, res: R
   const minutes = await cmpPrisma.cmpMeetingMinutes.create({
     data: {
       projectId: req.params.id,
+      title: parseTitle(title),
       meetingDate: new Date(meetingDate as string),
       meetingType: (meetingType as string) || null,
       location: (location as string) || null,
@@ -50,9 +65,7 @@ projectMeetingMinutesRouter.post("/", async (req: Request<ProjectParams>, res: R
     projectName: project.name,
     userId: req.user!.sub,
     userName: req.user!.name,
-    action: minutes.meetingType
-      ? `recorded meeting minutes for a ${minutes.meetingType}`
-      : "recorded meeting minutes",
+    action: describeMinutes("recorded", minutes),
   });
 
   res.status(201).json(minutes);
@@ -67,10 +80,11 @@ meetingMinutesRouter.put("/:id", async (req, res) => {
   });
   if (!before) return res.status(404).json({ error: "Meeting minutes not found" });
 
-  const { meetingDate, meetingType, location, attendees, summary, nextMeetingDate, notes } =
+  const { title, meetingDate, meetingType, location, attendees, summary, nextMeetingDate, notes } =
     req.body as Record<string, unknown>;
 
   const data: Record<string, unknown> = {};
+  if (title !== undefined) data.title = parseTitle(title);
   if (meetingDate !== undefined) data.meetingDate = new Date(meetingDate as string);
   if (meetingType !== undefined) data.meetingType = meetingType || null;
   if (location !== undefined) data.location = location || null;
@@ -90,9 +104,7 @@ meetingMinutesRouter.put("/:id", async (req, res) => {
       projectName: before.project.name,
       userId: req.user!.sub,
       userName: req.user!.name,
-      action: before.meetingType
-        ? `updated meeting minutes for a ${before.meetingType}`
-        : "updated meeting minutes",
+      action: describeMinutes("updated", before),
     });
     res.json(minutes);
   } catch (err) {
@@ -112,9 +124,7 @@ meetingMinutesRouter.delete("/:id", async (req, res) => {
     projectName: minutes.project.name,
     userId: req.user!.sub,
     userName: req.user!.name,
-    action: minutes.meetingType
-      ? `deleted meeting minutes for a ${minutes.meetingType}`
-      : "deleted meeting minutes",
+    action: describeMinutes("deleted", minutes),
   });
   await cmpPrisma.cmpMeetingMinutes.delete({ where: { id: req.params.id } });
   res.status(204).send();

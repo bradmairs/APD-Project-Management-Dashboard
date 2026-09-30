@@ -168,7 +168,11 @@ export default function TodayAndUpcomingPanel({
                       </div>
                       {item.project && (
                         <Link
-                          to={`/projects/${item.project.id}`}
+                          to={
+                            item.kind === "TASK"
+                              ? `/projects/${item.project.id}?tab=schedule`
+                              : `/projects/${item.project.id}`
+                          }
                           className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-0.5 inline-block"
                         >
                           {item.project.name}

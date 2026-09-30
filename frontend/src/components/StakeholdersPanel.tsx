@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Stakeholder, StakeholderInput } from "../types";
 import StakeholderFormModal from "./StakeholderFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   stakeholders: Stakeholder[];
@@ -39,8 +40,10 @@ export default function StakeholdersPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(stakeholder: Stakeholder) {
-    if (!confirm(`Remove "${stakeholder.name}" from the stakeholder register?`)) return;
+    if (!await confirm(`Remove "${stakeholder.name}" from the stakeholder register?`, { confirmLabel: "Remove" })) return;
     await onDelete(stakeholder);
   }
 

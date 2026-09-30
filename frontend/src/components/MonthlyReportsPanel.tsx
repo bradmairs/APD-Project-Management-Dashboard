@@ -5,6 +5,7 @@ import { RAG_COLORS, RAG_LABELS } from "../ragMeta";
 import { formatReportMonth } from "../format";
 import { canModifyReport } from "../permissions";
 import MonthlyReportFormModal from "./MonthlyReportFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   reports: MonthlyReport[];
@@ -48,9 +49,11 @@ export default function MonthlyReportsPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(report: MonthlyReport) {
     if (
-      !confirm(
+      !await confirm(
         `Delete the ${formatReportMonth(report.reportingMonth)} report? This cannot be undone.`
       )
     )

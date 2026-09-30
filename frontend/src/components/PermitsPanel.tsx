@@ -14,6 +14,7 @@ import ImportCsvButton from "./ImportCsvButton";
 import { parseImportDate, parseOptionalEnum, requireCell } from "../csvImport";
 import BulkActionsBar from "./BulkActionsBar";
 import { useSelection } from "../useSelection";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 const PERMIT_IMPORT_HEADERS = [
   "Title",
@@ -88,8 +89,10 @@ export default function PermitsPanel({ permits, onCreate, onUpdate, onDelete }: 
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(permit: Permit) {
-    if (!confirm(`Delete permit "${permit.title}"? This cannot be undone.`)) return;
+    if (!await confirm(`Delete permit "${permit.title}"? This cannot be undone.`)) return;
     await onDelete(permit);
   }
 

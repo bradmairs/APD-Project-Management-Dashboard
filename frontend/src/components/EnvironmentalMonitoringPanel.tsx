@@ -3,6 +3,7 @@ import { EnvironmentalMonitoringRecord, EnvironmentalMonitoringRecordInput } fro
 import { formatDate } from "../format";
 import { environmentalMonitoringRank, isExceedance } from "../environmentalMeta";
 import EnvironmentalMonitoringFormModal from "./EnvironmentalMonitoringFormModal";
+import { useConfirm } from "../confirm/ConfirmContext";
 
 interface Props {
   records: EnvironmentalMonitoringRecord[];
@@ -46,8 +47,10 @@ export default function EnvironmentalMonitoringPanel({
     setEditing(null);
   }
 
+  const confirm = useConfirm();
+
   async function handleDelete(record: EnvironmentalMonitoringRecord) {
-    if (!confirm(`Delete this ${record.parameter} reading? This cannot be undone.`)) return;
+    if (!await confirm(`Delete this ${record.parameter} reading? This cannot be undone.`)) return;
     await onDelete(record);
   }
 

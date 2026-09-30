@@ -176,6 +176,7 @@ export type FeeClaimInput = Omit<
 export interface CmpMeetingMinutes {
   id: string;
   projectId: string;
+  title: string | null;
   meetingDate: string;
   meetingType: string | null;
   location: string | null;
