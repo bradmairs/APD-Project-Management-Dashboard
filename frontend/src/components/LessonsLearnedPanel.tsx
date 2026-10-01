@@ -3,6 +3,7 @@ import { LessonLearned, LessonLearnedInput } from "../types";
 import { LESSON_TYPE_COLORS, LESSON_TYPE_LABELS } from "../lessonMeta";
 import LessonLearnedFormModal from "./LessonLearnedFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   lessons: LessonLearned[];
@@ -54,12 +55,15 @@ export default function LessonsLearnedPanel({
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           Lessons Learned
         </h2>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Lesson
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="lessons-learned" rows={lessons} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Lesson
+          </button>
+        </div>
       </div>
 
       {lessons.length === 0 ? (

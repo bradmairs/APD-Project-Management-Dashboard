@@ -5,6 +5,7 @@ import { approvedEotDaysTotal } from "../eot";
 import { ALL_EOT_STATUSES, EOT_STATUS_COLORS, EOT_STATUS_LABELS } from "../eotMeta";
 import EotClaimFormModal from "./EotClaimFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   claims: EotClaim[];
@@ -66,12 +67,15 @@ export default function EotPanel({ claims, onCreate, onUpdate, onDelete }: Props
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New EOT Claim
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="eot-claims" rows={claims} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New EOT Claim
+          </button>
+        </div>
       </div>
 
       {claims.length === 0 ? (

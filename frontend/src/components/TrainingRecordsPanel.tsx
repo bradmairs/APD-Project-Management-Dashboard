@@ -8,6 +8,7 @@ import {
 } from "../trainingMeta";
 import TrainingRecordFormModal from "./TrainingRecordFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   items: TrainingRecord[];
@@ -60,12 +61,15 @@ export default function TrainingRecordsPanel({ items, onCreate, onUpdate, onDele
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           Training &amp; Induction Records
         </h2>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Record
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="training-records" rows={items} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Record
+          </button>
+        </div>
       </div>
 
       {items.length === 0 ? (

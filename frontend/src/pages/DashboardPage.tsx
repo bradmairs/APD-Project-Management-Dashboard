@@ -63,6 +63,7 @@ import {
   updateTask,
 } from "../api";
 import StatCards from "../components/StatCards";
+import { isProjectOverdue } from "../statusMeta";
 import TaskList from "../components/TaskList";
 import ProjectTable from "../components/ProjectTable";
 import ProjectFormModal from "../components/ProjectFormModal";
@@ -152,6 +153,7 @@ export default function DashboardPage() {
     "ALL"
   );
   const [healthFilter, setHealthFilter] = useState<RagStatus | "ALL">("ALL");
+  const [overdueOnly, setOverdueOnly] = useState(false);
   const [pmFilter, setPmFilter] = useState("");
   const [search, setSearch] = useState("");
   const [modalProject, setModalProject] = useState<Project | null>(null);
@@ -300,6 +302,7 @@ export default function DashboardPage() {
       if (statusFilter !== "ALL" && p.status !== statusFilter) return false;
       if (healthFilter !== "ALL" && healthByProjectId[p.id]?.overall !== healthFilter) return false;
       if (pmFilter && p.projectManager !== pmFilter) return false;
+      if (overdueOnly && !isProjectOverdue(p)) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
         const haystack = `${p.name} ${p.location ?? ""} ${
@@ -309,7 +312,7 @@ export default function DashboardPage() {
       }
       return true;
     });
-  }, [projects, statusFilter, healthFilter, pmFilter, search, healthByProjectId]);
+  }, [projects, statusFilter, healthFilter, pmFilter, overdueOnly, search, healthByProjectId]);
 
   function applyView(viewId: string) {
     setSelectedViewId(viewId);
@@ -409,6 +412,11 @@ export default function DashboardPage() {
     await loadData();
   }
 
+  async function handleUpdateActionDueDate(actionItem: ActionItem, dueDate: string | null) {
+    await updateActionItem(actionItem.id, { dueDate });
+    await loadData();
+  }
+
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
@@ -457,7 +465,28 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <StatCards projects={projects} variations={variations} />
+        <StatCards
+          projects={projects}
+          variations={variations}
+          onSelect={{
+            total: () => {
+              setStatusFilter("ALL");
+              setOverdueOnly(false);
+              setActiveTab("projects");
+            },
+            inConstruction: () => {
+              setStatusFilter("CONSTRUCTION");
+              setOverdueOnly(false);
+              setActiveTab("projects");
+            },
+            overdue: () => {
+              setStatusFilter("ALL");
+              setOverdueOnly(true);
+              setActiveTab("projects");
+            },
+            budget: () => setActiveTab("charts"),
+          }}
+        />
 
         <Tabs tabs={DASHBOARD_TABS} active={activeTab} onChange={setActiveTab} />
 
@@ -511,6 +540,15 @@ export default function DashboardPage() {
                     </option>
                   ))}
                 </select>
+                {overdueOnly && (
+                  <button
+                    onClick={() => setOverdueOnly(false)}
+                    className="text-sm rounded-full border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 px-3 py-1"
+                    title="Clear the overdue filter"
+                  >
+                    Overdue only ✕
+                  </button>
+                )}
                 <select
                   value={pmFilter}
                   onChange={(e) => setPmFilter(e.target.value)}
@@ -625,6 +663,7 @@ export default function DashboardPage() {
             onCompleteTask={handleCompleteTask}
             onCompleteAction={handleCompleteAction}
             onUpdateTaskDueDate={handleUpdateTaskDueDate}
+              onUpdateActionDueDate={handleUpdateActionDueDate}
           />
         )}
 

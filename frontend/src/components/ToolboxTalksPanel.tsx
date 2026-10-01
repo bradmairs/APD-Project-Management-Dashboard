@@ -3,6 +3,7 @@ import { ToolboxTalk, ToolboxTalkInput } from "../types";
 import { formatDate } from "../format";
 import ToolboxTalkFormModal from "./ToolboxTalkFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   talks: ToolboxTalk[];
@@ -60,12 +61,15 @@ export default function ToolboxTalksPanel({ talks, onCreate, onUpdate, onDelete 
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Talk
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="toolbox-talks" rows={talks} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Talk
+          </button>
+        </div>
       </div>
 
       {talks.length === 0 ? (

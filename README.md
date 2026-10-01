@@ -49,6 +49,16 @@ The Vite dev server proxies `/api` to `http://localhost:4000` (see
 `frontend/vite.config.ts`), matching the nginx proxy used in the Docker build,
 so `npm run dev` talks to your local backend out of the box.
 
+### Tests and CI
+
+`npm test` in either `backend/` or `frontend/` runs the Vitest unit tests
+(`*.test.ts` next to the code) — currently the pure logic that's easiest to
+get subtly wrong: budget maths (`variations.ts`), Project Health RAG
+thresholds (`health.ts`), risk scoring, task due-date helpers, CSV
+escaping/formula-neutralising, and search ranking. They need no database.
+`.github/workflows/ci.yml` runs the tests plus a typecheck/build of both
+packages on every pull request and on pushes to `main`.
+
 ## Data model (v1)
 
 Each **Project** tracks:
@@ -128,10 +138,15 @@ Archive Links, Lessons Learned, Training Records, Toolbox Talks,
 Environmental Monitoring, Safety Inspections, SQE Issues, Subcontractors,
 and Tender Packages — effectively the whole dashboard, not a curated
 subset of it. `GET /api/search?q=` (`backend/src/routes/search.ts`) runs
-one case-insensitive `contains` query per register in parallel, capped at
-5 results each, and returns them ungrouped for the frontend to bucket by
-type — there's no cross-category relevance ranking, since "5 RFIs and 5
-documents" is more useful here than one merged, arbitrarily-ordered list.
+one case-insensitive `contains` query per register in parallel, fetching up
+to 25 candidates each. `backend/src/searchRank.ts` then scores every
+candidate (exact title > title prefix > a word starting with the query >
+title substring > subtitle match > a match only in a hidden field, ties
+broken by most recent), keeps each register's best 5, and orders the
+registers by their best hit — so an exact RFI number surfaces first even
+if five newer records also mention it. Results are still bucketed by type
+for display; there's no single merged list, since "5 RFIs and 5 documents"
+is more useful than one arbitrarily-mixed one.
 Tasks are the one register filtered server-side beyond the text match
 (`projectId: { not: null }`), since a portfolio-wide Task has no project
 to link a result to.
@@ -1523,7 +1538,11 @@ so a screen only ever shows one section at a time:
   Approved Budget when set, else its Original Budget as revised by
   approved Variations, summed across the portfolio — the same
   `effectiveBudget()` figure Project Health and the Cumulative Spend
-  charts use) — stay above the tabs, visible on every tab.
+  charts use) — stay above the tabs, visible on every tab. Each card is a
+shortcut: Total Projects clears the Projects tab's filters, In Construction
+filters it to that status, Overdue filters it to overdue projects (shown as
+a dismissible "Overdue only" chip beside the other filters — it isn't part
+of a saved view), and Total Approved Budget opens the Charts tab.
 - **Project detail page** — Overview (Stakeholders, Actions & Decisions,
   Activity), Schedule (Milestones, Tasks, EOT Claims, Commissioning &
   Handover), Budget & Contract (Cash Flow, Variations, Payment Claims,
@@ -1606,8 +1625,9 @@ doesn't require leaving the dashboard to open its project. A Task's due
 date is also editable right here, via a date input in place of the
 plain-text date (`PUT /api/tasks/:id`, the same endpoint the Schedule
 tab's Tasks panel uses) — rescheduling something no longer requires
-leaving the dashboard either. Actions/Decisions don't get this, since
-their due date lives on the ActionItem form rather than a single field.
+leaving the dashboard either. Actions and Decisions get the same date
+input (`PUT /api/action-items/:id`), so every row's due date is editable
+in place.
 
 This tab fully supersedes two panels that used to show the same
 underlying data less usefully: the Activity tab's "Upcoming Deadlines"
@@ -1631,8 +1651,21 @@ sorting the panel already applies) via a shared client-side helper
 no backend export endpoint, since every register's full list is already
 fetched to the browser to render the panel in the first place. The file
 opens correctly in Excel (UTF-8 BOM prefix, RFC 4180 quoting) for sharing
-with stakeholders who don't have a login. Not every register has this
-button yet; the pattern is easy to extend to more panels as needed.
+with stakeholders who don't have a login.
+
+The remaining project registers — Contracts, Payment Claims,
+Correspondence, Community Enquiries, EOT Claims, the Commissioning
+checklist, Milestones, Insurance & Warranties, SQE Issues, Safety
+Inspections, Training Records, Toolbox Talks, Environmental Monitoring,
+Performance Reviews, Stakeholders, Tender Packages, Lessons Learned and
+Site Visits — use `components/AutoExportCsvButton.tsx`, which derives the
+columns from each record's own scalar fields (`csvExport.ts`'s `autoCsv`):
+internal ids and timestamps are dropped, camelCase keys become headers,
+ISO dates become `YYYY-MM-DD`, and enum values like `IN_PROGRESS` become
+"In progress". The hand-curated panels above keep their bespoke column
+order; use `ExportCsvButton` directly when a register needs one. Meeting
+Minutes isn't exported — its records carry linked attachments and actions
+that don't flatten into one row.
 
 ## Dashboard Filters & Saved Views
 

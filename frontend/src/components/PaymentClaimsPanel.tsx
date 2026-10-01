@@ -9,6 +9,7 @@ import {
 } from "../paymentClaimMeta";
 import PaymentClaimFormModal from "./PaymentClaimFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   claims: PaymentClaim[];
@@ -88,12 +89,15 @@ export default function PaymentClaimsPanel({
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Claim
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="payment-claims" rows={claims} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Claim
+          </button>
+        </div>
       </div>
 
       {claims.length === 0 ? (
