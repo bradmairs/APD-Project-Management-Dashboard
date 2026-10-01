@@ -9,6 +9,8 @@ const IS_MAC = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(naviga
 const SHORTCUT_LABEL = IS_MAC ? "⌘K" : "Ctrl+K";
 
 // Which project tab each result type lives on, so a result opens that tab.
+// A type left out defaults to "overview" (stakeholders, actions, meeting
+// minutes all live there).
 const RESULT_TAB: Record<string, string> = {
   risk: "quality",
   action: "overview",
@@ -19,6 +21,24 @@ const RESULT_TAB: Record<string, string> = {
   correspondence: "quality",
   subcontractor: "budget",
   tender: "budget",
+  task: "schedule",
+  milestone: "schedule",
+  eot: "schedule",
+  checklist: "schedule",
+  contract: "budget",
+  paymentClaim: "budget",
+  insurance: "budget",
+  permit: "budget",
+  performanceReview: "budget",
+  environmentalMonitoring: "quality",
+  safetyInspection: "quality",
+  sqe: "quality",
+  siteVisit: "site",
+  enquiry: "site",
+  archiveLink: "site",
+  lessonLearned: "site",
+  trainingRecord: "site",
+  toolboxTalk: "site",
 };
 
 function resultHref(item: SearchResult): string {

@@ -23,6 +23,7 @@ interface UnifiedItem {
   project?: { id: string; name: string };
   ownerName?: string | null;
   onComplete: () => void;
+  task?: Task;
 }
 
 interface Props {
@@ -30,6 +31,11 @@ interface Props {
   actionItems: ActionItem[];
   onCompleteTask: (task: Task) => void;
   onCompleteAction: (actionItem: ActionItem) => void;
+  onUpdateTaskDueDate: (task: Task, dueDate: string | null) => void;
+}
+
+function toDateInputValue(value: string | null): string {
+  return value ? value.substring(0, 10) : "";
 }
 
 function dayStart(value: string | Date): Date {
@@ -67,6 +73,7 @@ export default function TodayAndUpcomingPanel({
   actionItems,
   onCompleteTask,
   onCompleteAction,
+  onUpdateTaskDueDate,
 }: Props) {
   const todayStart = dayStart(new Date());
   const weekEnd = new Date(todayStart);
@@ -82,6 +89,7 @@ export default function TodayAndUpcomingPanel({
       dueDate: task.dueDate,
       project: task.project,
       onComplete: () => onCompleteTask(task),
+      task,
     })),
     ...openActionItems.map((actionItem) => ({
       key: `action-${actionItem.id}`,
@@ -180,16 +188,35 @@ export default function TodayAndUpcomingPanel({
                       )}
                     </div>
                     <div className="text-right shrink-0">
-                      {item.dueDate && (
-                        <div
-                          className={
-                            bucket === "OVERDUE"
-                              ? "text-red-600 dark:text-red-400 font-medium text-xs"
-                              : "text-slate-500 dark:text-slate-400 text-xs"
+                      {item.kind === "TASK" && item.task ? (
+                        <input
+                          type="date"
+                          value={toDateInputValue(item.dueDate)}
+                          onChange={(e) =>
+                            onUpdateTaskDueDate(
+                              item.task!,
+                              e.target.value ? new Date(e.target.value).toISOString() : null
+                            )
                           }
-                        >
-                          {formatDate(item.dueDate)}
-                        </div>
+                          title="Edit due date"
+                          className={`text-xs rounded border px-1.5 py-1 dark:bg-slate-700 ${
+                            bucket === "OVERDUE"
+                              ? "border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 font-medium"
+                              : "border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300"
+                          }`}
+                        />
+                      ) : (
+                        item.dueDate && (
+                          <div
+                            className={
+                              bucket === "OVERDUE"
+                                ? "text-red-600 dark:text-red-400 font-medium text-xs"
+                                : "text-slate-500 dark:text-slate-400 text-xs"
+                            }
+                          >
+                            {formatDate(item.dueDate)}
+                          </div>
+                        )
                       )}
                       {item.ownerName && (
                         <div className="text-xs text-slate-500 dark:text-slate-400">

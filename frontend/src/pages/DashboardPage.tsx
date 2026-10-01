@@ -399,6 +399,11 @@ export default function DashboardPage() {
     await loadData();
   }
 
+  async function handleUpdateTaskDueDate(task: Task, dueDate: string | null) {
+    await updateTask(task.id, { dueDate });
+    await loadData();
+  }
+
   async function handleCompleteAction(actionItem: ActionItem) {
     await updateActionItem(actionItem.id, { status: "DONE" });
     await loadData();
@@ -452,7 +457,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <StatCards projects={projects} />
+        <StatCards projects={projects} variations={variations} />
 
         <Tabs tabs={DASHBOARD_TABS} active={activeTab} onChange={setActiveTab} />
 
@@ -619,6 +624,7 @@ export default function DashboardPage() {
             actionItems={actionItems}
             onCompleteTask={handleCompleteTask}
             onCompleteAction={handleCompleteAction}
+            onUpdateTaskDueDate={handleUpdateTaskDueDate}
           />
         )}
 

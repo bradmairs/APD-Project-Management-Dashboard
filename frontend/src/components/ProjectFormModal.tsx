@@ -36,9 +36,6 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
   const [latestApprovedBudget, setLatestApprovedBudget] = useState(
     project?.latestApprovedBudget ?? ""
   );
-  const [contractValue, setContractValue] = useState(
-    project?.contractValue ?? ""
-  );
   const [startDate, setStartDate] = useState(
     toDateInputValue(project?.startDate ?? null)
   );
@@ -68,7 +65,6 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
         latestApprovedBudget: latestApprovedBudget
           ? String(latestApprovedBudget)
           : null,
-        contractValue: contractValue ? String(contractValue) : null,
         startDate: startDate ? new Date(startDate).toISOString() : null,
         targetCompletionDate: targetCompletionDate
           ? new Date(targetCompletionDate).toISOString()
@@ -206,7 +202,7 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Contractor
@@ -217,20 +213,6 @@ export default function ProjectFormModal({ project, onClose, onSave }: Props) {
                 className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Contract Value ($)
-              </label>
-              <input
-                type="number"
-                value={contractValue}
-                onChange={(e) => setContractValue(e.target.value)}
-                className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Original Budget ($)
