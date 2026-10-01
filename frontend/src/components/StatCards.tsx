@@ -1,8 +1,15 @@
-import { Project } from "../types";
+import { Project, Variation } from "../types";
 import { isProjectOverdue } from "../statusMeta";
 import { formatCurrency } from "../format";
+import { effectiveBudget } from "../variations";
 
-export default function StatCards({ projects }: { projects: Project[] }) {
+export default function StatCards({
+  projects,
+  variations,
+}: {
+  projects: Project[];
+  variations: Variation[];
+}) {
   const total = projects.length;
   const inConstruction = projects.filter(
     (p) => p.status === "CONSTRUCTION"
@@ -10,8 +17,19 @@ export default function StatCards({ projects }: { projects: Project[] }) {
 
   const overdue = projects.filter(isProjectOverdue).length;
 
-  const totalBudget = projects.reduce(
-    (sum, p) => sum + (p.budget ? Number(p.budget) : 0),
+  const variationsByProject = new Map<string, Variation[]>();
+  for (const v of variations) {
+    const list = variationsByProject.get(v.projectId);
+    if (list) list.push(v);
+    else variationsByProject.set(v.projectId, [v]);
+  }
+
+  // The Latest Approved Budget when a project has one, since it already
+  // reflects every negotiated change; otherwise the Original Budget as
+  // revised by approved Variations — see variations.ts's effectiveBudget,
+  // the same figure Project Health and the Cumulative Spend charts use.
+  const totalApprovedBudget = projects.reduce(
+    (sum, p) => sum + (effectiveBudget(p, variationsByProject.get(p.id) ?? []) ?? 0),
     0
   );
 
@@ -19,7 +37,7 @@ export default function StatCards({ projects }: { projects: Project[] }) {
     { label: "Total Projects", value: total },
     { label: "In Construction", value: inConstruction },
     { label: "Overdue", value: overdue, alert: overdue > 0 },
-    { label: "Total Original Budget", value: formatCurrency(totalBudget) },
+    { label: "Total Approved Budget", value: formatCurrency(totalApprovedBudget) },
   ];
 
   return (

@@ -61,7 +61,10 @@ Each **Project** tracks:
   about to start, but the project isn't administratively closed out yet
 - BP Ref. No., Project Manager, Project Director, Project Sponsor
 - Location, contractor
-- Original Budget, Latest Approved Budget, vs. contract value
+- Original Budget, Latest Approved Budget, vs. contract value (Contract
+  Value itself isn't on the New/Edit Project form — it's set once from a
+  seed/import or left blank, then only shown read-only, in the Cash Flow
+  panel, Monthly/Closeout reports, and the Dashboard CSV export)
 - Start date, target completion date, actual completion date
 
 A project marked "overdue" on the dashboard means its target completion date
@@ -115,16 +118,23 @@ the tab that holds that register (an RFI opens Quality & Risk, a Variation
 opens Budget & Contract). Press **Ctrl+K** (**⌘K** on a Mac) from any page
 to jump straight into the search box; Esc closes it.
 
-It searches across Projects, Risks & Opportunities, Actions & Decisions,
-RFIs, Defects, Variations, the Document Register, Correspondence,
-Subcontractors, and Tender Packages — a curated set of the registers
-most often searched for by name or number (an RFI number, a document
-number, a contractor's name), not a full-text index over every table in
-the app. `GET /api/search?q=` (`backend/src/routes/search.ts`) runs one
-case-insensitive `contains` query per register in parallel, capped at 5
-results each, and returns them ungrouped for the frontend to bucket by
+It searches across every project-scoped register with meaningful text to
+match: Projects, Tasks, Milestones, Risks & Opportunities, Actions &
+Decisions, RFIs, Defects, EOT Claims, Commissioning & Handover checklist
+items, Variations, Contracts, Payment Claims, Insurance & Warranties,
+Permits & Approvals, Performance Reviews, Stakeholders, Meeting Minutes,
+Site Visits, Community Enquiries, the Document Register, Correspondence,
+Archive Links, Lessons Learned, Training Records, Toolbox Talks,
+Environmental Monitoring, Safety Inspections, SQE Issues, Subcontractors,
+and Tender Packages — effectively the whole dashboard, not a curated
+subset of it. `GET /api/search?q=` (`backend/src/routes/search.ts`) runs
+one case-insensitive `contains` query per register in parallel, capped at
+5 results each, and returns them ungrouped for the frontend to bucket by
 type — there's no cross-category relevance ranking, since "5 RFIs and 5
 documents" is more useful here than one merged, arbitrarily-ordered list.
+Tasks are the one register filtered server-side beyond the text match
+(`projectId: { not: null }`), since a portfolio-wide Task has no project
+to link a result to.
 
 `frontend/src/components/GlobalSearch.tsx` is self-contained like
 `NotificationBell` — no props, it fetches on its own as you type — and is
@@ -1508,8 +1518,12 @@ so a screen only ever shows one section at a time:
   portfolio, merged and bucketed by urgency), Alerts (the portfolio-wide
   "needs attention" panels for compliance/register items), Charts
   (spend-vs-budget and projects-by-status), Activity (top risks, recent
-  activity feed). The header and the four stat cards stay above the
-  tabs, visible on every tab.
+  activity feed). The header and the four stat cards — Total Projects, In
+  Construction, Overdue, and Total Approved Budget (each project's Latest
+  Approved Budget when set, else its Original Budget as revised by
+  approved Variations, summed across the portfolio — the same
+  `effectiveBudget()` figure Project Health and the Cumulative Spend
+  charts use) — stay above the tabs, visible on every tab.
 - **Project detail page** — Overview (Stakeholders, Actions & Decisions,
   Activity), Schedule (Milestones, Tasks, EOT Claims, Commissioning &
   Handover), Budget & Contract (Cash Flow, Variations, Payment Claims,
@@ -1588,7 +1602,12 @@ to its project (portfolio-wide tasks have none), an owner (Actions only),
 and the due date in red once it's overdue. A checkbox on each row marks
 it complete inline — `updateTask`/`updateActionItem` with `status: "DONE"`,
 the same calls their own project-level panels use — so clearing something
-doesn't require leaving the dashboard to open its project.
+doesn't require leaving the dashboard to open its project. A Task's due
+date is also editable right here, via a date input in place of the
+plain-text date (`PUT /api/tasks/:id`, the same endpoint the Schedule
+tab's Tasks panel uses) — rescheduling something no longer requires
+leaving the dashboard either. Actions/Decisions don't get this, since
+their due date lives on the ActionItem form rather than a single field.
 
 This tab fully supersedes two panels that used to show the same
 underlying data less usefully: the Activity tab's "Upcoming Deadlines"
