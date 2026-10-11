@@ -1,0 +1,124 @@
+Option Explicit
+' Paste into: VBA editor > Microsoft Excel Objects > ThisWorkbook (replace its contents).
+' Provides: automatic Activity Log, recurring-task creation, Ctrl+Shift+F to jump to Search.
+
+Private mOldValue As String
+Private mOldCell As String
+
+Private Const LOG_SHEET As String = "Activity Log"
+Private Const LOG_MAX_ROWS As Long = 5001
+
+Private Sub Workbook_Open()
+    Application.OnKey "^+f", "FocusSearch"
+End Sub
+
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+    Application.OnKey "^+f"
+End Sub
+
+' Remember the cell's value before the user changes it, so the log can show old -> new.
+Private Sub Workbook_SheetSelectionChange(ByVal Sh As Object, ByVal Target As Range)
+    mOldValue = vbNullString
+    mOldCell = vbNullString
+    If Target.Cells.CountLarge <> 1 Then Exit Sub
+    On Error Resume Next
+    mOldValue = CStr(Target.Value)
+    If Err.Number = 0 Then mOldCell = Sh.Name & "!" & Target.Address(False, False)
+    On Error GoTo 0
+End Sub
+
+Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
+    If Not IsRegisterSheet(Sh.Name) Then Exit Sub
+    If Target.Row < 2 Then Exit Sub
+
+    If Target.Cells.CountLarge > 25 Then
+        WriteLog Sh.Name, Target.Address(False, False), vbNullString, "(bulk edit: " & Target.Cells.CountLarge & " cells)"
+    Else
+        Dim c As Range, oldV As String
+        For Each c In Target.Cells
+            oldV = vbNullString
+            If Target.Cells.CountLarge = 1 And mOldCell = Sh.Name & "!" & c.Address(False, False) Then oldV = mOldValue
+            WriteLog Sh.Name, c.Address(False, False), oldV, CStr(c.Text)
+        Next c
+    End If
+
+    If Sh.Name = "Tasks" Then HandleRecurringTasks Sh, Target
+End Sub
+
+Private Function IsRegisterSheet(ByVal nm As String) As Boolean
+    Select Case nm
+        Case "Guide", "Dashboard", "Project Summary", "Gantt", "Charts", "Search", "Lists", "Calc", LOG_SHEET
+            IsRegisterSheet = False
+        Case Else
+            IsRegisterSheet = True
+    End Select
+End Function
+
+Private Sub WriteLog(ByVal sheetName As String, ByVal addr As String, ByVal oldV As String, ByVal newV As String)
+    Dim ws As Worksheet, r As Long, prev As Boolean
+    Set ws = Me.Worksheets(LOG_SHEET)
+    prev = Application.EnableEvents
+    Application.EnableEvents = False
+    r = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row + 1
+    If r > LOG_MAX_ROWS Then            ' roll over: drop the oldest 1,000 entries
+        ws.Rows("2:1001").Delete
+        r = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row + 1
+    End If
+    ws.Cells(r, 1).Value = Now
+    ws.Cells(r, 1).NumberFormat = "dd-mmm-yyyy hh:mm:ss"
+    ws.Cells(r, 2).Value = Environ$("USERNAME")
+    ws.Cells(r, 3).Value = sheetName
+    ws.Cells(r, 4).Value = addr
+    ws.Cells(r, 5).Value = "'" & oldV
+    ws.Cells(r, 6).Value = "'" & newV
+    Application.EnableEvents = prev
+End Sub
+
+' --- Recurring tasks ---------------------------------------------------------
+' When a recurring task's Status becomes Done, create the next occurrence
+' (same project/title/description/recurrence, due date advanced by one interval
+' from the completed task's due date, or from today if it had none).
+Private Sub HandleRecurringTasks(ByVal ws As Worksheet, ByVal Target As Range)
+    Dim cStatus As Long, cDue As Long, cRec As Long, cTitle As Long, cDone As Long, cProj As Long, cDesc As Long
+    cStatus = ColOf(ws, "Status"): cDue = ColOf(ws, "Due Date"): cRec = ColOf(ws, "Recurrence")
+    cTitle = ColOf(ws, "Title"): cDone = ColOf(ws, "Completed Date"): cProj = ColOf(ws, "Project"): cDesc = ColOf(ws, "Description")
+    If cStatus * cDue * cRec * cTitle * cDone * cProj * cDesc = 0 Then Exit Sub
+
+    Dim hit As Range, c As Range
+    Set hit = Intersect(Target, ws.Columns(cStatus))
+    If hit Is Nothing Then Exit Sub
+
+    Dim prev As Boolean, baseDate As Date, nextDue As Date, rec As String, newRow As Long
+    prev = Application.EnableEvents
+    Application.EnableEvents = False
+    For Each c In hit.Cells
+        If c.Row >= 2 And CStr(c.Value) = "Done" Then
+            If Len(CStr(ws.Cells(c.Row, cTitle).Value)) > 0 And Len(CStr(ws.Cells(c.Row, cDone).Value)) = 0 Then
+                ws.Cells(c.Row, cDone).Value = Date
+                rec = CStr(ws.Cells(c.Row, cRec).Value)
+                If rec = "Daily" Or rec = "Weekly" Or rec = "Monthly" Then
+                    If IsDate(ws.Cells(c.Row, cDue).Value) Then baseDate = CDate(ws.Cells(c.Row, cDue).Value) Else baseDate = Date
+                    Select Case rec
+                        Case "Daily": nextDue = baseDate + 1
+                        Case "Weekly": nextDue = baseDate + 7
+                        Case "Monthly": nextDue = DateAdd("m", 1, baseDate)
+                    End Select
+                    newRow = ws.Cells(ws.Rows.Count, cTitle).End(xlUp).Row + 1
+                    ws.Cells(newRow, cProj).Value = ws.Cells(c.Row, cProj).Value
+                    ws.Cells(newRow, cTitle).Value = ws.Cells(c.Row, cTitle).Value
+                    ws.Cells(newRow, cDesc).Value = ws.Cells(c.Row, cDesc).Value
+                    ws.Cells(newRow, cStatus).Value = "To Do"
+                    ws.Cells(newRow, cDue).Value = nextDue
+                    ws.Cells(newRow, cRec).Value = rec
+                End If
+            End If
+        End If
+    Next c
+    Application.EnableEvents = prev
+End Sub
+
+Private Function ColOf(ByVal ws As Worksheet, ByVal header As String) As Long
+    Dim f As Range
+    Set f = ws.Rows(1).Find(What:=header, LookIn:=xlValues, LookAt:=xlWhole, MatchCase:=False)
+    If f Is Nothing Then ColOf = 0 Else ColOf = f.Column
+End Function

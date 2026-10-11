@@ -1,0 +1,7 @@
+Option Explicit
+' Paste into: VBA editor > Microsoft Excel Objects > Search (the Search sheet's own code).
+' Runs the search as soon as you type in B3 and press Enter.
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    If Not Intersect(Target, Me.Range("B3")) Is Nothing Then modSearch.RunSearch
+End Sub
