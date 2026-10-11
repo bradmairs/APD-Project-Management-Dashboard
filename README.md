@@ -5,6 +5,12 @@ Delivery (APD) team. It gives Project Managers a single view of construction
 projects — status, budget, key dates, and who owns what — plus a detail page
 per project for tracking tasks/milestones and their due dates.
 
+## Versioning
+
+Releases are numbered `X.YY` (current: see `VERSION`, history in `CHANGELOG.md`).
+A small update or fix bumps the last digit (1.0 -> 1.01); a larger or more
+significant update bumps the tenth (1.01 -> 1.1). Each release is tagged `vX.YY`.
+
 ## Stack
 
 - **Frontend:** React + TypeScript (Vite), Tailwind CSS
