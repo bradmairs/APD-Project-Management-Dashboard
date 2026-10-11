@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Stakeholder, StakeholderInput } from "../types";
 import StakeholderFormModal from "./StakeholderFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   stakeholders: Stakeholder[];
@@ -53,12 +54,15 @@ export default function StakeholdersPanel({
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           Stakeholders
         </h2>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Stakeholder
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="stakeholders" rows={stakeholders} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Stakeholder
+          </button>
+        </div>
       </div>
 
       {stakeholders.length === 0 ? (

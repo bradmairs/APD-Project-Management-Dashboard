@@ -45,3 +45,43 @@ export function downloadCsv(filename: string, columns: { header: string; key: st
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}T/;
+const HIDDEN_KEYS = new Set(["id", "projectId", "createdById", "createdAt", "updatedAt", "createdBy", "project"]);
+
+function humanise(key: string): string {
+  const spaced = key.replace(/([a-z])([A-Z])/g, "$1 $2");
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+function humaniseValue(value: unknown): unknown {
+  if (typeof value === "string") {
+    if (ISO_DATE.test(value)) return value.substring(0, 10);
+    if (/^[A-Z][A-Z0-9_]+$/.test(value)) {
+      const lower = value.toLowerCase().replace(/_/g, " ");
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    }
+  }
+  return value;
+}
+
+// Derives export columns from a register's own scalar fields so a panel can
+// offer CSV export with one line instead of hand-listing every column.
+export function autoCsv(rows: object[]): { columns: { header: string; key: string }[]; rows: Record<string, unknown>[] } {
+  const keys: string[] = [];
+  for (const row of rows) {
+    for (const [key, value] of Object.entries(row)) {
+      if (HIDDEN_KEYS.has(key) || keys.includes(key)) continue;
+      if (value !== null && typeof value === "object") continue;
+      keys.push(key);
+    }
+  }
+  return {
+    columns: keys.map((key) => ({ header: humanise(key), key })),
+    rows: rows.map((row) => {
+      const out: Record<string, unknown> = {};
+      for (const key of keys) out[key] = humaniseValue((row as Record<string, unknown>)[key]);
+      return out;
+    }),
+  };
+}

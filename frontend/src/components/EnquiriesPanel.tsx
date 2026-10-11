@@ -10,6 +10,7 @@ import {
 } from "../enquiryMeta";
 import EnquiryFormModal from "./EnquiryFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   enquiries: CommunityEnquiry[];
@@ -75,12 +76,15 @@ export default function EnquiriesPanel({ enquiries, onCreate, onUpdate, onDelete
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Enquiry
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="community-enquiries" rows={enquiries} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Enquiry
+          </button>
+        </div>
       </div>
 
       {enquiries.length === 0 ? (

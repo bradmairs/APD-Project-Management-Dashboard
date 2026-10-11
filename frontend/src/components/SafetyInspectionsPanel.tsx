@@ -9,6 +9,7 @@ import {
 } from "../safetyInspectionMeta";
 import SafetyInspectionFormModal from "./SafetyInspectionFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   inspections: SafetyInspection[];
@@ -84,12 +85,15 @@ export default function SafetyInspectionsPanel({
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Inspection
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="safety-inspections" rows={inspections} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Inspection
+          </button>
+        </div>
       </div>
 
       {inspections.length === 0 ? (

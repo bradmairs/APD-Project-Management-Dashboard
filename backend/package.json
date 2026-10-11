@@ -1,6 +1,6 @@
 {
   "name": "apd-dashboard-backend",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "private": true,
   "type": "commonjs",
   "scripts": {
@@ -14,7 +14,8 @@
     "prisma:cmp:generate": "prisma generate --schema=prisma/cmp/schema.prisma",
     "prisma:cmp:migrate": "prisma migrate deploy --schema=prisma/cmp/schema.prisma",
     "prisma:cmp:migrate:dev": "prisma migrate dev --schema=prisma/cmp/schema.prisma",
-    "prisma:cmp:seed": "ts-node prisma/cmp/seed.ts"
+    "prisma:cmp:seed": "ts-node prisma/cmp/seed.ts",
+    "test": "vitest run"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -48,6 +49,7 @@
     "prisma": "^5.19.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.9"
   }
 }

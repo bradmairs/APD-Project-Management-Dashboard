@@ -11,6 +11,7 @@ import {
 } from "../correspondenceMeta";
 import CorrespondenceFormModal from "./CorrespondenceFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   items: Correspondence[];
@@ -74,12 +75,15 @@ export default function CorrespondencePanel({ items, onCreate, onUpdate, onDelet
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Correspondence
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="correspondence" rows={items} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Correspondence
+          </button>
+        </div>
       </div>
 
       {items.length === 0 ? (

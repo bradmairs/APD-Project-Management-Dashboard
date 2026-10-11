@@ -4,6 +4,7 @@ import { formatDate } from "../format";
 import { overallScore, performanceBand, PERFORMANCE_BAND_COLORS } from "../performanceMeta";
 import PerformanceReviewFormModal from "./PerformanceReviewFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   items: PerformanceReview[];
@@ -68,12 +69,15 @@ export default function PerformanceReviewsPanel({ items, onCreate, onUpdate, onD
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           Performance Reviews
         </h2>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Review
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="performance-reviews" rows={items} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Review
+          </button>
+        </div>
       </div>
 
       {items.length === 0 ? (

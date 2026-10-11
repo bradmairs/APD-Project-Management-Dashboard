@@ -6,9 +6,11 @@ import { effectiveBudget } from "../variations";
 export default function StatCards({
   projects,
   variations,
+  onSelect,
 }: {
   projects: Project[];
   variations: Variation[];
+  onSelect?: Partial<Record<"total" | "inConstruction" | "overdue" | "budget", () => void>>;
 }) {
   const total = projects.length;
   const inConstruction = projects.filter(
@@ -34,31 +36,45 @@ export default function StatCards({
   );
 
   const cards = [
-    { label: "Total Projects", value: total },
-    { label: "In Construction", value: inConstruction },
-    { label: "Overdue", value: overdue, alert: overdue > 0 },
-    { label: "Total Approved Budget", value: formatCurrency(totalApprovedBudget) },
+    { label: "Total Projects", value: total, select: onSelect?.total },
+    { label: "In Construction", value: inConstruction, select: onSelect?.inConstruction },
+    { label: "Overdue", value: overdue, alert: overdue > 0, select: onSelect?.overdue },
+    { label: "Total Approved Budget", value: formatCurrency(totalApprovedBudget), select: onSelect?.budget },
   ];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map((c) => (
-        <div
-          key={c.label}
-          className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 shadow-sm"
-        >
-          <div className="text-sm text-slate-500 dark:text-slate-400">{c.label}</div>
-          <div
-            className={`text-2xl font-semibold mt-1 ${
-              "alert" in c && c.alert
-                ? "text-red-600 dark:text-red-400"
-                : "text-slate-900 dark:text-slate-100"
-            }`}
+      {cards.map((c) => {
+        const body = (
+          <>
+            <div className="text-sm text-slate-500 dark:text-slate-400">{c.label}</div>
+            <div
+              className={`text-2xl font-semibold mt-1 ${
+                "alert" in c && c.alert
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-slate-900 dark:text-slate-100"
+              }`}
+            >
+              {c.value}
+            </div>
+          </>
+        );
+        const base =
+          "bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 shadow-sm";
+        return c.select ? (
+          <button
+            key={c.label}
+            onClick={c.select}
+            className={`${base} text-left hover:border-blue-400 dark:hover:border-blue-500 transition-colors`}
           >
-            {c.value}
+            {body}
+          </button>
+        ) : (
+          <div key={c.label} className={base}>
+            {body}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

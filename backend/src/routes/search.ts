@@ -1,9 +1,13 @@
 import { Request, Response, Router } from "express";
 import { prisma } from "../prisma";
+import { rankResults } from "../searchRank";
 
 export const searchRouter = Router();
 
 const RESULTS_PER_TYPE = 5;
+// Fetch more candidates than we return so ranking can promote a close match
+// that is older than five weaker ones.
+const CANDIDATES_PER_TYPE = 25;
 
 interface SearchResult {
   type: string;
@@ -21,8 +25,9 @@ interface SearchResult {
 // capped, parallel `contains` query per register, so a user can find
 // anything by number, name, or title (an RFI number, a contractor's name, a
 // toolbox talk topic) from one box regardless of which tab it lives on.
-// Results are grouped by type on the frontend rather than ranked against
-// each other, so there's no need for a single relevance score here.
+// Candidates are scored by how closely they match (see searchRank.ts) and
+// each register keeps its best few, with the registers holding the closest
+// hits listed first.
 searchRouter.get("/", async (req: Request, res: Response) => {
   const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
   if (q.length < 2) {
@@ -74,61 +79,61 @@ searchRouter.get("/", async (req: Request, res: Response) => {
           { bpRefNo: contains },
         ],
       },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { updatedAt: "desc" },
     }),
     prisma.risk.findMany({
       where: { OR: [{ title: contains }, { description: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.actionItem.findMany({
       where: { OR: [{ title: contains }, { description: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.rfi.findMany({
       where: { OR: [{ rfiNumber: contains }, { subject: contains }, { question: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.defectItem.findMany({
       where: { OR: [{ title: contains }, { description: contains }, { location: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.variation.findMany({
       where: { OR: [{ title: contains }, { description: contains }, { reference: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.documentRecord.findMany({
       where: { OR: [{ documentNumber: contains }, { title: contains }, { description: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.correspondence.findMany({
       where: { OR: [{ subject: contains }, { summary: contains }, { correspondent: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.subcontractor.findMany({
       where: { OR: [{ companyName: contains }, { trade: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.tenderPackage.findMany({
       where: { OR: [{ title: contains }, { packageNumber: contains }, { description: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     // Portfolio-wide tasks (projectId null) have no project to link to, so
@@ -139,13 +144,13 @@ searchRouter.get("/", async (req: Request, res: Response) => {
         OR: [{ title: contains }, { description: contains }],
       },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.milestone.findMany({
       where: { OR: [{ taskActivity: contains }, { wbsItem: contains }, { notes: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.eotClaim.findMany({
@@ -153,25 +158,25 @@ searchRouter.get("/", async (req: Request, res: Response) => {
         OR: [{ title: contains }, { reference: contains }, { cause: contains }, { description: contains }],
       },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.checklistItem.findMany({
       where: { OR: [{ title: contains }, { description: contains }, { responsible: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.contractRecord.findMany({
       where: { OR: [{ partyName: contains }, { contractNumber: contains }, { discipline: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.paymentClaim.findMany({
       where: { OR: [{ claimNumber: contains }, { notes: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.insuranceWarranty.findMany({
@@ -184,7 +189,7 @@ searchRouter.get("/", async (req: Request, res: Response) => {
         ],
       },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.permit.findMany({
@@ -192,19 +197,19 @@ searchRouter.get("/", async (req: Request, res: Response) => {
         OR: [{ title: contains }, { referenceNumber: contains }, { issuingAuthority: contains }],
       },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.performanceReview.findMany({
       where: { OR: [{ revieweeName: contains }, { reviewPeriod: contains }, { comments: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.stakeholder.findMany({
       where: { OR: [{ name: contains }, { organization: contains }, { role: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.meetingMinutes.findMany({
@@ -218,13 +223,13 @@ searchRouter.get("/", async (req: Request, res: Response) => {
         ],
       },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.siteVisit.findMany({
       where: { OR: [{ location: contains }, { notes: contains }, { discussionNotes: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.communityEnquiry.findMany({
@@ -237,19 +242,19 @@ searchRouter.get("/", async (req: Request, res: Response) => {
         ],
       },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.archiveLink.findMany({
       where: { OR: [{ label: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.lessonLearned.findMany({
       where: { OR: [{ title: contains }, { description: contains }, { recommendation: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.trainingRecord.findMany({
@@ -262,19 +267,19 @@ searchRouter.get("/", async (req: Request, res: Response) => {
         ],
       },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.toolboxTalk.findMany({
       where: { OR: [{ topic: contains }, { conductedBy: contains }, { keyPoints: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.environmentalMonitoringRecord.findMany({
       where: { OR: [{ parameter: contains }, { location: contains }, { correctiveAction: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.safetyInspection.findMany({
@@ -287,13 +292,13 @@ searchRouter.get("/", async (req: Request, res: Response) => {
         ],
       },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
     prisma.sqeRecord.findMany({
       where: { OR: [{ title: contains }, { description: contains }, { correctiveAction: contains }] },
       include: { project: projectSelect },
-      take: RESULTS_PER_TYPE,
+      take: CANDIDATES_PER_TYPE,
       orderBy: { createdAt: "desc" },
     }),
   ]);
@@ -603,5 +608,5 @@ searchRouter.get("/", async (req: Request, res: Response) => {
     })),
   ];
 
-  res.json({ query: q, results });
+  res.json({ query: q, results: rankResults(results, q, RESULTS_PER_TYPE) });
 });

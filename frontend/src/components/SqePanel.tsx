@@ -13,6 +13,7 @@ import {
 } from "../sqeMeta";
 import SqeFormModal from "./SqeFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   records: SqeRecord[];
@@ -76,12 +77,15 @@ export default function SqePanel({ records, onCreate, onUpdate, onDelete }: Prop
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Issue
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="sqe-issues" rows={records} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Issue
+          </button>
+        </div>
       </div>
 
       {records.length === 0 ? (

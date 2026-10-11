@@ -3,6 +3,7 @@ import { Milestone, MilestoneInput } from "../types";
 import { formatDate } from "../format";
 import MilestoneFormModal from "./MilestoneFormModal";
 import { useConfirm } from "../confirm/ConfirmContext";
+import AutoExportCsvButton from "./AutoExportCsvButton";
 
 interface Props {
   milestones: Milestone[];
@@ -74,12 +75,15 @@ export default function MilestonesPanel({
             </span>
           )}
         </div>
-        <button
-          onClick={openCreate}
-          className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-        >
-          + New Milestone
-        </button>
+        <div className="flex items-center gap-2">
+          <AutoExportCsvButton filename="milestones" rows={milestones} />
+          <button
+            onClick={openCreate}
+            className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            + New Milestone
+          </button>
+        </div>
       </div>
 
       {milestones.length === 0 ? (
