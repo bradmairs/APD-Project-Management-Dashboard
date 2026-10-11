@@ -26,6 +26,13 @@ cp .env.example .env
 docker compose up --build
 ```
 
+- Data: everything persistent is stored in `./data/` next to `docker-compose.yml`
+  (`db/` and `db-cmp/` = the two Postgres databases, `uploads/` = attachments and
+  photos) as bind mounts, so backing up or moving the app is just copying that folder.
+  Docker creates it on first start. Upgrading from a version that used named
+  volumes? Those volumes are not read any more; copy their contents into `./data/`
+  (e.g. `docker run --rm -v apd-project-management-dashboard_db_data:/from -v "$PWD/data/db":/to alpine cp -a /from/. /to/`)
+  before starting, or you will start with empty databases.
 - Dashboard: http://localhost:8080
 - API directly: http://localhost:4000/api/projects
 
@@ -182,8 +189,8 @@ and was removed, and by whom.
 Each project has an **Attachments** panel for drawings, contracts, and
 correspondence. Files are stored on disk (not in Postgres), organized by
 project under `backend/uploads/<projectId>/` — the Docker Compose setup
-mounts that path to a named volume (`uploads_data`) so uploads survive
-container restarts and rebuilds.
+bind-mounts that path to `./data/uploads` (next to `docker-compose.yml`) so
+uploads survive container restarts and rebuilds.
 
 - Allowed types: PDF, Word, Excel, PowerPoint, images (PNG/JPG/GIF), CSV,
   TXT, DWG, and ZIP — anything else is rejected with a clear error
