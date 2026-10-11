@@ -6,3 +6,5 @@ dist/
 backend/uploads/
 backend/src/generated/
 *.tsbuildinfo
+# Docker bind-mounted data (databases, uploads)
+/data/

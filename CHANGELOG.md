@@ -5,6 +5,10 @@ digit (1.0 -> 1.01); a larger or more significant update bumps the tenth
 (1.01 -> 1.1). `package.json` uses the matching semver (1.01 = 1.0.1,
 1.1 = 1.1.0). The current version is in `VERSION`.
 
+## 1.01 - 2026-10-11
+
+- Docker Compose now uses bind mounts under `./data/` (databases and uploads) instead of named volumes, so all data sits next to `docker-compose.yml`
+
 ## 1.0 - 2026-10-11
 
 First numbered release. Includes everything built to date: the project,
