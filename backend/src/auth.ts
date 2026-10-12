@@ -6,7 +6,11 @@ if (!process.env.JWT_SECRET) {
 }
 const JWT_SECRET: string = process.env.JWT_SECRET;
 
-export const COOKIE_NAME = "apd_token";
+// Cookies are scoped to a host, not a port, so two instances on one host (e.g.
+// :8080 and :8069 on the same LAN IP) overwrite each other's login cookie and
+// each rejects the other's token ("Invalid or expired session"). Setting
+// AUTH_COOKIE_NAME per instance keeps their sessions separate.
+export const COOKIE_NAME = process.env.AUTH_COOKIE_NAME || "apd_token";
 
 export interface AuthTokenPayload {
   sub: string;

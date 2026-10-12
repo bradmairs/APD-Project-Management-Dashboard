@@ -45,6 +45,7 @@ services:
       CMP_DATABASE_URL: postgresql://${POSTGRES_USER:-apd}:${POSTGRES_PASSWORD:-apd}@db-cmp:5432/${POSTGRES_CMP_DB:-apd_cmp}
       PORT: 4000
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
+      AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-}
       FRONTEND_URL: ${FRONTEND_URL:-}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       # OLLAMA_MODEL is the legacy name for the chat slot (see backend/src/ollama.ts) —
