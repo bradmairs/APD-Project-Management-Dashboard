@@ -20,6 +20,8 @@ import {
   DocumentRecordInput,
   EnvironmentalMonitoringRecord,
   EnvironmentalMonitoringRecordInput,
+  Delay,
+  DelayInput,
   EotClaim,
   EotClaimInput,
   InsuranceWarranty,
@@ -809,6 +811,30 @@ export function deleteEotClaim(id: string): Promise<void> {
   return fetch(`${API_BASE}/eot-claims/${id}`, { method: "DELETE" }).then((res) =>
     handle(res)
   );
+}
+
+export function getDelays(projectId: string): Promise<Delay[]> {
+  return fetch(`${API_BASE}/projects/${projectId}/delays`).then((res) => handle(res));
+}
+
+export function createDelay(projectId: string, data: Partial<DelayInput>): Promise<Delay> {
+  return fetch(`${API_BASE}/projects/${projectId}/delays`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function updateDelay(id: string, data: Partial<DelayInput>): Promise<Delay> {
+  return fetch(`${API_BASE}/delays/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).then((res) => handle(res));
+}
+
+export function deleteDelay(id: string): Promise<void> {
+  return fetch(`${API_BASE}/delays/${id}`, { method: "DELETE" }).then((res) => handle(res));
 }
 
 export function getChecklistItems(projectId: string): Promise<ChecklistItem[]> {

@@ -549,6 +549,34 @@ export type EotClaimInput = Omit<
   | "updatedAt"
 >;
 
+export type DelayStatus = "ONGOING" | "RESOLVED";
+
+export interface Delay {
+  id: string;
+  projectId: string;
+  title: string;
+  category: string | null;
+  description: string | null;
+  responsibleParty: string | null;
+  criticalPath: boolean;
+  dateStarted: string;
+  dateEnded: string | null;
+  daysImpact: number | null;
+  status: DelayStatus;
+  mitigation: string | null;
+  eotReference: string | null;
+  notes: string | null;
+  raisedById: string | null;
+  raisedByName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type DelayInput = Omit<
+  Delay,
+  "id" | "projectId" | "dateEnded" | "raisedById" | "raisedByName" | "createdAt" | "updatedAt"
+> & { dateEnded: string | null };
+
 export type ChecklistPhase = "COMMISSIONING" | "HANDOVER";
 
 export type ChecklistItemStatus =

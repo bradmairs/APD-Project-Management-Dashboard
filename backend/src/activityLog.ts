@@ -5,6 +5,7 @@ import {
   ContractRecord,
   Correspondence,
   DefectItem,
+  Delay,
   DocumentRecord,
   EnvironmentalMonitoringRecord,
   EotClaim,
@@ -288,6 +289,17 @@ export function describeEotClaimUpdate(
     return `marked EOT claim "${before.title}" as ${label}${grantedNote}`;
   }
   return `updated EOT claim "${before.title}"`;
+}
+
+export function describeDelayUpdate(
+  before: Delay,
+  body: Record<string, unknown>
+): string {
+  if ("status" in body && body.status !== before.status) {
+    const label = body.status === "RESOLVED" ? "resolved" : "reopened";
+    return `${label} delay "${before.title}"`;
+  }
+  return `updated delay "${before.title}"`;
 }
 
 const CHECKLIST_STATUS_LABELS: Record<string, string> = {

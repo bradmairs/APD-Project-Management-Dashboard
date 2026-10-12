@@ -51,6 +51,7 @@ searchRouter.get("/", async (req: Request, res: Response) => {
     tasks,
     milestones,
     eotClaims,
+    delays,
     checklistItems,
     contracts,
     paymentClaims,
@@ -156,6 +157,20 @@ searchRouter.get("/", async (req: Request, res: Response) => {
     prisma.eotClaim.findMany({
       where: {
         OR: [{ title: contains }, { reference: contains }, { cause: contains }, { description: contains }],
+      },
+      include: { project: projectSelect },
+      take: CANDIDATES_PER_TYPE,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.delay.findMany({
+      where: {
+        OR: [
+          { title: contains },
+          { category: contains },
+          { description: contains },
+          { responsibleParty: contains },
+          { eotReference: contains },
+        ],
       },
       include: { project: projectSelect },
       take: CANDIDATES_PER_TYPE,
@@ -435,6 +450,16 @@ searchRouter.get("/", async (req: Request, res: Response) => {
       title: e.title,
       subtitle: e.reference,
       date: e.createdAt,
+    })),
+    ...delays.map((d) => ({
+      type: "delay",
+      typeLabel: "Delay",
+      id: d.id,
+      projectId: d.project.id,
+      projectName: d.project.name,
+      title: d.title,
+      subtitle: d.category,
+      date: d.createdAt,
     })),
     ...checklistItems.map((c) => ({
       type: "checklist",
