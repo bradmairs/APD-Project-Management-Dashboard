@@ -143,7 +143,7 @@ to jump straight into the search box; Esc closes it.
 
 It searches across every project-scoped register with meaningful text to
 match: Projects, Tasks, Milestones, Risks & Opportunities, Actions &
-Decisions, RFIs, Defects, EOT Claims, Commissioning & Handover checklist
+Decisions, RFIs, Defects, Delays, EOT Claims, Commissioning & Handover checklist
 items, Variations, Contracts, Payment Claims, Insurance & Warranties,
 Permits & Approvals, Performance Reviews, Stakeholders, Meeting Minutes,
 Site Visits, Community Enquiries, the Document Register, Correspondence,
@@ -577,6 +577,32 @@ per-month snapshot — its current state (and history of status changes,
 via the Activity panel) is what matters, not what it looked like on some
 past reporting date. Open to any logged-in user to edit, matching Tasks,
 Attachments, and Milestones.
+
+## Delays
+
+Each project has a **Delays** register on its Schedule tab (above Extension of
+Time) — the factual log of what slowed the works, which is what an EOT claim is
+later built on. A delay has a title, a cause/category (free text with
+suggestions such as Weather, Design / Information, Client / Approvals,
+Supply Chain / Materials), a responsible party, a description, a start date, an
+optional end date, a **Days Delayed** figure, a Status of Ongoing or Resolved,
+a mitigation / recovery action, notes, and an optional **Related EOT Claim**
+reference (e.g. `EOT-01`). A **critical path** checkbox flags delays that push
+out the completion date.
+
+Log a delay when it begins (leave the end date empty — it shows as "ongoing"),
+then switch it to Resolved from the row's status dropdown, which stamps the end
+date automatically (reopening clears it). If Days Delayed is left blank the
+panel counts the calendar days from the start to the end date, or to today
+while it's still ongoing (`frontend/src/delayMeta.ts`'s `delayDays`); an entered
+figure always wins. The panel header totals the days lost, how many were on the
+critical path, and how many delays are still ongoing. An end date before the
+start date is rejected. Delays are searchable from the global search, written to
+the activity log, deletable with undo, and exportable to CSV. The related-EOT
+field is a plain reference rather than a link, so a delay doesn't have to become
+a claim and one claim can cover several delays. Delays are informational: they
+don't change Project Health or the revised completion date — only approved EOT
+claims do. Open to any logged-in user to edit.
 
 ## Extension of Time (EOT) Claims
 
@@ -1557,7 +1583,7 @@ filters it to that status, Overdue filters it to overdue projects (shown as
 a dismissible "Overdue only" chip beside the other filters — it isn't part
 of a saved view), and Total Approved Budget opens the Charts tab.
 - **Project detail page** — Overview (Stakeholders, Actions & Decisions,
-  Activity), Schedule (Milestones, Tasks, EOT Claims, Commissioning &
+  Activity), Schedule (Milestones, Tasks, Delays, EOT Claims, Commissioning &
   Handover), Budget & Contract (Cash Flow, Variations, Payment Claims,
   Insurance & Warranties, Permits & Approvals), Quality & Risk (Risks &
   Opportunities, SQE, Defects & Punch List, RFIs, Document Register), Site
@@ -1670,7 +1696,7 @@ The remaining project registers — Contracts, Payment Claims,
 Correspondence, Community Enquiries, EOT Claims, the Commissioning
 checklist, Milestones, Insurance & Warranties, SQE Issues, Safety
 Inspections, Training Records, Toolbox Talks, Environmental Monitoring,
-Performance Reviews, Stakeholders, Tender Packages, Lessons Learned and
+Performance Reviews, Stakeholders, Tender Packages, Lessons Learned, Delays and
 Site Visits — use `components/AutoExportCsvButton.tsx`, which derives the
 columns from each record's own scalar fields (`csvExport.ts`'s `autoCsv`):
 internal ids and timestamps are dropped, camelCase keys become headers,

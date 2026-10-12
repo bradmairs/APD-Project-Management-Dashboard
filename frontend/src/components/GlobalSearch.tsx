@@ -24,6 +24,7 @@ const RESULT_TAB: Record<string, string> = {
   task: "schedule",
   milestone: "schedule",
   eot: "schedule",
+  delay: "schedule",
   checklist: "schedule",
   contract: "budget",
   paymentClaim: "budget",

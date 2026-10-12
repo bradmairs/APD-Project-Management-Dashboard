@@ -26,6 +26,8 @@ import {
   DocumentRecordInput,
   EnvironmentalMonitoringRecord,
   EnvironmentalMonitoringRecordInput,
+  Delay,
+  DelayInput,
   EotClaim,
   EotClaimInput,
   SafetyInspection,
@@ -83,6 +85,7 @@ import {
   createDefect,
   createDocument,
   createEnvironmentalMonitoring,
+  createDelay,
   createEotClaim,
   createSafetyInspection,
   askProjectAi,
@@ -117,6 +120,7 @@ import {
   deleteDefect,
   deleteDocument,
   deleteEnvironmentalMonitoring,
+  deleteDelay,
   deleteEotClaim,
   extractMeetingActions,
   generateMeetingMinutesDraft,
@@ -154,6 +158,7 @@ import {
   getDefects,
   getDocuments,
   getEnvironmentalMonitoring,
+  getDelays,
   getEotClaims,
   getSafetyInspections,
   getInsuranceWarranties,
@@ -186,6 +191,7 @@ import {
   updateDefect,
   updateDocument,
   updateEnvironmentalMonitoring,
+  updateDelay,
   updateEotClaim,
   updateSafetyInspection,
   updateInsuranceWarranty,
@@ -240,6 +246,7 @@ import EnvironmentalMonitoringPanel from "../components/EnvironmentalMonitoringP
 import SafetyInspectionsPanel from "../components/SafetyInspectionsPanel";
 import TenderPackagesPanel from "../components/TenderPackagesPanel";
 import AiAssistantPanel from "../components/AiAssistantPanel";
+import DelaysPanel from "../components/DelaysPanel";
 import EotPanel from "../components/EotPanel";
 import ChecklistPanel from "../components/ChecklistPanel";
 import DefectsPanel from "../components/DefectsPanel";
@@ -290,6 +297,7 @@ const TAB_SECTIONS: Record<ProjectTabId, JumpSection[]> = {
     { id: "timeline", label: "Timeline" },
     { id: "milestones", label: "Milestones" },
     { id: "tasks", label: "Tasks" },
+    { id: "delays", label: "Delays" },
     { id: "eot-claims", label: "Extension of Time" },
     { id: "checklist", label: "Commissioning & Handover" },
   ],
@@ -350,6 +358,7 @@ export default function ProjectDetailPage() {
   const [rfis, setRfis] = useState<Rfi[]>([]);
   const [lessons, setLessons] = useState<LessonLearned[]>([]);
   const [sqeRecords, setSqeRecords] = useState<SqeRecord[]>([]);
+  const [delays, setDelays] = useState<Delay[]>([]);
   const [eotClaims, setEotClaims] = useState<EotClaim[]>([]);
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [defects, setDefects] = useState<DefectItem[]>([]);
@@ -426,6 +435,7 @@ export default function ProjectDetailPage() {
         environmentalMonitoringData,
         safetyInspectionData,
         tenderPackageData,
+        delayData,
       ] = await Promise.all([
         getProject(id),
         getProjectActivity(id),
@@ -461,6 +471,7 @@ export default function ProjectDetailPage() {
         getEnvironmentalMonitoring(id),
         getSafetyInspections(id),
         getTenderPackages(id),
+        getDelays(id),
       ]);
       // Two quick saves overlap two refreshes — only the newest one's
       // result is applied, so an older response can't overwrite it.
@@ -481,6 +492,7 @@ export default function ProjectDetailPage() {
       setPermits(permitData);
       setLessons(lessonData);
       setSqeRecords(sqeData);
+      setDelays(delayData);
       setEotClaims(eotData);
       setChecklistItems(checklistData);
       setDefects(defectData);
@@ -930,6 +942,23 @@ export default function ProjectDetailPage() {
     notifyUndo(`Tender package "${tenderPackage.title}" deleted.`, () =>
       handleCreateTenderPackage(tenderPackage)
     );
+  }
+
+  async function handleCreateDelay(data: Partial<DelayInput>) {
+    if (!project) return;
+    await createDelay(project.id, data);
+    await load();
+  }
+
+  async function handleUpdateDelay(delay: Delay, data: Partial<DelayInput>) {
+    await updateDelay(delay.id, data);
+    await load();
+  }
+
+  async function handleDeleteDelay(delay: Delay) {
+    await deleteDelay(delay.id);
+    await load();
+    notifyUndo(`Delay "${delay.title}" deleted.`, () => handleCreateDelay(delay));
   }
 
   async function handleCreateEotClaim(data: Partial<EotClaimInput>) {
@@ -1490,6 +1519,15 @@ export default function ProjectDetailPage() {
                   onAdd={handleAddTask}
                   onUpdate={handleUpdateTask}
                   onDelete={handleDeleteTask}
+                />
+              </div>
+
+              <div id="delays">
+                <DelaysPanel
+                  delays={delays}
+                  onCreate={handleCreateDelay}
+                  onUpdate={handleUpdateDelay}
+                  onDelete={handleDeleteDelay}
                 />
               </div>
 

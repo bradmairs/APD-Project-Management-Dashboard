@@ -292,6 +292,7 @@ model User {
   lessonsLearned                 LessonLearned[]
   sqeRecords                     SqeRecord[]
   eotClaims                      EotClaim[]
+  delays                         Delay[]
   checklistItems                 ChecklistItem[]
   defectItems                    DefectItem[]
   paymentClaims                  PaymentClaim[]
@@ -393,6 +394,7 @@ model Project {
   lessonsLearned                 LessonLearned[]
   sqeRecords                     SqeRecord[]
   eotClaims                      EotClaim[]
+  delays                         Delay[]
   checklistItems                 ChecklistItem[]
   defectItems                    DefectItem[]
   paymentClaims                  PaymentClaim[]
@@ -456,20 +458,20 @@ model TaskTemplateItem {
 // single project's lifecycle and is listed/managed separately from that
 // project's own Task list (see routes/tasks.ts's /portfolio endpoints).
 model Task {
-  id          String         @id @default(cuid())
-  project     Project?       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId   String?
-  title       String
-  description String?
-  status      TaskStatus     @default(TODO)
-  dueDate     DateTime?
-  recurrence  TaskRecurrence @default(NONE)
+  id               String          @id @default(cuid())
+  project          Project?        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String?
+  title            String
+  description      String?
+  status           TaskStatus      @default(TODO)
+  dueDate          DateTime?
+  recurrence       TaskRecurrence  @default(NONE)
   // Optional: the meeting this task was actioned at. SetNull on delete, the
   // same reasoning as ActionItem.meetingMinutes.
   meetingMinutes   MeetingMinutes? @relation(fields: [meetingMinutesId], references: [id], onDelete: SetNull)
   meetingMinutesId String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   @@index([projectId])
   @@index([meetingMinutesId])
@@ -929,6 +931,47 @@ model EotClaim {
   notes         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// A logged delay event on a project — what slowed the works, when, for how
+// long, and who was responsible. This is the factual record that comes
+// BEFORE an Extension of Time claim: a delay is logged as it happens
+// (ONGOING, no end date), then marked RESOLVED once the works are moving
+// again, and eotReference ties it to the EOT claim raised for it (a plain
+// reference rather than a foreign key — a delay need not become a claim,
+// and one claim can cover several delays). daysImpact is the PM's own
+// estimate of calendar days lost; the UI falls back to the elapsed days
+// between the start and end dates when it's left blank. criticalPath
+// flags whether the delay moves the completion date at all. Cascades with
+// its project like the other registers.
+enum DelayStatus {
+  ONGOING
+  RESOLVED
+}
+
+model Delay {
+  id               String      @id @default(cuid())
+  project          Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId        String
+  title            String
+  category         String?
+  description      String?
+  responsibleParty String?
+  criticalPath     Boolean     @default(false)
+  dateStarted      DateTime
+  dateEnded        DateTime?
+  daysImpact       Int?
+  status           DelayStatus @default(ONGOING)
+  mitigation       String?
+  eotReference     String?
+  notes            String?
+  raisedBy         User?       @relation(fields: [raisedById], references: [id], onDelete: SetNull)
+  raisedById       String?
+  raisedByName     String
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
   @@index([projectId])
 }
