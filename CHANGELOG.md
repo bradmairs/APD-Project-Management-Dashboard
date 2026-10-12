@@ -5,6 +5,10 @@ digit (1.0 -> 1.01); a larger or more significant update bumps the tenth
 (1.01 -> 1.1). `package.json` uses the matching semver (1.01 = 1.0.1,
 1.1 = 1.1.0). The current version is in `VERSION`.
 
+## 1.21 - 2026-10-13
+
+- Admins can **permanently delete** a user from Manage Users (with confirmation). Their records stay and keep their name; their access ends immediately. Admins can't delete themselves
+
 ## 1.2 - 2026-10-13
 
 - **Two-factor authentication (TOTP)**: any user can turn on a 6-digit authenticator-app code at sign-in (user menu -> Two-Factor Auth), with QR enrolment, 10 one-time recovery codes, and password + code to turn it off; admins can reset a locked-out user from Manage Users. Opt-in per account; includes a migration adding four columns to `User`

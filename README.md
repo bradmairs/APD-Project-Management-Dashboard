@@ -324,10 +324,20 @@ nothing about them is deleted: their projects, tasks, activity history, and
 attachments stay exactly as they were, still attributed to them by name.
 "Reactivate" restores login access with no other side effects. The same
 self-lockout guard applies here — an admin can't deactivate their own
-account. There's still no way to permanently delete a user outright, which
-is deliberate: deactivating covers the real use case (someone leaves the
-team) without the SET NULL cleanup and lost-history trade-offs a hard
-delete would need.
+account.
+
+Admins can also **permanently delete** an account with the "Delete" link on each
+row (after a confirmation). Deleting is irreversible and immediate: the person
+loses access straight away (their open session is cut off, and signing in again
+fails), and their organisation memberships are removed. What they created is
+**not** deleted — projects, risks, actions, attachments, activity history and
+every other record stay in place and keep showing the name they were recorded
+under (each record stores the author's name alongside its link to the account;
+only the link is cleared). Two-factor settings go with the account. An admin
+can't delete their own account, which also means at least one active admin always
+remains. Prefer **Deactivate** when someone might come back, since it can be
+undone and deleting can't; a deleted person can only return as a brand-new
+account.
 
 ### Permissions
 
