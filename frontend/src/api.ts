@@ -161,6 +161,10 @@ export function getTwoFactorStatus(): Promise<{
   return fetch(`${API_BASE}/auth/2fa/status`).then((res) => handle(res));
 }
 
+export function deleteUser(id: string): Promise<void> {
+  return fetch(`${API_BASE}/users/${id}`, { method: "DELETE" }).then((res) => handle(res));
+}
+
 export function resetUserTwoFactor(id: string): Promise<void> {
   return fetch(`${API_BASE}/users/${id}/2fa/reset`, { method: "POST" }).then(
     (res) => handle(res)

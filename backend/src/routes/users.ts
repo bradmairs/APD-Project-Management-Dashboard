@@ -119,6 +119,23 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// Permanently removes an account. Every record the user created keeps its
+// stored name (raisedByName etc.) because those foreign keys are SET NULL, and
+// their org memberships cascade; their live session stops working at once since
+// requireAuth looks the user up on every request. An admin can't delete their own
+// account, which also guarantees at least one active admin always remains.
+router.delete("/:id", async (req, res) => {
+  if (req.params.id === req.user!.sub) {
+    return res.status(400).json({ error: "You can't delete your own account" });
+  }
+  try {
+    await prisma.user.delete({ where: { id: req.params.id } });
+    res.status(204).send();
+  } catch {
+    res.status(404).json({ error: "User not found" });
+  }
+});
+
 // Lets an admin switch off two-factor auth for someone who has lost both their
 // authenticator and their recovery codes. They sign in with just their
 // password afterwards and can enrol again from the user menu.

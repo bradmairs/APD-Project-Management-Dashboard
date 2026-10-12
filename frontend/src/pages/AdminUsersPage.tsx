@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   createUser,
+  deleteUser,
   getUsers,
   resetUserTwoFactor,
   setUserActive,
@@ -10,12 +11,14 @@ import {
 import { Role, User } from "../types";
 import { formatDate } from "../format";
 import { useAuth } from "../auth/AuthContext";
+import { useConfirm } from "../confirm/ConfirmContext";
 import CreateUserModal from "../components/CreateUserModal";
 import UserMenu from "../components/UserMenu";
 import GvwLogo from "../components/GvwLogo";
 
 export default function AdminUsersPage() {
   const { user: currentUser } = useAuth();
+  const confirm = useConfirm();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +57,21 @@ export default function AdminUsersPage() {
       setError(
         err instanceof Error ? err.message : "Failed to update account status"
       );
+    }
+  }
+
+  async function handleDelete(user: User) {
+    const ok = await confirm(
+      `Permanently delete ${user.name} (${user.email})? They'll lose access immediately. ` +
+        `Records they created are kept and still show their name. This can't be undone — ` +
+        `use Deactivate instead if you may want them back.`
+    );
+    if (!ok) return;
+    try {
+      await deleteUser(user.id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete user");
     }
   }
 
@@ -244,6 +262,18 @@ export default function AdminUsersPage() {
                         }`}
                       >
                         {user.active ? "Deactivate" : "Reactivate"}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(user)}
+                        disabled={user.id === currentUser?.id}
+                        title={
+                          user.id === currentUser?.id
+                            ? "You can't delete your own account"
+                            : "Permanently delete this account"
+                        }
+                        className="ml-3 text-xs text-red-600 dark:text-red-400 hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
+                      >
+                        Delete
                       </button>
                     </td>
                   </tr>
