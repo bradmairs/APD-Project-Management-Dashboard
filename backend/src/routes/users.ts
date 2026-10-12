@@ -32,7 +32,15 @@ async function grantDefaultOrgMembership(userId: string, role: "ADMIN" | "MEMBER
 
 router.get("/", async (_req, res) => {
   const users = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      active: true,
+      createdAt: true,
+      twoFactorEnabled: true,
+    },
     orderBy: { name: "asc" },
   });
   res.json(users);
@@ -107,6 +115,46 @@ router.put("/:id", async (req, res) => {
     }
     res.json(user);
   } catch (err) {
+    res.status(404).json({ error: "User not found" });
+  }
+});
+
+// Lets an admin switch off two-factor auth for someone who has lost both their
+// authenticator and their recovery codes. They sign in with just their
+// password afterwards and can enrol again from the user menu.
+router.post("/:id/2fa/reset", async (req, res) => {
+  try {
+    await prisma.user.update({
+      where: { id: req.params.id },
+      data: {
+        twoFactorEnabled: false,
+        twoFactorSecret: null,
+        twoFactorLastStep: null,
+        twoFactorRecoveryHashes: [],
+      },
+    });
+    res.status(204).send();
+  } catch {
+    res.status(404).json({ error: "User not found" });
+  }
+});
+
+// Lets an admin switch off two-factor auth for someone who has lost both their
+// authenticator and their recovery codes. They sign in with just their
+// password afterwards and can enrol again from the user menu.
+router.post("/:id/2fa/reset", async (req, res) => {
+  try {
+    await prisma.user.update({
+      where: { id: req.params.id },
+      data: {
+        twoFactorEnabled: false,
+        twoFactorSecret: null,
+        twoFactorLastStep: null,
+        twoFactorRecoveryHashes: [],
+      },
+    });
+    res.status(204).send();
+  } catch {
     res.status(404).json({ error: "User not found" });
   }
 });

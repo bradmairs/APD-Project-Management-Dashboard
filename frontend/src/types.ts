@@ -21,6 +21,8 @@ export interface User {
   // Only populated on the logged-in user's own record (login/me responses) —
   // see PUT /api/auth/preferences. Not selected on the admin Users list.
   emailDigestOptIn?: boolean;
+  // Own record (login/me) and the admin Users list — see backend/src/twoFactor.ts.
+  twoFactorEnabled?: boolean;
 }
 
 export type ProjectStatus =

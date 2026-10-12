@@ -5,14 +5,22 @@ import {
   useEffect,
   useState,
 } from "react";
-import { getMe, login as apiLogin, logout as apiLogout } from "../api";
+import {
+  getMe,
+  login as apiLogin,
+  loginWithTwoFactor as apiLoginWithTwoFactor,
+  logout as apiLogout,
+} from "../api";
 import { User } from "../types";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   isViewer: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  // Resolves with the challenge token when the account has two-factor auth on;
+  // the caller then collects a code and calls completeTwoFactor.
+  login: (email: string, password: string) => Promise<{ challengeToken: string } | null>;
+  completeTwoFactor: (challengeToken: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -31,8 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function login(email: string, password: string) {
-    const loggedInUser = await apiLogin(email, password);
-    setUser(loggedInUser);
+    const result = await apiLogin(email, password);
+    if (result.twoFactorRequired) return { challengeToken: result.challengeToken };
+    setUser(result.user);
+    return null;
+  }
+
+  async function completeTwoFactor(challengeToken: string, code: string) {
+    setUser(await apiLoginWithTwoFactor(challengeToken, code));
   }
 
   async function logout() {
@@ -47,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isViewer = user?.role === "VIEWER";
 
   return (
-    <AuthContext.Provider value={{ user, loading, isViewer, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, isViewer, login, completeTwoFactor, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

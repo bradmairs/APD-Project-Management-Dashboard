@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { updateDigestPreference } from "../api";
 import ChangePasswordModal from "./ChangePasswordModal";
+import TwoFactorModal from "./TwoFactorModal";
 import GlobalSearch from "./GlobalSearch";
 import NotificationBell from "./NotificationBell";
 import OrgSwitcher from "./OrgSwitcher";
@@ -15,6 +16,7 @@ export default function UserMenu() {
   const isCmp = location.pathname.startsWith("/cmp");
   const [menuOpen, setMenuOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
   const [togglingDigest, setTogglingDigest] = useState(false);
 
   async function handleLogout() {
@@ -72,6 +74,16 @@ export default function UserMenu() {
                 Change Password
               </button>
               <button
+                onClick={() => {
+                  setShowTwoFactorModal(true);
+                  setMenuOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                title="Require a code from an authenticator app when you sign in"
+              >
+                Two-Factor Auth: {user.twoFactorEnabled ? "On" : "Off"}
+              </button>
+              <button
                 onClick={handleToggleDigest}
                 disabled={togglingDigest}
                 className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
@@ -111,6 +123,9 @@ export default function UserMenu() {
 
       {showPasswordModal && (
         <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+      )}
+      {showTwoFactorModal && (
+        <TwoFactorModal onClose={() => setShowTwoFactorModal(false)} />
       )}
     </div>
   );

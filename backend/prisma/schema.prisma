@@ -277,6 +277,15 @@ model User {
   // anyway, and a new account shouldn't start emailing someone who hasn't
   // asked for it.
   emailDigestOptIn               Boolean                         @default(false)
+  // Opt-in TOTP two-factor auth (authenticator app) — see backend/src/twoFactor.ts.
+  // The secret is stored AES-GCM encrypted (not plaintext) and is set while a
+  // user is still enrolling (twoFactorEnabled=false) until they confirm a code.
+  // Recovery codes are stored only as hashes. twoFactorLastStep is the last
+  // accepted 30s time step, so a code can't be replayed within its window.
+  twoFactorEnabled               Boolean                         @default(false)
+  twoFactorSecret                String?
+  twoFactorRecoveryHashes        String[]                        @default([])
+  twoFactorLastStep              Int?
   createdAt                      DateTime                        @default(now())
   updatedAt                      DateTime                        @updatedAt
   activityLogs                   ActivityLog[]

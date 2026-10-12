@@ -90,12 +90,81 @@ async function handle<T>(res: Response): Promise<T> {
   return res.json();
 }
 
-export function login(email: string, password: string): Promise<User> {
+export type LoginResult =
+  | { twoFactorRequired: false; user: User }
+  | { twoFactorRequired: true; challengeToken: string };
+
+export function login(email: string, password: string): Promise<LoginResult> {
   return fetch(`${API_BASE}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
+  })
+    .then((res) =>
+      handle<User | { twoFactorRequired: true; challengeToken: string }>(res)
+    )
+    .then((body) =>
+      "twoFactorRequired" in body && body.twoFactorRequired
+        ? { twoFactorRequired: true as const, challengeToken: body.challengeToken }
+        : { twoFactorRequired: false as const, user: body as User }
+    );
+}
+
+export function loginWithTwoFactor(
+  challengeToken: string,
+  code: string
+): Promise<User> {
+  return fetch(`${API_BASE}/auth/login/2fa`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ challengeToken, code }),
   }).then((res) => handle(res));
+}
+
+export interface TwoFactorSetup {
+  secret: string;
+  otpauthUrl: string;
+  qrDataUrl: string;
+}
+
+function postJson<T>(path: string, body: unknown): Promise<T> {
+  return fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }).then((res) => handle<T>(res));
+}
+
+export function startTwoFactorSetup(password: string): Promise<TwoFactorSetup> {
+  return postJson("/auth/2fa/setup", { password });
+}
+
+export function enableTwoFactor(code: string): Promise<{ recoveryCodes: string[] }> {
+  return postJson("/auth/2fa/enable", { code });
+}
+
+export function disableTwoFactor(password: string, code: string): Promise<void> {
+  return postJson("/auth/2fa/disable", { password, code });
+}
+
+export function regenerateRecoveryCodes(
+  password: string,
+  code: string
+): Promise<{ recoveryCodes: string[] }> {
+  return postJson("/auth/2fa/recovery-codes", { password, code });
+}
+
+export function getTwoFactorStatus(): Promise<{
+  enabled: boolean;
+  recoveryCodesRemaining: number;
+}> {
+  return fetch(`${API_BASE}/auth/2fa/status`).then((res) => handle(res));
+}
+
+export function resetUserTwoFactor(id: string): Promise<void> {
+  return fetch(`${API_BASE}/users/${id}/2fa/reset`, { method: "POST" }).then(
+    (res) => handle(res)
+  );
 }
 
 export function logout(): Promise<void> {

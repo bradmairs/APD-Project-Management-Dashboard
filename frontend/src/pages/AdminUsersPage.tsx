@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { createUser, getUsers, setUserActive, updateUserRole } from "../api";
+import {
+  createUser,
+  getUsers,
+  resetUserTwoFactor,
+  setUserActive,
+  updateUserRole,
+} from "../api";
 import { Role, User } from "../types";
 import { formatDate } from "../format";
 import { useAuth } from "../auth/AuthContext";
@@ -48,6 +54,22 @@ export default function AdminUsersPage() {
       setError(
         err instanceof Error ? err.message : "Failed to update account status"
       );
+    }
+  }
+
+  async function handleResetTwoFactor(user: User) {
+    if (
+      !window.confirm(
+        `Turn off two-factor authentication for ${user.name}? They'll be able to sign in with just their password until they set it up again.`
+      )
+    ) {
+      return;
+    }
+    try {
+      await resetUserTwoFactor(user.id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reset two-factor authentication");
     }
   }
 
@@ -117,6 +139,9 @@ export default function AdminUsersPage() {
                     Status
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
+                    2FA
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
                     Joined
                   </th>
                   <th className="px-4 py-3"></th>
@@ -174,6 +199,24 @@ export default function AdminUsersPage() {
                         <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
                           Deactivated
                         </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {user.twoFactorEnabled ? (
+                        <span className="inline-flex items-center gap-2">
+                          <span className="text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">
+                            On
+                          </span>
+                          <button
+                            onClick={() => handleResetTwoFactor(user)}
+                            className="text-xs text-red-600 dark:text-red-400 hover:underline"
+                            title="Switch off two-factor auth for someone who lost their authenticator and recovery codes"
+                          >
+                            Reset
+                          </button>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400 dark:text-slate-500">Off</span>
                       )}
                     </td>
                     <td

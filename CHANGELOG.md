@@ -5,6 +5,11 @@ digit (1.0 -> 1.01); a larger or more significant update bumps the tenth
 (1.01 -> 1.1). `package.json` uses the matching semver (1.01 = 1.0.1,
 1.1 = 1.1.0). The current version is in `VERSION`.
 
+## 1.2 - 2026-10-13
+
+- **Two-factor authentication (TOTP)**: any user can turn on a 6-digit authenticator-app code at sign-in (user menu -> Two-Factor Auth), with QR enrolment, 10 one-time recovery codes, and password + code to turn it off; admins can reset a locked-out user from Manage Users. Opt-in per account; includes a migration adding four columns to `User`
+- `AUTH_COOKIE_NAME` env var (optional) so two instances on one host can keep separate logins
+
 ## 1.1 - 2026-10-12
 
 - New **Delays** register on every project's Schedule tab: log delay events (cause, responsible party, dates, days lost, critical path, mitigation, related EOT reference), mark them Ongoing/Resolved, with CSV export, search and activity log

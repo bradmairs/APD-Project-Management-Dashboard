@@ -227,6 +227,39 @@ menu (top right → **Change Password**), no admin needed.
 `docker compose up` will refuse to start the backend without it. Generate one
 with `openssl rand -base64 32`.
 
+### Two-factor authentication (2FA)
+
+Every account can turn on a second sign-in step: after the password, the
+login page asks for a 6-digit code from an authenticator app (Google
+Authenticator, Microsoft Authenticator, Authy, 1Password, Bitwarden…). It's
+opt-in per user — top right → **Two-Factor Auth** → follow the prompts:
+
+1. Confirm your password.
+2. Scan the QR code (or type the key in by hand) and enter the code the app
+   shows. 2FA only switches on once a code has been verified, so a bad scan
+   can't lock you out.
+3. Save the 10 one-time **recovery codes** shown at the end — each lets you
+   sign in once if you lose your phone. They're shown only that once; **Get
+   new recovery codes** in the same dialog replaces them.
+
+Turning 2FA off (or getting new recovery codes) needs your password plus a
+current code. If someone loses both their authenticator and their recovery
+codes, an admin can switch their 2FA off from **Manage Users** (the **2FA**
+column → **Reset**); they sign in with just their password and re-enrol.
+
+How it works (`backend/src/twoFactor.ts`, `backend/src/routes/auth.ts`):
+standard TOTP (RFC 6238 — SHA-1, 6 digits, 30 s, ±1 step of clock drift),
+implemented on `node:crypto` with the RFC test vectors as unit tests. For an
+account with 2FA, `POST /api/auth/login` returns a 5-minute challenge token
+instead of a session; `POST /api/auth/login/2fa` exchanges it plus a code for
+the session cookie. The challenge token is signed with a key derived from
+`JWT_SECRET` for that purpose only, so it can never act as a session. Each
+code works once (the last accepted time step is stored), a wrong-code budget
+applies per account as well as per IP, secrets are stored AES-256-GCM
+encrypted (key derived from `JWT_SECRET`), and recovery codes are stored only
+as hashes. **Rotating `JWT_SECRET` therefore invalidates enrolled
+authenticators** — admins would need to reset 2FA for each user afterwards.
+
 ### Deploying on the internet
 
 This app was built for a small team behind a login, not for the open
