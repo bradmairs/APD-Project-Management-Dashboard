@@ -97,6 +97,7 @@ import UserMenu from "../components/UserMenu";
 import Tabs from "../components/Tabs";
 import { useAuth } from "../auth/AuthContext";
 import GvwLogo from "../components/GvwLogo";
+import { APP_VERSION } from "../version";
 import ExportCsvButton from "../components/ExportCsvButton";
 import { formatCurrency, formatDate } from "../format";
 import { DashboardView, addSavedView, loadSavedViews, removeSavedView } from "../savedViews";
@@ -429,6 +430,12 @@ export default function DashboardPage() {
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Water Authority
+                <span
+                  className="ml-2 text-xs text-slate-400 dark:text-slate-500"
+                  title={`Siris Project Management version ${APP_VERSION}`}
+                >
+                  v{APP_VERSION}
+                </span>
               </p>
             </div>
           </Link>

@@ -1,8 +1,15 @@
 import { FormEvent, useState } from "react";
 import { CashFlowEntry, CashFlowEntryInput, CashFlowType } from "../types";
+import { formatCurrency } from "../format";
 
 interface Props {
   entry: CashFlowEntry | null;
+  // Every entry on the project, so converting forecast <-> actual can warn
+  // when the target type already exists for that month.
+  entries: CashFlowEntry[];
+  // Opens an existing entry already switched to this type (the "Mark as actual"
+  // shortcut).
+  initialType?: CashFlowType;
   onClose: () => void;
   onSave: (data: Partial<CashFlowEntryInput>) => Promise<void>;
 }
@@ -12,12 +19,30 @@ function toMonthInputValue(value: string | null): string {
   return value.substring(0, 7);
 }
 
-export default function CashFlowEntryFormModal({ entry, onClose, onSave }: Props) {
+export default function CashFlowEntryFormModal({
+  entry,
+  entries,
+  initialType,
+  onClose,
+  onSave,
+}: Props) {
   const [month, setMonth] = useState(toMonthInputValue(entry?.month ?? null));
-  const [type, setType] = useState<CashFlowType>(entry?.type ?? "ACTUAL");
+  const [type, setType] = useState<CashFlowType>(
+    initialType ?? entry?.type ?? "ACTUAL"
+  );
   const [amount, setAmount] = useState(entry?.amount ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const replaced =
+    entry && type !== entry.type
+      ? entries.find(
+          (other) =>
+            other.id !== entry.id &&
+            other.type === type &&
+            other.month.substring(0, 7) === entry.month.substring(0, 7)
+        )
+      : undefined;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -65,14 +90,22 @@ export default function CashFlowEntryFormModal({ entry, onClose, onSave }: Props
               Type
             </label>
             <select
-              disabled={!!entry}
               value={type}
               onChange={(e) => setType(e.target.value as CashFlowType)}
-              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm disabled:bg-slate-50 dark:disabled:bg-slate-800 disabled:text-slate-500"
+              className="w-full rounded border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 text-sm "
             >
               <option value="ACTUAL">Actual</option>
               <option value="FORECAST">Forecast</option>
             </select>
+            {entry && type !== entry.type && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {replaced
+                  ? `This month already has a ${type.toLowerCase()} entry (${formatCurrency(
+                      replaced.amount
+                    )}) — saving replaces it with this amount.`
+                  : `Changes this ${entry.type.toLowerCase()} entry to ${type.toLowerCase()}.`}
+              </p>
+            )}
           </div>
 
           <div>

@@ -218,6 +218,7 @@ import {
   uploadAttachment,
   uploadSiteVisitPhotos,
   upsertCashFlowEntry,
+  updateCashFlowEntry,
 } from "../api";
 import ProjectFormModal from "../components/ProjectFormModal";
 import TaskList from "../components/TaskList";
@@ -695,6 +696,47 @@ export default function ProjectDetailPage() {
     if (!project) return;
     await upsertCashFlowEntry(project.id, data);
     await refreshCashFlow();
+  }
+
+  async function handleUpdateCashFlowEntry(
+    entry: CashFlowEntry,
+    data: Partial<CashFlowEntryInput>
+  ) {
+    // A different target type that already exists for the month is merged into
+    // by the server (it takes the new amount and this entry goes away), so
+    // remember it to put back on undo.
+    const replaced =
+      data.type && data.type !== entry.type
+        ? cashFlowEntries.find(
+            (other) =>
+              other.id !== entry.id &&
+              other.type === data.type &&
+              other.month.substring(0, 7) === entry.month.substring(0, 7)
+          )
+        : undefined;
+    await updateCashFlowEntry(entry.id, data);
+    await refreshCashFlow();
+    const label = formatReportMonth(entry.month);
+    notifyUndo(
+      data.type && data.type !== entry.type
+        ? `${label} changed from ${entry.type.toLowerCase()} to ${data.type.toLowerCase()}.`
+        : `${label} ${entry.type.toLowerCase()} entry updated.`,
+      async () => {
+        if (replaced) {
+          // Merged: the server kept the existing entry (with the new amount)
+          // and removed this one, so restore the old amount and recreate it.
+          await updateCashFlowEntry(replaced.id, { amount: replaced.amount });
+          await upsertCashFlowEntry(entry.projectId, {
+            month: entry.month,
+            type: entry.type,
+            amount: entry.amount,
+          });
+        } else {
+          await updateCashFlowEntry(entry.id, { type: entry.type, amount: entry.amount });
+        }
+        await refreshCashFlow();
+      }
+    );
   }
 
   async function handleDeleteCashFlowEntry(entry: CashFlowEntry) {
@@ -1569,6 +1611,7 @@ export default function ProjectDetailPage() {
                   entries={cashFlowEntries}
                   variations={variations}
                   onUpsert={handleUpsertCashFlowEntry}
+                  onUpdate={handleUpdateCashFlowEntry}
                   onDelete={handleDeleteCashFlowEntry}
                 />
               </div>

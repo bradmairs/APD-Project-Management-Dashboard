@@ -5,6 +5,11 @@ digit (1.0 -> 1.01); a larger or more significant update bumps the tenth
 (1.01 -> 1.1). `package.json` uses the matching semver (1.01 = 1.0.1,
 1.1 = 1.1.0). The current version is in `VERSION`.
 
+## 1.22 - 2026-10-13
+
+- Cash flow entries can now be **changed between forecast and actual**: a one-click "Mark as actual" on forecast rows (pre-fills the amount so you can enter the real spend), and the Edit dialog now lets you change the Type. If the month already has an entry of the new type it is replaced; the change is logged and can be undone. New `PUT /api/cashflow/:id`
+- The app version is shown on the dashboard header (next to "Water Authority")
+
 ## 1.21 - 2026-10-13
 
 - Admins can **permanently delete** a user from Manage Users (with confirmation). Their records stay and keep their name; their access ends immediately. Admins can't delete themselves

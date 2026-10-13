@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { CashFlowEntry, CashFlowEntryInput, Project, Variation } from "../types";
+import {
+  CashFlowEntry,
+  CashFlowEntryInput,
+  CashFlowType,
+  Project,
+  Variation,
+} from "../types";
 import { formatCurrency, formatReportMonth } from "../format";
 import { approvedVariationsTotal, revisedBudget } from "../variations";
 import { expenditureToDate, forecastAtCompletion } from "../cashflow";
@@ -13,6 +19,7 @@ interface Props {
   entries: CashFlowEntry[];
   variations: Variation[];
   onUpsert: (data: Partial<CashFlowEntryInput>) => Promise<void>;
+  onUpdate: (entry: CashFlowEntry, data: Partial<CashFlowEntryInput>) => Promise<void>;
   onDelete: (entry: CashFlowEntry) => Promise<void>;
 }
 
@@ -21,10 +28,12 @@ export default function CashFlowPanel({
   entries,
   variations,
   onUpsert,
+  onUpdate,
   onDelete,
 }: Props) {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<CashFlowEntry | null>(null);
+  const [initialType, setInitialType] = useState<CashFlowType | undefined>();
 
   const expenditure = expenditureToDate(entries);
   const forecastTotal = forecastAtCompletion(entries);
@@ -34,18 +43,29 @@ export default function CashFlowPanel({
 
   function openCreate() {
     setEditing(null);
+    setInitialType(undefined);
     setShowModal(true);
   }
 
-  function openEdit(entry: CashFlowEntry) {
+  function openEdit(entry: CashFlowEntry, type?: CashFlowType) {
     setEditing(entry);
+    setInitialType(type);
     setShowModal(true);
+  }
+
+  function closeModal() {
+    setShowModal(false);
+    setEditing(null);
+    setInitialType(undefined);
   }
 
   async function handleSave(data: Partial<CashFlowEntryInput>) {
-    await onUpsert(data);
-    setShowModal(false);
-    setEditing(null);
+    if (editing) {
+      await onUpdate(editing, { type: data.type, amount: data.amount });
+    } else {
+      await onUpsert(data);
+    }
+    closeModal();
   }
 
   const confirm = useConfirm();
@@ -143,6 +163,15 @@ export default function CashFlowPanel({
                   <span className="text-slate-900 dark:text-slate-100">
                     {formatCurrency(entry.amount)}
                   </span>
+                  {entry.type === "FORECAST" && (
+                    <button
+                      onClick={() => openEdit(entry, "ACTUAL")}
+                      className="text-xs text-emerald-700 dark:text-emerald-400 hover:underline"
+                      title="Record the actual spend for this month (replaces the forecast)"
+                    >
+                      Mark as actual
+                    </button>
+                  )}
                   <button
                     onClick={() => openEdit(entry)}
                     className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
@@ -165,10 +194,9 @@ export default function CashFlowPanel({
       {showModal && (
         <CashFlowEntryFormModal
           entry={editing}
-          onClose={() => {
-            setShowModal(false);
-            setEditing(null);
-          }}
+          entries={entries}
+          initialType={initialType}
+          onClose={closeModal}
           onSave={handleSave}
         />
       )}
