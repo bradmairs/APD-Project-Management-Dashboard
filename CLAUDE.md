@@ -1,5 +1,11 @@
 # Working on APD-Project-Management-Dashboard
 
+## Versions and shipping (Brad's standing instructions)
+
+- **Bump the version in every pull request.** Versions are **Section.Feature.Fix** (e.g. 2.6.1), the same rule as SirisOS and SirisAI: `scripts/bump-version.sh fix` (+0.0.1) for a fix or minor change; `scripts/bump-version.sh feature` (+0.1.0) for a new feature or a bigger upgrade; `scripts/bump-version.sh section` (+1.0.0) only for a significant new section. Fill in the `docs/releases/<version>.md` it starts. If CI's version check says main has moved on, run `scripts/bump-version.sh rebase`. See [docs/releases.md](docs/releases.md).
+- Merging a `VERSION` change tags `v<version>` and publishes the GitHub release by itself.
+- **Merge and deploy automatically**: open the pull request, wait for CI to go green, merge it (squash) and deploy, without being asked. Never merge red.
+
 ## Siris: record what you build (Brad's standing instruction)
 
 Siris is Brad's second brain, the private repo `bradmairs/Siris-Second-Brain`, and his manual for rebuilding everything. When a session in this repo builds, changes, deploys or retires a feature, record it in Siris before finishing, without being asked:

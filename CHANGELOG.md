@@ -1,5 +1,7 @@
 # Changelog
 
+**From the next release, versions are Section.Feature.Fix (like SirisOS) and release notes are in [docs/releases/](docs/releases/).**
+
 Versioning: releases are numbered `X.YY`. A small change or fix bumps the last
 digit (1.0 -> 1.01); a larger or more significant update bumps the tenth
 (1.01 -> 1.1). `package.json` uses the matching semver (1.01 = 1.0.1,
